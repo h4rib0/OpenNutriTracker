@@ -1,13 +1,5 @@
 name: Default Workflow
-
 on:
-  # `push` is intentionally limited to `main` so the workflow doesn't
-  # double-fire on the `develop → main` release PR (where every push to
-  # `develop` would otherwise trigger both a `push` run *and* a
-  # `pull_request` synchronize run). All pre-merge validation happens via
-  # `pull_request`; the `push: main` trigger only catches post-merge runs
-  # on `main`. Direct pushes to `develop` are disallowed by project policy
-  # (see CLAUDE.md) so skipping CI for them is safe.
   push:
     branches:
       - main
@@ -16,8 +8,8 @@ on:
       - main
       - develop
   workflow_dispatch:
-
 jobs:
+
   linux-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -30,8 +22,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.7'
-          channel: 'stable'
+          flutter-version: 3.41.7
+          channel: stable
           cache: true
 
       - name: Setup Just
@@ -58,36 +50,18 @@ jobs:
           SUPABASE_PROJECT_URL="https://stub.supabase.co"
           SUPABASE_PROJECT_ANON_KEY="ci-stub"
           EOF
-
-      # `just ci` would also run `dart format --set-exit-if-changed`, but the
-      # codebase currently has accumulated pre-existing format drift from the
-      # period when CI was disabled. We run the rest of `just ci` (intl
-      # check, build_runner, analyze, test) and leave the format pass for a
-      # dedicated follow-up PR.
       - name: Install Flutter packages
         run: just install
-
       - name: Verify generated intl files
         run: just check_intl
-
       - name: Generate code (env.g.dart, Hive adapters, JSON serializers)
         run: just build
-
       - name: Static analysis
         run: flutter analyze
-
       - name: Run tests
         run: just test
-
-      # The iOS pod-install fallback parser is the only piece of the iOS
-      # CI flow that decides which pods to update when Podfile.lock
-      # drifts. A regression in its regexes would silently degrade the
-      # targeted-update path back to a full `pod update`, which is
-      # exactly the behaviour #369 was filed to avoid. The test runs on
-      # ubuntu — it stubs out CocoaPods entirely with a shell mock — so
-      # we don't pay for it on the macOS runners.
       - name: Test the iOS pod-install fallback parser
-        run: .github/scripts/test_pod_install_with_targeted_fallback.sh
+        run: ".github/scripts/test_pod_install_with_targeted_fallback.sh"
 
   ios-build:
     runs-on: macos-latest
@@ -98,17 +72,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Check out the PR head so auto-commit lands on the right branch.
-          # Falls back to github.ref for push and workflow_dispatch.
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-
+          ref: "${{ github.event.pull_request.head.ref || github.ref }}"
+          repository:
+            "${{ github.event.pull_request.head.repo.full_name || github.repository
+            }}"
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.7'
-          channel: 'stable'
+          flutter-version: 3.41.7
+          channel: stable
           cache: true
+
 
       - name: Cache Flutter packages
         uses: actions/cache@v4
@@ -141,33 +115,17 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      # `pod install` honours Podfile.lock as authoritative even with
-      # --repo-update — CocoaPods will only refresh the spec cache, not
-      # re-resolve. So if the lockfile pins a transitive subdep version
-      # that's been bumped in pubspec.yaml (e.g. sentry_flutter 9.19
-      # now wants Sentry/HybridSDK 8.58 but the lock still pins 8.46),
-      # `pod install` fails. The script's fallback re-resolves only the
-      # pod(s) named in the CocoaPods error output (full `pod update`
-      # only as a last resort), and the auto-commit step below pushes
-      # the refreshed lockfile back to the PR branch so future runs hit
-      # the deterministic `install` path. See #369 for the rationale
-      # behind targeting specific pods rather than re-resolving all.
-      # The script self-locates the iOS dir, so the caller doesn't need
-      # to cd first.
       - name: Pod install (regenerate lockfile if constraints have shifted)
-        run: .github/scripts/pod_install_with_targeted_fallback.sh
+        run: ".github/scripts/pod_install_with_targeted_fallback.sh"
 
-      # Same-repo PRs only — fork PRs run with a read-only token so this
-      # step would fail to push. Fork contributors get the lockfile via
-      # the artifact uploaded below.
       - name: Auto-commit refreshed Podfile.lock
-        if: >-
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+        if:
+          github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name
+          == github.repository
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: 'ios/Podfile.lock'
-          commit_message: 'chore(ios): refresh Podfile.lock via CI'
+          file_pattern: ios/Podfile.lock
+          commit_message: "chore(ios): refresh Podfile.lock via CI"
 
       - name: Upload Podfile.lock artifact
         uses: actions/upload-artifact@v4
@@ -190,8 +148,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.7'
-          channel: 'stable'
+          flutter-version: 3.41.7
+          channel: stable
           cache: true
 
       - name: Cache Flutter packages
@@ -226,11 +184,8 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Pod install (regenerate lockfile if constraints have shifted)
-        run: .github/scripts/pod_install_with_targeted_fallback.sh
+        run: ".github/scripts/pod_install_with_targeted_fallback.sh"
 
-      # Pick any available iPhone simulator on the runner. macos-latest
-      # ships several preinstalled; we don't care which exact model — the
-      # boot-smoke test is platform-bridge driven, not display-pixel driven.
       - name: Pick + boot iPhone simulator
         run: |
           DEVICE_UDID=$(xcrun simctl list devices available iPhone -j | python3 -c "
@@ -261,14 +216,14 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: zulu
+          java-version: "17"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.7'
-          channel: 'stable'
+          flutter-version: 3.41.7
+          channel: stable
           cache: true
 
       - name: Cache Flutter packages
@@ -305,9 +260,6 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build APK (debug)
-        # --release would need a keystore which CI doesn't have; --debug
-        # exercises the same Gradle / desugaring / R8 paths sufficiently
-        # for a "compiles cleanly" gate.
         run: flutter build apk --debug
 
   android-integration-tests:
@@ -322,14 +274,13 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
+          distribution: zulu
+          java-version: "17"
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.7'
-          channel: 'stable'
+          flutter-version: 3.41.7
+          channel: stable
           cache: true
 
       - name: Cache Flutter packages
@@ -382,9 +333,6 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      # First emulator-runner pass — only runs when the AVD cache is empty.
-      # It boots the emulator once to seed the snapshot, then exits. This
-      # makes the actual test pass below much faster.
       - name: Generate AVD snapshot (cache miss only)
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
@@ -393,10 +341,11 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options:
+            "-no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -camera-back none"
           disable-animations: false
           script: echo "AVD snapshot generated for cache"
-
       - name: Run integration tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -404,20 +353,125 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: "-no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none"
           disable-animations: true
           script: flutter test integration_test/ --reporter expanded
 
-# Historical reference — the original single-step `just ci` invocation that
-# was used before this workflow was split into linux-checks + ios-build.
-# Kept here so reviewers can see how the secrets-templated form would look
-# if/when real secrets are configured in repo Settings → Secrets and the
-# stub .env approach above is replaced.
-#
-#      - name: Run CI
-#        run: just ci
-#        env:
-#          FDC_API_KEY: ${{ secrets.FDC_API_KEY }}
-#          SENTRY_DNS: ${{ secrets.SENTRY_DNS }}
-#          SUPABASE_PROJECT_ANON_KEY: ${{ secrets.SUPABASE_PROJECT_ANON_KEY }}
-#          SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
+  ios-deploy-condensed:
+    needs: ios-integration-tests
+    runs-on: macos-latest
+    if:
+      "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Determine fastlane lane
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then echo "FASTLANE_LANE=release" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF}" = "refs/heads/develop" ]; then echo "FASTLANE_LANE=beta" >> $GITHUB_ENV
+          else echo "FASTLANE_LANE=release" >> $GITHUB_ENV
+          fi
+      - name: Inject native build secrets (.env, iOS certs)
+        run: |
+          cat > .env <<'EOT'
+          FDC_API_KEY="${{ secrets.FDC_API_KEY }}"
+          SENTRY_DNS="${{ secrets.SENTRY_DNS }}"
+          SUPABASE_PROJECT_URL="${{ secrets.SUPABASE_PROJECT_URL }}"
+          SUPABASE_PROJECT_ANON_KEY="${{ secrets.SUPABASE_PROJECT_ANON_KEY }}"
+          EOT
+          if [ -n "${{ secrets.IOS_CERTS_P12 }}" ]; then
+            echo "${{ secrets.IOS_CERTS_P12 }}" | base64 --decode > ios/certs.p12
+          fi
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+      - name: Install Bundler and gems
+        run: |
+          cd ios
+          gem install bundler --conservative || true
+          bundle config path vendor/bundle || true
+          bundle install --jobs 4 --retry 3
+      - name: Create App Store Connect API key file (if provided)
+        if: "${{ secrets.APP_STORE_CONNECT_API_KEY != '' }}"
+        run:
+          'echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > ios/appstore_api_key.json'
+      - name: Run fastlane (iOS)
+        env:
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD:
+            "${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD}}"
+          APP_STORE_CONNECT_API_KEY_PATH: ios/appstore_api_key.json
+          MATCH_GIT_URL: "${{ secrets.MATCH_GIT_URL }}"
+          MATCH_PASSWORD: "${{ secrets.MATCH_PASSWORD }}"
+        run: |
+          cd ios
+          bundle exec fastlane $FASTLANE_LANE
+
+  android-deploy-condensed:
+    needs: android-integration-tests
+    runs-on: ubuntu-latest
+    if:
+      "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Determine fastlane lane
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then echo "FASTLANE_LANE=deploy" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF}" = "refs/heads/develop" ]; then echo "FASTLANE_LANE=internal" >> $GITHUB_ENV
+          else echo "FASTLANE_LANE=deploy" >> $GITHUB_ENV
+          fi
+      - name: Inject native build secrets (.env) and decode keystore
+        run: |
+          cat > .env <<'EOT'
+          FDC_API_KEY="${{ secrets.FDC_API_KEY }}"
+          SENTRY_DNS="${{ secrets.SENTRY_DNS }}"
+          SUPABASE_PROJECT_URL="${{ secrets.SUPABASE_PROJECT_URL }}"
+          SUPABASE_PROJECT_ANON_KEY="${{ secrets.SUPABASE_PROJECT_ANON_KEY }}"
+          EOT
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore.jks
+            cd android
+            echo "storeFile=keystore.jks" > keystore.properties
+            echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> keystore.properties
+            echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> keystore.properties
+            echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+          fi
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.7
+          channel: stable
+          cache: true
+      - name: Install Bundler and gems
+        run: |
+          cd android
+          gem install bundler --conservative || true
+          bundle config path vendor/bundle || true
+          bundle install --jobs 4 --retry 3
+      - name: Create Google Play service account JSON (if provided)
+        if: "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON != '' }}"
+        run:
+          'echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}" > android/play_store_key.json'
+      - name: Run fastlane (Android)
+        env:
+          SUPPLY_JSON_KEY: android/play_store_key.json
+          ANDROID_KEYSTORE: android/keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+          ANDROID_KEY_ALIAS: "${{ secrets.ANDROID_KEY_ALIAS }}"
+          ANDROID_KEY_PASSWORD: "${{ secrets.ANDROID_KEY_PASSWORD }}"
+        run: |
+          cd android
+          bundle exec fastlane $FASTLANE_LANE

@@ -1,0 +1,4 @@
+# Appfile for iOS fastlane - values filled from project metadata when available
+app_identifier ENV['APP_IDENTIFIER'] || 'com.opennutritracker.ont.opennutritracker'
+apple_id ENV['APPLE_ID'] || 'your@apple.id'
+team_id ENV['APPLE_TEAM_ID'] || ''

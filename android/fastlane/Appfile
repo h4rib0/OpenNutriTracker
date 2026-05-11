@@ -1,0 +1,2 @@
+# Appfile for Android fastlane - filled from project metadata when available
+package_name ENV['ANDROID_PACKAGE_NAME'] || 'com.opennutritracker.ont.opennutritracker'

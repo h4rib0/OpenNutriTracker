@@ -1,0 +1,68 @@
+default_platform :ios
+
+platform :ios do
+  def get_release_notes
+    release_notes = ''
+    begin
+      changelog = File.read('../CHANGELOG.md')
+      # crude: take first paragraph after the first H2/## header
+      lines = changelog.split("\n")
+      idx = lines.find_index { |l| l =~ /^##\s+/ } || 0
+      snippet = lines[(idx+1)..-1] || []
+      snippet = snippet.take_while { |l| !(l =~ /^##\s+/) } if snippet
+      release_notes = snippet.join("\n").strip
+    rescue => e
+      UI.message("Could not parse CHANGELOG.md: #{e}")
+      release_notes = ''
+    end
+    ENV['RELEASE_NOTES'] = release_notes
+  end
+
+  desc "Build and upload to App Store using App Store Connect API key"
+  lane :release do
+    # Optional: use match if configured
+    if ENV['MATCH_GIT_URL'] && !ENV['MATCH_GIT_URL'].empty?
+      match(type: "appstore")
+    end
+
+    api_key = app_store_connect_api_key(path: "appstore_api_key.json")
+
+    get_release_notes
+
+    # Build the app for App Store distribution
+    build_app(
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
+      export_method: "app-store"
+    )
+
+    # Upload to App Store Connect using API key and release notes
+    upload_to_app_store(api_key: api_key, release_notes: ENV['RELEASE_NOTES'])
+  end
+
+  desc "Upload to TestFlight (beta channel)"
+  lane :beta do
+    if ENV['MATCH_GIT_URL'] && !ENV['MATCH_GIT_URL'].empty?
+      match(type: "appstore")
+    end
+
+    api_key = app_store_connect_api_key(path: "appstore_api_key.json")
+
+    get_release_notes
+
+    # Build for TestFlight / App Store distribution
+    build_app(
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
+      export_method: "app-store"
+    )
+
+    upload_to_testflight(api_key: api_key, changelog: ENV['RELEASE_NOTES'])
+  end
+
+  desc "Upload screenshots and metadata from ios/fastlane/metadata and screenshots"
+  lane :upload_metadata do
+    # deliver will upload metadata/screenshots placed under ios/fastlane/metadata
+    deliver(force: true)
+  end
+end

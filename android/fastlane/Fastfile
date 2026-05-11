@@ -1,0 +1,55 @@
+default_platform :android
+
+platform :android do
+  def get_release_notes
+    release_notes = ''
+    begin
+      changelog = File.read('../CHANGELOG.md')
+      lines = changelog.split("\n")
+      idx = lines.find_index { |l| l =~ /^##\s+/ } || 0
+      snippet = lines[(idx+1)..-1] || []
+      snippet = snippet.take_while { |l| !(l =~ /^##\s+/) } if snippet
+      release_notes = snippet.join("\n").strip
+    rescue => e
+      UI.message("Could not parse CHANGELOG.md: #{e}")
+      release_notes = ''
+    end
+    ENV['RELEASE_NOTES'] = release_notes
+  end
+
+  desc "Build Android App Bundle and upload to Play Store (internal track)"
+  lane :deploy do
+    get_release_notes
+    # Run the Gradle bundling task (runs ./gradlew bundleRelease)
+    gradle(task: "bundleRelease")
+
+    # Path to the generated AAB (relative to android/)
+    aab_path = "app/build/outputs/bundle/release/app-release.aab"
+
+    # Upload to Play Store using the provided service account JSON
+    supply(
+      track: "production",
+      json_key: "play_store_key.json",
+      aab: aab_path,
+      release_notes: { 'en-US' => ENV['RELEASE_NOTES'] }
+    )
+  end
+
+  desc "Upload to internal testing (develop branch)"
+  lane :internal do
+    get_release_notes
+    gradle(task: "bundleRelease")
+    aab_path = "app/build/outputs/bundle/release/app-release.aab"
+    supply(
+      track: "internal",
+      json_key: "play_store_key.json",
+      aab: aab_path,
+      release_notes: { 'en-US' => ENV['RELEASE_NOTES'] }
+    )
+  end
+
+  desc "Upload screenshots (place screenshots under android/fastlane/metadata)"
+  lane :upload_metadata do
+    supply(skip_upload_apk: true, skip_upload_aab: true, json_key: "play_store_key.json")
+  end
+end

@@ -1,0 +1,4 @@
+# Matchfile for fastlane match (iOS code signing)
+# Prefer setting MATCH_GIT_URL and MATCH_PASSWORD as environment variables/secrets
+git_url ENV['MATCH_GIT_URL'] || 'git@github.com:your-org/certs.git'
+type "appstore"
