@@ -386,13 +386,19 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.2"
+          ruby-version: '3.2.2'
       - name: Install Bundler and gems
         run: |
           cd ios
           gem install bundler --conservative || true
-          bundle config path vendor/bundle || true
+          bundle config set path 'vendor/bundle'
           bundle install --jobs 4 --retry 3
+      - name: Verify Ruby and fastlane (iOS)
+        run: |
+          ruby -e "require 'rubygems'; exit Gem::Version.new(RUBY_VERSION) <= Gem::Version.new('3.2.2') ? 0 : (STDERR.puts 'Ruby > 3.2.2'; exit 1)"
+          bundle exec fastlane --version
+          ruby -v
+          bundle -v
       - name: Create App Store Connect API key file (if provided)
         if: "${{ secrets.APP_STORE_CONNECT_API_KEY != '' }}"
         run: 'echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > ios/appstore_api_key.json'
@@ -449,12 +455,22 @@ jobs:
           flutter-version: 3.41.7
           channel: stable
           cache: true
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
       - name: Install Bundler and gems
         run: |
           cd android
           gem install bundler --conservative || true
-          bundle config path vendor/bundle || true
+          bundle config set path 'vendor/bundle'
           bundle install --jobs 4 --retry 3
+      - name: Verify Ruby and fastlane (Android)
+        run: |
+          ruby -e "require 'rubygems'; exit Gem::Version.new(RUBY_VERSION) <= Gem::Version.new('3.2.2') ? 0 : (STDERR.puts 'Ruby > 3.2.2'; exit 1)"
+          bundle exec fastlane --version
+          ruby -v
+          bundle -v
       - name: Create Google Play service account JSON (if provided)
         if: "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON != '' }}"
         run: 'echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}" > android/play_store_key.json'
