@@ -9,7 +9,6 @@ on:
       - develop
   workflow_dispatch:
 jobs:
-
   linux-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -82,7 +81,6 @@ jobs:
           flutter-version: 3.41.7
           channel: stable
           cache: true
-
 
       - name: Cache Flutter packages
         uses: actions/cache@v4
@@ -360,8 +358,7 @@ jobs:
   ios-deploy-condensed:
     needs: ios-integration-tests
     runs-on: macos-latest
-    if:
-      "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
+    if: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
     timeout-minutes: 60
     permissions:
       contents: read
@@ -398,12 +395,10 @@ jobs:
           bundle install --jobs 4 --retry 3
       - name: Create App Store Connect API key file (if provided)
         if: "${{ secrets.APP_STORE_CONNECT_API_KEY != '' }}"
-        run:
-          'echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > ios/appstore_api_key.json'
+        run: 'echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > ios/appstore_api_key.json'
       - name: Run fastlane (iOS)
         env:
-          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD:
-            "${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD}}"
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: "${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD}}"
           APP_STORE_CONNECT_API_KEY_PATH: ios/appstore_api_key.json
           MATCH_GIT_URL: "${{ secrets.MATCH_GIT_URL }}"
           MATCH_PASSWORD: "${{ secrets.MATCH_PASSWORD }}"
@@ -414,8 +409,7 @@ jobs:
   android-deploy-condensed:
     needs: android-integration-tests
     runs-on: ubuntu-latest
-    if:
-      "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
+    if: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch' }}"
     timeout-minutes: 45
     permissions:
       contents: read
@@ -463,8 +457,7 @@ jobs:
           bundle install --jobs 4 --retry 3
       - name: Create Google Play service account JSON (if provided)
         if: "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON != '' }}"
-        run:
-          'echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}" > android/play_store_key.json'
+        run: 'echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}" > android/play_store_key.json'
       - name: Run fastlane (Android)
         env:
           SUPPLY_JSON_KEY: android/play_store_key.json
