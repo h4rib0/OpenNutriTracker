@@ -232,13 +232,13 @@ Future<void> initLocator() async {
     () => GetIntakeUsecase(locator()),
   );
   locator.registerLazySingleton<AddIntakeUsecase>(
-    () => AddIntakeUsecase(locator()),
+    () => AddIntakeUsecase(locator(), locator()),
   );
   locator.registerLazySingleton<DeleteIntakeUsecase>(
-    () => DeleteIntakeUsecase(locator()),
+    () => DeleteIntakeUsecase(locator(), locator()),
   );
   locator.registerLazySingleton<UpdateIntakeUsecase>(
-    () => UpdateIntakeUsecase(locator()),
+    () => UpdateIntakeUsecase(locator(), locator()),
   );
   locator.registerLazySingleton<GetUserActivityUsecase>(
     () => GetUserActivityUsecase(locator()),

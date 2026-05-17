@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/utils/secure_app_storage_provider.dart';
 
 class PolarInfluxdbDataSource {
@@ -74,6 +75,101 @@ class PolarInfluxdbDataSource {
       _log.warning('triggerSync failed: $e');
       return false;
     }
+  }
+
+  /// Writes a food intake entry to InfluxDB (measurement: `nutrition`).
+  /// Fire-and-forget: call without await. Silently skipped if not configured.
+  Future<void> writeIntake(IntakeEntity intake) async {
+    if (!await isPolarConfigured()) return;
+    try {
+      final line = _buildIntakeLine(intake);
+      await _writeLine(line);
+    } catch (e) {
+      _log.warning('writeIntake failed: $e');
+    }
+  }
+
+  /// Deletes the InfluxDB nutrition point with the given timestamp.
+  /// Fire-and-forget: call without await. Silently skipped if not configured.
+  Future<void> deleteIntakeByTime(DateTime dateTime) async {
+    if (!await isPolarConfigured()) return;
+    final ns = dateTime.microsecondsSinceEpoch * 1000;
+    final q = 'DELETE FROM nutrition WHERE time = $ns';
+    try {
+      await _executeQuery(q);
+    } catch (e) {
+      _log.warning('deleteIntakeByTime failed: $e');
+    }
+  }
+
+  String _buildIntakeLine(IntakeEntity intake) {
+    final meal = _escapeTag(intake.type.name);
+    final food = _escapeTag(intake.meal.name ?? 'unknown');
+    final n = intake.meal.nutriments;
+
+    final fields = StringBuffer()
+      ..write('kcal=${intake.totalKcal}')
+      ..write(',carbs_g=${intake.totalCarbsGram}')
+      ..write(',fats_g=${intake.totalFatsGram}')
+      ..write(',proteins_g=${intake.totalProteinsGram}')
+      ..write(',amount=${intake.amount}');
+
+    final sugar = n.sugars100;
+    if (sugar != null) fields.write(',sugar_g=${intake.amount * sugar / 100}');
+    final fiber = n.fiber100;
+    if (fiber != null) fields.write(',fiber_g=${intake.amount * fiber / 100}');
+    final sodium = n.sodium100;
+    if (sodium != null) {
+      fields.write(',sodium=${intake.amount * sodium / 100}');
+    }
+
+    final ns = intake.dateTime.microsecondsSinceEpoch * 1000;
+    return 'nutrition,meal=$meal,food=$food $fields $ns';
+  }
+
+  String _escapeTag(String value) => value
+      .replaceAll(',', '\\,')
+      .replaceAll('=', '\\=')
+      .replaceAll(' ', '\\ ');
+
+  Future<void> _writeLine(String line) async {
+    final url = await getUrl();
+    final database = await getDatabase();
+    if (url.isEmpty || database.isEmpty) return;
+
+    final isV2 = await getIsV2();
+    final token = await getToken();
+    final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+
+    final uri = Uri.parse('$baseUrl/write')
+        .replace(queryParameters: {'db': database});
+    final request = http.Request('POST', uri)..body = line;
+    if (isV2 && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Token $token';
+    }
+    final streamed =
+        await http.Client().send(request).timeout(const Duration(seconds: 10));
+    if (streamed.statusCode >= 300) {
+      _log.warning('InfluxDB write HTTP ${streamed.statusCode}');
+    }
+  }
+
+  Future<void> _executeQuery(String q) async {
+    final url = await getUrl();
+    final database = await getDatabase();
+    if (url.isEmpty || database.isEmpty) return;
+
+    final isV2 = await getIsV2();
+    final token = await getToken();
+    final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+
+    final uri = Uri.parse('$baseUrl/query')
+        .replace(queryParameters: {'db': database, 'q': q});
+    final request = http.Request('GET', uri);
+    if (isV2 && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Token $token';
+    }
+    await http.Client().send(request).timeout(const Duration(seconds: 10));
   }
 
   Future<double?> fetchLatestWeightKg() async {
