@@ -1,7 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
+import 'package:opennutritracker/core/utils/calc/bmr_calc.dart';
 import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -38,6 +40,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetMacroGoalUsecase _getMacroGoalUsecase;
   final UpdateUserActivityUsecase _updateUserActivityUsecase;
   final GetUserUsecase _getUserUsecase;
+  final PolarInfluxdbDataSource _polarDataSource;
 
   DateTime currentDay = DateTime.now();
 
@@ -54,6 +57,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._getMacroGoalUsecase,
     this._updateUserActivityUsecase,
     this._getUserUsecase,
+    this._polarDataSource,
   ) : super(HomeInitial()) {
     on<LoadItemsEvent>((event, emit) async {
       emit(HomeLoadingState());
@@ -111,18 +115,55 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final totalKcalActivities =
           userActivities.map((activity) => activity.burnedKcal).toList().sum;
 
+      final polarActiveKcal =
+          await _polarDataSource.fetchActiveKcalForDate(currentDay);
+      final totalKcalActivitiesWithPolar =
+          totalKcalActivities + (polarActiveKcal ?? 0);
+
       final user = await _getUserUsecase.getUserData();
-      final totalKcalGoal =
-          await _getKcalGoalUsecase.getKcalGoal(userEntity: user);
-      final totalCarbsGoal = await _getMacroGoalUsecase.getCarbsGoal(
-        totalKcalGoal,
-      );
-      final totalFatsGoal = await _getMacroGoalUsecase.getFatsGoal(
-        totalKcalGoal,
-      );
-      final totalProteinsGoal = await _getMacroGoalUsecase.getProteinsGoal(
-        totalKcalGoal,
-      );
+      final influxWeightKg = await _polarDataSource.fetchLatestWeightKg();
+      final isPolarActive = await _polarDataSource.isPolarConfigured();
+
+      final userForCalc = influxWeightKg != null
+          ? user.copyWith(weightKG: influxWeightKg)
+          : user;
+
+      // When Polar is active: BMR (no PAL factor) + Polar-kcal + slider
+      // When Polar is inactive: TDEE (BMR × PAL) + goal adjustment + slider
+      final double totalKcalGoal;
+      if (isPolarActive) {
+        final bmr = BMRCalc.getBMRMifflinStJeor1990(userForCalc);
+        final kcalAdjustment = configData.userKcalAdjustment ?? 0;
+        totalKcalGoal = bmr + totalKcalActivitiesWithPolar + kcalAdjustment;
+      } else {
+        totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal(
+          userEntity: userForCalc,
+          totalKcalActivitiesParam: totalKcalActivitiesWithPolar,
+        );
+      }
+
+      double totalCarbsGoal, totalFatsGoal, totalProteinsGoal;
+      if (isPolarActive) {
+        final proteinGPerKg = await _polarDataSource.getProteinGPerKg();
+        final fatGPerKg = await _polarDataSource.getFatGPerKg();
+        final proteinG = MacroCalc.getProteinGoalFromBodyWeight(
+          userForCalc.weightKG,
+          proteinGPerKg,
+        );
+        final fatG = MacroCalc.getFatGoalFromBodyWeight(
+          userForCalc.weightKG,
+          fatGPerKg,
+        );
+        totalProteinsGoal = proteinG;
+        totalFatsGoal = fatG;
+        totalCarbsGoal =
+            MacroCalc.getCarbsGoalBodyWeightBased(totalKcalGoal, proteinG, fatG);
+      } else {
+        totalCarbsGoal = await _getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
+        totalFatsGoal = await _getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
+        totalProteinsGoal =
+            await _getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
+      }
 
       final totalKcalLeft = CalorieGoalCalc.getDailyKcalLeft(
         totalKcalGoal,
@@ -135,7 +176,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           totalKcalDaily: totalKcalGoal,
           totalKcalLeft: totalKcalLeft,
           totalKcalSupplied: totalKcalIntake,
-          totalKcalBurned: totalKcalActivities,
+          totalKcalBurned: totalKcalActivitiesWithPolar,
+          polarActiveKcal: polarActiveKcal,
+          influxWeightKg: influxWeightKg,
+          isPolarActive: isPolarActive,
           totalCarbsIntake: totalCarbsIntake,
           totalFatsIntake: totalFatsIntake,
           totalCarbsGoal: totalCarbsGoal,
@@ -149,7 +193,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           userActivityList: userActivities,
           usesImperialUnits: usesImperialUnits,
           showMealMacros: showMealMacros,
-          userWeightKg: user.weightKG,
+          userWeightKg: influxWeightKg ?? user.weightKG,
         ),
       );
     });

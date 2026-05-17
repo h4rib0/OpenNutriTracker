@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/user_bmi_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -25,6 +26,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final AddTrackedDayUsecase _addTrackedDayUsecase;
   final GetConfigUsecase _getConfigUsecase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
+  final PolarInfluxdbDataSource _polarDataSource;
 
   ProfileBloc(
     this._getUserUsecase,
@@ -32,23 +34,35 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     this._addTrackedDayUsecase,
     this._getConfigUsecase,
     this._getKcalGoalUsecase,
+    this._polarDataSource,
   ) : super(ProfileInitial()) {
     on<LoadProfileEvent>((event, emit) async {
       emit(ProfileLoadingState());
 
       final user = await _getUserUsecase.getUserData();
-      final userBMIValue = BMICalc.getBMI(user);
+      final userConfig = await _getConfigUsecase.getConfig();
+      final isPolarActive = await _polarDataSource.isPolarConfigured();
+      final influxWeightKg = isPolarActive
+          ? await _polarDataSource.fetchLatestWeightKg()
+          : null;
+
+      // Use InfluxDB weight for BMI calculation when available
+      final userForBmi = influxWeightKg != null
+          ? user.copyWith(weightKG: influxWeightKg)
+          : user;
+      final userBMIValue = BMICalc.getBMI(userForBmi);
       final userBMIEntity = UserBMIEntity(
         bmiValue: userBMIValue,
         nutritionalStatus: BMICalc.getNutritionalStatus(userBMIValue),
       );
-      final userConfig = await _getConfigUsecase.getConfig();
 
       emit(
         ProfileLoadedState(
           userBMI: userBMIEntity,
           userEntity: user,
           usesImperialUnits: userConfig.usesImperialUnits,
+          isPolarActive: isPolarActive,
+          influxWeightKg: influxWeightKg,
         ),
       );
     });

@@ -17,15 +17,18 @@ class ProfileLoadingState extends ProfileState {
 class ProfileLoadedState extends ProfileState {
   final UserBMIEntity userBMI;
   final UserEntity userEntity;
-
   final bool usesImperialUnits;
+  final bool isPolarActive;
+  final double? influxWeightKg;
 
   const ProfileLoadedState({
     required this.userBMI,
     required this.userEntity,
     required this.usesImperialUnits,
+    this.isPolarActive = false,
+    this.influxWeightKg,
   });
 
   @override
-  List<Object?> get props => [userBMI, userEntity, usesImperialUnits];
+  List<Object?> get props => [userBMI, userEntity, usesImperialUnits, isPolarActive, influxWeightKg];
 }

@@ -82,4 +82,12 @@ class TDEECalc {
         paValue * 10.9 * userEntity.weightKG +
         660.7 * (userEntity.heightCM / 100);
   }
+
+  /// Calculates TDEE using Mifflin-St. Jeor BMR × PAL.
+  /// BMR (1990): (10 × kg) + (6.25 × cm) - (5 × age) ± 5/-161
+  static double getTDEEKcalMifflinStJeor(UserEntity userEntity) {
+    final bmr = BMRCalc.getBMRMifflinStJeor1990(userEntity);
+    final pal = PalCalc.getPALValueFromActivityCategory(userEntity);
+    return bmr * pal;
+  }
 }

@@ -13,11 +13,13 @@ import 'package:opennutritracker/generated/l10n.dart';
 class QuickWeightWidget extends StatelessWidget {
   final double weightKg;
   final bool usesImperialUnits;
+  final bool weightFromInflux;
 
   const QuickWeightWidget({
     super.key,
     required this.weightKg,
     required this.usesImperialUnits,
+    this.weightFromInflux = false,
   });
 
   @override
@@ -38,6 +40,14 @@ class QuickWeightWidget extends StatelessWidget {
             '${displayWeight.toStringAsFixed(1)} $unit',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          if (weightFromInflux) ...[
+            const SizedBox(width: 4),
+            Icon(
+              Icons.sync,
+              size: 14,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 16),

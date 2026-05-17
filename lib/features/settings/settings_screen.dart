@@ -21,6 +21,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/calculations_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -109,6 +110,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _settingsBloc.setShowMicronutrients(value);
                     _settingsBloc.add(LoadSettingsEvent());
                   },
+                ),
+                const Divider(),
+                // Polar Integration
+                ListTile(
+                  leading: const Icon(Icons.monitor_heart_outlined),
+                  title: const Text('Polar Integration'),
+                  subtitle: const Text('InfluxDB URL & Datenbank konfigurieren'),
+                  onTap: () => _showPolarInfluxdbDialog(context),
                 ),
                 const Divider(),
                 // App
@@ -683,5 +692,161 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  void _showPolarInfluxdbDialog(BuildContext context) async {
+    final dataSource = locator<PolarInfluxdbDataSource>();
+    final initialUrl = await dataSource.getUrl();
+    final initialDb = await dataSource.getDatabase();
+    final initialIsV2 = await dataSource.getIsV2();
+    final initialToken = await dataSource.getToken();
+    final initialTriggerUrl = await dataSource.getTriggerUrl();
+
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _PolarInfluxdbDialog(
+        initialUrl: initialUrl,
+        initialDatabase: initialDb,
+        initialIsV2: initialIsV2,
+        initialToken: initialToken,
+        initialTriggerUrl: initialTriggerUrl,
+        onSave: (url, db, isV2, token, triggerUrl) async {
+          await dataSource.saveConfig(
+            url: url,
+            database: db,
+            isV2: isV2,
+            token: token,
+            triggerUrl: triggerUrl,
+          );
+          _homeBloc.add(const LoadItemsEvent());
+          _profileBloc.add(LoadProfileEvent());
+        },
+      ),
+    );
+  }
+}
+
+class _PolarInfluxdbDialog extends StatefulWidget {
+  final String initialUrl;
+  final String initialDatabase;
+  final bool initialIsV2;
+  final String initialToken;
+  final String initialTriggerUrl;
+  final Future<void> Function(
+      String url, String db, bool isV2, String token, String triggerUrl) onSave;
+
+  const _PolarInfluxdbDialog({
+    required this.initialUrl,
+    required this.initialDatabase,
+    required this.initialIsV2,
+    required this.initialToken,
+    required this.initialTriggerUrl,
+    required this.onSave,
+  });
+
+  @override
+  State<_PolarInfluxdbDialog> createState() => _PolarInfluxdbDialogState();
+}
+
+class _PolarInfluxdbDialogState extends State<_PolarInfluxdbDialog> {
+  late final TextEditingController _urlController;
+  late final TextEditingController _dbController;
+  late final TextEditingController _tokenController;
+  late final TextEditingController _triggerUrlController;
+  late bool _isV2;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController = TextEditingController(text: widget.initialUrl);
+    _dbController = TextEditingController(text: widget.initialDatabase);
+    _tokenController = TextEditingController(text: widget.initialToken);
+    _triggerUrlController =
+        TextEditingController(text: widget.initialTriggerUrl);
+    _isV2 = widget.initialIsV2;
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _dbController.dispose();
+    _tokenController.dispose();
+    _triggerUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Polar Integration'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _urlController,
+              decoration: const InputDecoration(
+                labelText: 'InfluxDB URL',
+                hintText: 'https://influx.example.com',
+              ),
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('InfluxDB v2'),
+              value: _isV2,
+              onChanged: (v) => setState(() => _isV2 = v),
+            ),
+            const SizedBox(height: 4),
+            TextField(
+              controller: _dbController,
+              decoration: InputDecoration(
+                labelText: _isV2 ? 'Bucket' : 'Datenbank',
+                hintText: 'polar',
+              ),
+            ),
+            if (_isV2) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: _tokenController,
+                decoration: const InputDecoration(labelText: 'Token'),
+                obscureText: true,
+              ),
+            ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: _triggerUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Sync-Trigger URL (optional)',
+                hintText: 'https://example.com/polar_to_influx.php',
+              ),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(S.of(context).dialogCancelLabel),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await widget.onSave(
+              _urlController.text.trim(),
+              _dbController.text.trim(),
+              _isV2,
+              _tokenController.text.trim(),
+              _triggerUrlController.text.trim(),
+            );
+          },
+          child: Text(S.of(context).dialogOKLabel),
+        ),
+      ],
+    );
   }
 }

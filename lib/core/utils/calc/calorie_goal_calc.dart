@@ -14,7 +14,7 @@ class CalorieGoalCalc {
       totalKcalGoal - totalKcalIntake;
 
   static double getTdee(UserEntity userEntity) =>
-      TDEECalc.getTDEEKcalIOM2005(userEntity);
+      TDEECalc.getTDEEKcalMifflinStJeor(userEntity);
 
   // 1 kg of body fat ≈ 7700 kcal; spread over 7 days → ~1100 kcal/day per kg/week
   static const double _kcalPerKgPerWeekDaily = 1100.0;

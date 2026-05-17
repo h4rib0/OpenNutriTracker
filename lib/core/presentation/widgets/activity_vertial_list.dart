@@ -17,6 +17,7 @@ class ActivityVerticalList extends StatefulWidget {
   final Function(BuildContext, UserActivityEntity)? onItemTappedCallback;
   final Function(bool isDragging)? onItemDragCallback;
   final Function(UserActivityEntity)? onCopyActivityCallback;
+  final double? polarActiveKcal;
 
   const ActivityVerticalList({
     super.key,
@@ -27,6 +28,7 @@ class ActivityVerticalList extends StatefulWidget {
     this.onItemTappedCallback,
     this.onItemDragCallback,
     this.onCopyActivityCallback,
+    this.polarActiveKcal,
   });
 
   @override
@@ -106,17 +108,24 @@ class _ActivityVerticalListState extends State<ActivityVerticalList> {
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: widget.userActivityList.length + 1,
+            itemCount: widget.userActivityList.length +
+                1 +
+                (widget.polarActiveKcal != null ? 1 : 0),
             itemBuilder: (BuildContext context, int index) {
-              final firstListElement = index == 0 ? true : false;
-              if (index == widget.userActivityList.length) {
+              final hasPolar = widget.polarActiveKcal != null;
+              if (hasPolar && index == 0) {
+                return _buildPolarCard(context);
+              }
+              final adjustedIndex = hasPolar ? index - 1 : index;
+              final firstListElement = adjustedIndex == 0 && !hasPolar;
+              if (adjustedIndex == widget.userActivityList.length) {
                 return PlaceholderCard(
                   day: widget.day,
                   onTap: () => _onPlaceholderCardTapped(context),
                   firstListElement: firstListElement,
                 );
               } else {
-                final userActivity = widget.userActivityList[index];
+                final userActivity = widget.userActivityList[adjustedIndex];
                 return ActivityCard(
                   activityEntity: userActivity,
                   onItemLongPressed: widget.onItemLongPressedCallback,
@@ -136,6 +145,75 @@ class _ActivityVerticalListState extends State<ActivityVerticalList> {
     Navigator.of(context).pushNamed(
       NavigationOptions.addActivityRoute,
       arguments: AddActivityScreenArguments(day: widget.day),
+    );
+  }
+
+  Widget _buildPolarCard(BuildContext context) {
+    return Row(
+      children: [
+        const SizedBox(width: 16),
+        SizedBox(
+          width: 120,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 120,
+                child: Card(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  ),
+                  child: Stack(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.all(8.0),
+                        padding:
+                            const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 4.0),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .tertiaryContainer
+                              .withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '🔥${widget.polarActiveKcal!.toInt()} kcal',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onTertiaryContainer,
+                                  ),
+                        ),
+                      ),
+                      Center(
+                        child: Icon(
+                          Icons.monitor_heart_outlined,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: Text(
+                  'Polar',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: Text('heute', maxLines: 1),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

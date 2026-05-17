@@ -10,6 +10,7 @@ import 'package:opennutritracker/core/presentation/widgets/edit_activity_dialog.
 import 'package:opennutritracker/core/presentation/widgets/edit_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
@@ -78,6 +79,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             state.usesImperialUnits,
             state.showMealMacros,
             state.userWeightKg,
+            state.polarActiveKcal,
+            state.influxWeightKg != null,
           );
         } else {
           return _getLoadingContent();
@@ -120,17 +123,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     bool usesImperialUnits,
     bool showMealMacros,
     double userWeightKg,
+    double? polarActiveKcal,
+    bool weightFromInflux,
   ) {
     if (showDisclaimerDialog) {
       _showDisclaimerDialog(context);
     }
     return Stack(
       children: [
-        ListView(
-          children: [
+        RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: ListView(
+            children: [
             QuickWeightWidget(
               weightKg: userWeightKg,
               usesImperialUnits: usesImperialUnits,
+              weightFromInflux: weightFromInflux,
             ),
             const SizedBox(height: 8.0),
             DashboardWidget(
@@ -144,6 +152,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               totalCarbsGoal: totalCarbsGoal,
               totalFatsGoal: totalFatsGoal,
               totalProteinsGoal: totalProteinsGoal,
+              polarActiveKcal: polarActiveKcal,
             ),
             ActivityVerticalList(
               day: DateTime.now(),
@@ -152,6 +161,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               onItemLongPressedCallback: onActivityItemLongPressed,
               onItemTappedCallback: onActivityItemTapped,
               onItemDragCallback: onActivityItemDrag,
+              polarActiveKcal: polarActiveKcal,
             ),
             IntakeVerticalList(
               day: DateTime.now(),
@@ -204,6 +214,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 48.0),
           ],
         ),
+        ),
         Align(
           alignment: Alignment.bottomCenter,
           child: Visibility(
@@ -254,6 +265,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
       ],
     );
+  }
+
+  Future<void> _onRefresh() async {
+    // Trigger server-side Polar → InfluxDB sync, then reload
+    await locator<PolarInfluxdbDataSource>().triggerSync();
+    _homeBloc.add(const LoadItemsEvent());
+    await _homeBloc.stream.firstWhere((s) => s is HomeLoadedState);
   }
 
   void onActivityItemLongPressed(

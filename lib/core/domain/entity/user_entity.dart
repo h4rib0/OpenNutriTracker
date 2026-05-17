@@ -46,4 +46,21 @@ class UserEntity {
   }
 
   int get age => DateTime.now().difference(birthday).inDays ~/ 365;
+
+  UserEntity copyWith({
+    double? weightKG,
+    UserPALEntity? pal,
+    UserWeightGoalEntity? goal,
+    bool clearWeeklyGoal = false,
+  }) =>
+      UserEntity(
+        birthday: birthday,
+        heightCM: heightCM,
+        weightKG: weightKG ?? this.weightKG,
+        gender: gender,
+        goal: goal ?? this.goal,
+        pal: pal ?? this.pal,
+        weeklyWeightGoalKg: clearWeeklyGoal ? null : weeklyWeightGoalKg,
+        caloriesProfile: caloriesProfile,
+      );
 }

@@ -51,6 +51,8 @@ class _ProfilePageState extends State<ProfilePage> {
             state.userBMI,
             state.userEntity,
             state.usesImperialUnits,
+            state.isPolarActive,
+            state.influxWeightKg,
           );
         } else {
           return _getLoadingContent();
@@ -68,6 +70,8 @@ class _ProfilePageState extends State<ProfilePage> {
     UserBMIEntity userBMIEntity,
     UserEntity user,
     bool usesImperialUnits,
+    bool isPolarActive,
+    double? influxWeightKg,
   ) {
     return ListView(
       children: [
@@ -83,14 +87,28 @@ class _ProfilePageState extends State<ProfilePage> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           subtitle: Text(
-            user.pal.getName(context),
-            style: Theme.of(context).textTheme.titleMedium,
+            isPolarActive
+                ? '${user.pal.getName(context)} (Polar aktiv: ignoriert)'
+                : user.pal.getName(context),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isPolarActive
+                      ? Theme.of(context).disabledColor
+                      : null,
+                ),
           ),
-          leading: const SizedBox(
+          leading: SizedBox(
             height: double.infinity,
-            child: Icon(Icons.directions_walk_outlined),
+            child: Icon(
+              Icons.directions_walk_outlined,
+              color: isPolarActive ? Theme.of(context).disabledColor : null,
+            ),
           ),
-          onTap: () => _showSetPALCategoryDialog(context, user),
+          trailing: isPolarActive
+              ? Icon(Icons.lock_outline,
+                  size: 16, color: Theme.of(context).disabledColor)
+              : null,
+          enabled: !isPolarActive,
+          onTap: isPolarActive ? null : () => _showSetPALCategoryDialog(context, user),
         ),
         ListTile(
           title: Text(
@@ -98,14 +116,26 @@ class _ProfilePageState extends State<ProfilePage> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           subtitle: Text(
-            user.goal.getName(context),
-            style: Theme.of(context).textTheme.titleMedium,
+            isPolarActive
+                ? '${user.goal.getName(context)} (Polar aktiv: ignoriert)'
+                : user.goal.getName(context),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isPolarActive ? Theme.of(context).disabledColor : null,
+                ),
           ),
-          leading: const SizedBox(
+          leading: SizedBox(
             height: double.infinity,
-            child: Icon(Icons.flag_outlined),
+            child: Icon(
+              Icons.flag_outlined,
+              color: isPolarActive ? Theme.of(context).disabledColor : null,
+            ),
           ),
-          onTap: () => _showSetGoalDialog(context, user),
+          trailing: isPolarActive
+              ? Icon(Icons.lock_outline,
+                  size: 16, color: Theme.of(context).disabledColor)
+              : null,
+          enabled: !isPolarActive,
+          onTap: isPolarActive ? null : () => _showSetGoalDialog(context, user),
         ),
         ListTile(
           title: Text(
@@ -113,15 +143,29 @@ class _ProfilePageState extends State<ProfilePage> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           subtitle: Text(
-            _weeklyGoalSubtitle(context, user, usesImperialUnits),
-            style: Theme.of(context).textTheme.titleMedium,
+            isPolarActive
+                ? '${_weeklyGoalSubtitle(context, user, usesImperialUnits)} (Polar aktiv: ignoriert)'
+                : _weeklyGoalSubtitle(context, user, usesImperialUnits),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isPolarActive ? Theme.of(context).disabledColor : null,
+                ),
           ),
-          leading: const SizedBox(
+          leading: SizedBox(
             height: double.infinity,
-            child: Icon(Icons.trending_down_outlined),
+            child: Icon(
+              Icons.trending_down_outlined,
+              color: isPolarActive ? Theme.of(context).disabledColor : null,
+            ),
           ),
-          onTap: () =>
-              _showSetWeeklyWeightGoalDialog(context, user, usesImperialUnits),
+          trailing: isPolarActive
+              ? Icon(Icons.lock_outline,
+                  size: 16, color: Theme.of(context).disabledColor)
+              : null,
+          enabled: !isPolarActive,
+          onTap: isPolarActive
+              ? null
+              : () => _showSetWeeklyWeightGoalDialog(
+                    context, user, usesImperialUnits),
         ),
         ListTile(
           title: Text(
@@ -129,7 +173,9 @@ class _ProfilePageState extends State<ProfilePage> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           subtitle: Text(
-            '${_profileBloc.getDisplayWeight(user, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
+            influxWeightKg != null
+                ? '${_profileBloc.getDisplayWeight(user.copyWith(weightKG: influxWeightKg), usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel} (Polar)'
+                : '${_profileBloc.getDisplayWeight(user, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           leading: const SizedBox(

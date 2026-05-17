@@ -16,6 +16,7 @@ class DashboardWidget extends StatefulWidget {
   final double totalCarbsGoal;
   final double totalFatsGoal;
   final double totalProteinsGoal;
+  final double? polarActiveKcal;
 
   const DashboardWidget({
     super.key,
@@ -29,6 +30,7 @@ class DashboardWidget extends StatefulWidget {
     required this.totalCarbsGoal,
     required this.totalFatsGoal,
     required this.totalProteinsGoal,
+    this.polarActiveKcal,
   });
 
   @override
@@ -165,6 +167,33 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                   ),
                 ],
               ),
+              if (widget.polarActiveKcal != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.monitor_heart_outlined,
+                        size: 14,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Polar: ${widget.polarActiveKcal!.toInt()} kcal',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               MacroNutrientsView(
                 totalCarbsIntake: widget.totalCarbsIntake,
                 totalFatsIntake: widget.totalFatsIntake,

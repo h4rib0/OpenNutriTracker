@@ -35,6 +35,9 @@ class HomeLoadedState extends HomeState {
   final bool showActivityTracking; // #277
   final bool showMealMacros;
   final double userWeightKg;
+  final double? polarActiveKcal;
+  final double? influxWeightKg;
+  final bool isPolarActive;
 
   const HomeLoadedState({
     required this.showDisclaimerDialog,
@@ -57,6 +60,9 @@ class HomeLoadedState extends HomeState {
     required this.userWeightKg,
     this.showActivityTracking = true,
     this.showMealMacros = true,
+    this.polarActiveKcal,
+    this.influxWeightKg,
+    this.isPolarActive = false,
   });
 
   @override

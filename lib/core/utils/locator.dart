@@ -1,6 +1,7 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/recipe_data_source.dart';
@@ -106,8 +107,12 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<OnboardingBloc>(
     () => OnboardingBloc(locator(), locator()),
   );
+  locator.registerLazySingleton<PolarInfluxdbDataSource>(
+    () => PolarInfluxdbDataSource(),
+  );
   locator.registerLazySingleton<HomeBloc>(
     () => HomeBloc(
+      locator(),
       locator(),
       locator(),
       locator(),
@@ -136,7 +141,7 @@ Future<void> initLocator() async {
     ),
   );
   locator.registerLazySingleton<ProfileBloc>(
-    () => ProfileBloc(locator(), locator(), locator(), locator(), locator()),
+    () => ProfileBloc(locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerLazySingleton<RecipesBloc>(() => RecipesBloc(locator()));
   locator.registerFactory<RecipeBuilderBloc>(
