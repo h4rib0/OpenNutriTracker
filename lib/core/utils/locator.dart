@@ -2,6 +2,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/recipe_data_source.dart';
@@ -195,7 +196,8 @@ Future<void> initLocator() async {
     ),
   );
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
-  locator.registerFactory<EditMealBloc>(() => EditMealBloc(locator(), locator()));
+  locator.registerFactory<EditMealBloc>(
+      () => EditMealBloc(locator(), locator(), locator(), locator()));
   locator.registerFactory<AddMealBloc>(() => AddMealBloc(locator()));
   locator.registerFactory<ProductsBloc>(
     () => ProductsBloc(locator(), locator()),
@@ -341,6 +343,9 @@ Future<void> initLocator() async {
       hiveDBProvider.cachedOffMealBox,
       hiveDBProvider.cachedOffMealTimestampsBox,
     ),
+  );
+  locator.registerLazySingleton<NutrientOverrideDataSource>(
+    () => NutrientOverrideDataSource(locator<SupabaseClient>()),
   );
 
   await _initializeConfig(locator());

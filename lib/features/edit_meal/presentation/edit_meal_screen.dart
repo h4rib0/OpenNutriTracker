@@ -427,6 +427,11 @@ class _EditMealScreenState extends State<EditMealScreen> {
       // Persist custom meal template (#267)
       if (newMealEntity.source == MealSourceEntity.custom) {
         await _editMealBloc.saveCustomMeal(newMealEntity);
+      } else if (newMealEntity.source == MealSourceEntity.off ||
+          newMealEntity.source == MealSourceEntity.fdc) {
+        // Write enriched nutrient data back to the local cache so the next
+        // search returns the user-filled values instead of the empty remote version.
+        await _editMealBloc.updateCachedMealNutrients(newMealEntity);
       }
 
       if (!mounted) return;

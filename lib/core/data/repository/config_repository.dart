@@ -96,4 +96,8 @@ class ConfigRepository {
   Future<void> setConfigShowMicronutrients(bool show) async {
     await _configDataSource.setConfigShowMicronutrients(show);
   }
+
+  Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
+    await _configDataSource.setConfigSyncNutrientsToSupabase(sync);
+  }
 }

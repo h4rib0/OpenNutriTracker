@@ -147,6 +147,13 @@ class ConfigDataSource {
     await config?.save();
   }
 
+  Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
+    _log.fine('Updating config syncNutrientsToSupabase to $sync');
+    final config = _configBox.get(_configKey);
+    config?.syncNutrientsToSupabase = sync;
+    await config?.save();
+  }
+
 
   Future<ConfigDBO> getConfig() async {
     return _configBox.get(_configKey) ?? ConfigDBO.empty();

@@ -71,4 +71,8 @@ class AddConfigUsecase {
   Future<void> setConfigShowMicronutrients(bool show) async {
     _configRepository.setConfigShowMicronutrients(show);
   }
+
+  Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
+    _configRepository.setConfigSyncNutrientsToSupabase(sync);
+  }
 }

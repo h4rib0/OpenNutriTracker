@@ -119,6 +119,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: const Text('InfluxDB URL & Datenbank konfigurieren'),
                   onTap: () => _showPolarInfluxdbDialog(context),
                 ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.cloud_upload_outlined),
+                  title: const Text('Nährwert-Ergänzungen sichern'),
+                  subtitle: const Text(
+                      'Manuell eingetragene Nährwerte in Supabase speichern'),
+                  value: state.syncNutrientsToSupabase,
+                  onChanged: (bool value) {
+                    _settingsBloc.setSyncNutrientsToSupabase(value);
+                    _settingsBloc.add(LoadSettingsEvent());
+                  },
+                ),
                 const Divider(),
                 // App
                 ListTile(

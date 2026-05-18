@@ -4,8 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
 import 'package:opennutritracker/core/presentation/main_screen.dart';
@@ -47,6 +50,9 @@ Future<void> main() async {
   unawaited(
     locator<RemoteSearchCacheDataSource>().pruneStale(const Duration(days: 90)),
   );
+
+  // Anonymous Supabase auth + optional nutrient-override restore.
+  unawaited(_initSupabaseSync());
 
   final isUserInitialized = await locator<UserDataSource>().hasUserData();
   final configRepo = locator<ConfigRepository>();
@@ -178,4 +184,64 @@ class OpenNutriTrackerApp extends StatelessWidget {
       },
     );
   }
+}
+
+/// Signs in to Supabase anonymously and, when the user has opted in,
+/// fetches their stored nutrient overrides and merges them into the
+/// local Hive cache so manually entered values survive a cache clear.
+Future<void> _initSupabaseSync() async {
+  final overrideDs = locator<NutrientOverrideDataSource>();
+  await overrideDs.ensureSignedIn();
+
+  final configRepo = locator<ConfigRepository>();
+  final config = await configRepo.getConfig();
+  if (!config.syncNutrientsToSupabase) return;
+
+  final overrides = await overrideDs.fetchAll();
+  if (overrides.isEmpty) return;
+
+  final cache = locator<RemoteSearchCacheDataSource>();
+  final existing = cache.getAll();
+
+  for (final override in overrides) {
+    final matches = existing.where(
+      (m) =>
+          (m.code == override.lookupKey || m.name == override.lookupKey) &&
+          m.source.name == override.mealSource,
+    );
+    if (matches.isEmpty) continue; // not in cache, can't enrich without full meal data
+
+    final match = matches.first;
+    if (_cacheHasNutrients(match)) continue; // already enriched, skip
+
+    final enriched = MealDBO(
+      code: match.code,
+      name: match.name,
+      brands: match.brands,
+      url: match.url,
+      thumbnailImageUrl: match.thumbnailImageUrl,
+      mainImageUrl: match.mainImageUrl,
+      mealQuantity: match.mealQuantity,
+      mealUnit: match.mealUnit,
+      servingQuantity: match.servingQuantity,
+      servingUnit: match.servingUnit,
+      servingSize: match.servingSize,
+      nutriments: MealNutrimentsDBO(
+        energyKcal100: override.kcal100,
+        carbohydrates100: override.carbs100,
+        fat100: override.fat100,
+        proteins100: override.proteins100,
+        sugars100: match.nutriments.sugars100,
+        saturatedFat100: match.nutriments.saturatedFat100,
+        fiber100: match.nutriments.fiber100,
+      ),
+      source: match.source,
+    );
+    await cache.cache(enriched);
+  }
+}
+
+bool _cacheHasNutrients(MealDBO meal) {
+  final kcal = meal.nutriments.energyKcal100;
+  return kcal != null && kcal > 0;
 }

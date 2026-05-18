@@ -57,6 +57,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           offCacheCount: offCacheCount,
           offCacheSizeBytes: offCacheSizeBytes,
           showMicronutrients: userConfig.showMicronutrients,
+          syncNutrientsToSupabase: userConfig.syncNutrientsToSupabase,
         ),
       );
     });
@@ -103,6 +104,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   void setShowMicronutrients(bool show) {
     _addConfigUsecase.setConfigShowMicronutrients(show);
+  }
+
+  void setSyncNutrientsToSupabase(bool sync) {
+    _addConfigUsecase.setConfigSyncNutrientsToSupabase(sync);
   }
 
 
