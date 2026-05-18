@@ -3,6 +3,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_activity_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
@@ -26,7 +27,8 @@ import '../helpers/hive_test_setup.dart';
 /// real (per-test) Hive box, because the dedup behaviour we're exercising
 /// lives in [CustomMealDataSource] itself.
 class _RecordingAddIntakeUsecase extends AddIntakeUsecase {
-  _RecordingAddIntakeUsecase(super.repo);
+  _RecordingAddIntakeUsecase(IntakeRepository repo)
+      : super(repo, PolarInfluxdbDataSource());
 
   final List<IntakeEntity> writtenIntakes = <IntakeEntity>[];
 

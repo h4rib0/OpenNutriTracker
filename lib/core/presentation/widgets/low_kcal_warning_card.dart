@@ -14,11 +14,13 @@ import 'package:opennutritracker/generated/l10n.dart';
 class LowKcalWarningCard extends StatelessWidget {
   final double thresholdKcal;
   final EdgeInsetsGeometry margin;
+  final VoidCallback? onDismiss;
 
   const LowKcalWarningCard({
     super.key,
     required this.thresholdKcal,
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    this.onDismiss,
   });
 
   @override
@@ -58,6 +60,14 @@ class LowKcalWarningCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (onDismiss != null)
+                    IconButton(
+                      icon: Icon(Icons.close,
+                          size: 18, color: colors.onTertiaryContainer),
+                      onPressed: onDismiss,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                 ],
               ),
               const SizedBox(height: 8),

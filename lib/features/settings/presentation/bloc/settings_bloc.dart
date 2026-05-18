@@ -203,9 +203,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     double fatGoalPct,
   ) async {
     await _addConfigUsecase.setConfigMacroGoalPct(
-      carbGoalPct.toInt() / 100,
-      proteinGoalPct.toInt() / 100,
-      fatGoalPct.toInt() / 100,
+      carbGoalPct / 100,
+      proteinGoalPct / 100,
+      fatGoalPct / 100,
     );
   }
 

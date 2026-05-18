@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
+import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -9,14 +14,21 @@ import 'package:opennutritracker/generated/l10n.dart';
 /// the other two against 100% so the trio always adds up, with each
 /// macro pinned to a 5% floor so the diary still has something to
 /// track against if a user pulls one slider all the way down.
+///
+/// When Polar is configured the dialog switches to a body-weight mode
+/// (g/kg) for protein and fat, with carbs filling the remaining kcal.
 class MacroSplitDialog extends StatefulWidget {
   final SettingsBloc settingsBloc;
   final HomeBloc homeBloc;
+  final DiaryBloc diaryBloc;
+  final CalendarDayBloc calendarDayBloc;
 
   const MacroSplitDialog({
     super.key,
     required this.settingsBloc,
     required this.homeBloc,
+    required this.diaryBloc,
+    required this.calendarDayBloc,
   });
 
   @override
@@ -24,6 +36,7 @@ class MacroSplitDialog extends StatefulWidget {
 }
 
 class _MacroSplitDialogState extends State<MacroSplitDialog> {
+  // ── Standard (% ) mode ───────────────────────────────────────────────────
   static const double _defaultCarbsPct = 60;
   static const double _defaultProteinPct = 15;
   static const double _defaultFatPct = 25;
@@ -31,11 +44,23 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   double _carbsPct = _defaultCarbsPct;
   double _proteinPct = _defaultProteinPct;
   double _fatPct = _defaultFatPct;
+
+  // ── Polar (g/kg) mode ────────────────────────────────────────────────────
+  static const double _defaultProteinGPerKg = 2.2;
+  static const double _defaultFatGPerKg = 0.8;
+
+  bool _isPolarActive = false;
+  double _proteinGPerKg = _defaultProteinGPerKg;
+  double _fatGPerKg = _defaultFatGPerKg;
+  double _weightKg = 70.0;
+
   bool _loaded = false;
 
   late final TextEditingController _carbsController;
   late final TextEditingController _proteinController;
   late final TextEditingController _fatController;
+  late final TextEditingController _proteinGPerKgController;
+  late final TextEditingController _fatGPerKgController;
 
   @override
   void initState() {
@@ -43,6 +68,8 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     _carbsController = TextEditingController();
     _proteinController = TextEditingController();
     _fatController = TextEditingController();
+    _proteinGPerKgController = TextEditingController();
+    _fatGPerKgController = TextEditingController();
     _load();
   }
 
@@ -51,6 +78,8 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     _carbsController.dispose();
     _proteinController.dispose();
     _fatController.dispose();
+    _proteinGPerKgController.dispose();
+    _fatGPerKgController.dispose();
     super.dispose();
   }
 
@@ -58,11 +87,28 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     final carbs = await widget.settingsBloc.getUserCarbGoalPct();
     final protein = await widget.settingsBloc.getUserProteinGoalPct();
     final fat = await widget.settingsBloc.getUserFatGoalPct();
+
+    final polarDataSource = locator<PolarInfluxdbDataSource>();
+    final isPolar = await polarDataSource.isPolarConfigured();
+    double proteinGPerKg = _defaultProteinGPerKg;
+    double fatGPerKg = _defaultFatGPerKg;
+    double weightKg = 70.0;
+    if (isPolar) {
+      proteinGPerKg = await polarDataSource.getProteinGPerKg();
+      fatGPerKg = await polarDataSource.getFatGPerKg();
+      final user = await locator<ProfileBloc>().getUser();
+      weightKg = user.weightKG;
+    }
+
     if (!mounted) return;
     setState(() {
       _carbsPct = (carbs ?? _defaultCarbsPct / 100) * 100;
       _proteinPct = (protein ?? _defaultProteinPct / 100) * 100;
       _fatPct = (fat ?? _defaultFatPct / 100) * 100;
+      _isPolarActive = isPolar;
+      _proteinGPerKg = proteinGPerKg;
+      _fatGPerKg = fatGPerKg;
+      _weightKg = weightKg;
       _loaded = true;
     });
     _syncControllers();
@@ -72,6 +118,8 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     _carbsController.text = _carbsPct.round().toString();
     _proteinController.text = _proteinPct.round().toString();
     _fatController.text = _fatPct.round().toString();
+    _proteinGPerKgController.text = _proteinGPerKg.toStringAsFixed(1);
+    _fatGPerKgController.text = _fatGPerKg.toStringAsFixed(1);
   }
 
   /// Rebalance the two unmoved macros proportionally to their current
@@ -118,10 +166,24 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   }
 
   Future<void> _save() async {
-    await widget.settingsBloc.setMacroGoals(_carbsPct, _proteinPct, _fatPct);
+    if (_isPolarActive) {
+      final protein = double.tryParse(_proteinGPerKgController.text.trim()) ?? _defaultProteinGPerKg;
+      final fat = double.tryParse(_fatGPerKgController.text.trim()) ?? _defaultFatGPerKg;
+      final polarDataSource = locator<PolarInfluxdbDataSource>();
+      await polarDataSource.saveProteinGPerKg(protein.clamp(0.5, 4.0));
+      await polarDataSource.saveFatGPerKg(fat.clamp(0.3, 2.0));
+    } else {
+      // Flush any uncommitted text-field edits into state first.
+      _applyTextInput(_carbsController, _carbsPct, (v) => _carbsPct = v);
+      _applyTextInput(_proteinController, _proteinPct, (v) => _proteinPct = v);
+      _applyTextInput(_fatController, _fatPct, (v) => _fatPct = v);
+      await widget.settingsBloc.setMacroGoals(_carbsPct, _proteinPct, _fatPct);
+      await widget.settingsBloc.updateTrackedDay(DateTime.now());
+    }
     widget.settingsBloc.add(LoadSettingsEvent());
     widget.homeBloc.add(const LoadItemsEvent());
-    await widget.settingsBloc.updateTrackedDay(DateTime.now());
+    widget.calendarDayBloc.add(const RefreshCalendarDayEvent());
+    widget.diaryBloc.add(const LoadDiaryYearEvent());
     if (!mounted) return;
     Navigator.of(context).pop();
   }
@@ -145,9 +207,14 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
             onPressed: _loaded
                 ? () {
                     setState(() {
-                      _carbsPct = _defaultCarbsPct;
-                      _proteinPct = _defaultProteinPct;
-                      _fatPct = _defaultFatPct;
+                      if (_isPolarActive) {
+                        _proteinGPerKg = _defaultProteinGPerKg;
+                        _fatGPerKg = _defaultFatGPerKg;
+                      } else {
+                        _carbsPct = _defaultCarbsPct;
+                        _proteinPct = _defaultProteinPct;
+                        _fatPct = _defaultFatPct;
+                      }
                     });
                     _syncControllers();
                   }
@@ -166,6 +233,54 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_isPolarActive) ...[
+                    Text(
+                      'Polar aktiv — Makros nach Körpergewicht (${_weightKg.toStringAsFixed(1)} kg)',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    _GPerKgRow(
+                      label: s.proteinLabel,
+                      color: Colors.blue,
+                      gPerKg: _proteinGPerKg,
+                      weightKg: _weightKg,
+                      min: 0.5,
+                      max: 4.0,
+                      controller: _proteinGPerKgController,
+                      onChanged: (v) => setState(() => _proteinGPerKg = v),
+                    ),
+                    _GPerKgRow(
+                      label: s.fatLabel,
+                      color: Colors.green,
+                      gPerKg: _fatGPerKg,
+                      weightKg: _weightKg,
+                      min: 0.3,
+                      max: 2.0,
+                      controller: _fatGPerKgController,
+                      onChanged: (v) => setState(() => _fatGPerKg = v),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(s.carbsLabel)),
+                          Text(
+                            'Rest der Kalorien',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
                   Text(
                     '$totalPct% total',
                     style: Theme.of(context).textTheme.bodySmall,
@@ -228,6 +343,7 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                     onTextSubmitted: () => _applyTextInput(
                         _fatController, _fatPct, (v) => _fatPct = v),
                   ),
+                  ],  // end else branch
                 ],
               ),
             ),
@@ -315,6 +431,96 @@ class _MacroRow extends StatelessWidget {
               },
               onChangeEnd: (_) => onSliderEnd(),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GPerKgRow extends StatelessWidget {
+  final String label;
+  final Color color;
+  final double gPerKg;
+  final double weightKg;
+  final double min;
+  final double max;
+  final TextEditingController controller;
+  final ValueChanged<double> onChanged;
+
+  const _GPerKgRow({
+    required this.label,
+    required this.color,
+    required this.gPerKg,
+    required this.weightKg,
+    required this.min,
+    required this.max,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final totalG = gPerKg * weightKg;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
+            SizedBox(
+              width: 60,
+              child: TextField(
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(
+                  suffixText: 'g/kg',
+                  isDense: true,
+                ),
+                onSubmitted: (_) {
+                  final v = double.tryParse(controller.text) ?? gPerKg;
+                  onChanged(v.clamp(min, max));
+                },
+                onEditingComplete: () {
+                  final v = double.tryParse(controller.text) ?? gPerKg;
+                  onChanged(v.clamp(min, max));
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '= ${totalG.round()} g',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderThemeData(
+            activeTrackColor: color,
+            thumbColor: color,
+            inactiveTrackColor: color.withValues(alpha: 0.2),
+          ),
+          child: Slider(
+            min: min,
+            max: max,
+            divisions: ((max - min) * 10).round(),
+            value: gPerKg.clamp(min, max),
+            label: '${gPerKg.toStringAsFixed(1)} g/kg = ${totalG.round()} g',
+            onChanged: (v) {
+              final snapped = (v * 10).round() / 10;
+              onChanged(snapped);
+              controller.text = snapped.toStringAsFixed(1);
+            },
           ),
         ),
       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_gender_entity.dart';
@@ -39,12 +40,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isIntakeDragging = false;
   bool _isActivityDragging = false;
   bool get _isDragging => _isIntakeDragging || _isActivityDragging;
+  bool _lowKcalWarningDismissed = false;
+
+  static const _prefKeyLowKcalDismissed = 'low_kcal_warning_dismissed';
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
     _homeBloc = locator<HomeBloc>();
     super.initState();
+    _loadLowKcalDismissed();
+  }
+
+  Future<void> _loadLowKcalDismissed() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _lowKcalWarningDismissed =
+          prefs.getBool(_prefKeyLowKcalDismissed) ?? false;
+    });
+  }
+
+  Future<void> _dismissLowKcalWarning() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefKeyLowKcalDismissed, true);
+    if (!mounted) return;
+    setState(() => _lowKcalWarningDismissed = true);
   }
 
   @override
@@ -197,16 +218,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               totalProteinsGoal: totalProteinsGoal,
               polarActiveKcal: polarActiveKcal,
             ),
-            if (CalorieGoalCalc.isBelowRecommendedDailyKcalFloor(
-              goalKcal: totalKcalDaily,
-              gender: userGender,
-              caloriesProfile: userCaloriesProfile,
-            ))
+            if (!_lowKcalWarningDismissed &&
+                CalorieGoalCalc.isBelowRecommendedDailyKcalFloor(
+                  goalKcal: totalKcalDaily,
+                  gender: userGender,
+                  caloriesProfile: userCaloriesProfile,
+                ))
               LowKcalWarningCard(
                 thresholdKcal: CalorieGoalCalc.recommendedDailyKcalFloor(
                   gender: userGender,
                   caloriesProfile: userCaloriesProfile,
                 ),
+                onDismiss: _dismissLowKcalWarning,
               ),
             ActivityVerticalList(
               day: DateTime.now(),

@@ -81,6 +81,7 @@ dependencies:
   flutter_timezone: ^3.0.0
 
   dynamic_color: ^1.7.0
+  shared_preferences: ^2.3.5
 
 dev_dependencies:
   flutter_test:

@@ -158,7 +158,9 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${_profileBloc.getDisplayWeight(user, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
+                  influxWeightKg != null
+                      ? '${_profileBloc.getDisplayWeight(user.copyWith(weightKG: influxWeightKg), usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel} (Polar)'
+                      : '${_profileBloc.getDisplayWeight(user, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 // #119: When the user has set a concrete target weight, surface

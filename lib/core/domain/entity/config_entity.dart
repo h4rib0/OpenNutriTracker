@@ -108,7 +108,6 @@ class ConfigEntity extends Equatable {
   static const int waterGoalFemaleMl = 1500;
   static const int waterGoalMaleMl = 1900;
   static const int waterGoalAveragedMl = 1700;
->>>>>>> upstream/develop
 
   const ConfigEntity(
     this.hasAcceptedDisclaimer,
@@ -192,7 +191,6 @@ class ConfigEntity extends Equatable {
       dayStartOffsetHours * 60 + dayStartOffsetMinutes;
 
   factory ConfigEntity.fromConfigDBO(ConfigDBO dbo) => ConfigEntity(
-<<<<<<< HEAD
     dbo.hasAcceptedDisclaimer,
     dbo.hasAcceptedPolicy,
     dbo.hasAcceptedSendAnonymousData,

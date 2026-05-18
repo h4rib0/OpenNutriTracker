@@ -219,6 +219,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         totalKcalIntake,
       );
 
+      // Keep the stored calorieGoal in sync so the diary shows the same value
+      // as the dashboard (especially important when Polar is active and the
+      // goal is calculated live from BMR + Polar kcal instead of stored TDEE).
+      if (await _addTrackedDayUseCase.hasTrackedDay(currentDay)) {
+        await _addTrackedDayUseCase.updateDayCalorieGoal(currentDay, totalKcalGoal);
+        locator<CalendarDayBloc>().add(const RefreshCalendarDayEvent());
+      }
+
       // #150: derive recommended per-meal kcal targets from the saved share.
       final breakfastKcalTarget = configData.targetKcalForMeal(
         ConfigEntity.mealKeyBreakfast,
@@ -261,9 +269,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           usesImperialUnits: usesImperialUnits,
           showMealMacros: showMealMacros,
           userWeightKg: influxWeightKg ?? user.weightKG,
-          polarActiveKcal: polarActiveKcal,
-          influxWeightKg: influxWeightKg,
-          isPolarActive: isPolarActive,
           breakfastKcalTarget: breakfastKcalTarget,
           lunchKcalTarget: lunchKcalTarget,
           dinnerKcalTarget: dinnerKcalTarget,

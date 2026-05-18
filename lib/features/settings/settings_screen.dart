@@ -573,7 +573,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) =>
-          MacroSplitDialog(settingsBloc: _settingsBloc, homeBloc: _homeBloc),
+          MacroSplitDialog(
+            settingsBloc: _settingsBloc,
+            homeBloc: _homeBloc,
+            diaryBloc: _diaryBloc,
+            calendarDayBloc: _calendarDayBloc,
+          ),
     );
   }
 
