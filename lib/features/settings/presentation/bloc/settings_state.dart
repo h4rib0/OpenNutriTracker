@@ -29,6 +29,11 @@ class SettingsLoadedState extends SettingsState {
   final int offCacheSizeBytes;
   final bool showMicronutrients; // #237
   final bool syncNutrientsToSupabase;
+  final bool usesKilojoules; // #177
+  final int dayStartOffsetHours; // #139
+  final int dayStartOffsetMinutes; // #139 follow-up
+  final bool useMaterialYou; // #415
+  final int? accentColor; // #415 follow-up
 
   const SettingsLoadedState(
     this.versionNumber,
@@ -45,6 +50,11 @@ class SettingsLoadedState extends SettingsState {
     this.offCacheSizeBytes = 0,
     this.showMicronutrients = false,
     this.syncNutrientsToSupabase = false,
+    this.usesKilojoules = false,
+    this.dayStartOffsetHours = 0,
+    this.dayStartOffsetMinutes = 0,
+    this.useMaterialYou = true,
+    this.accentColor,
   });
 
   @override
@@ -63,5 +73,10 @@ class SettingsLoadedState extends SettingsState {
         offCacheSizeBytes,
         showMicronutrients,
         syncNutrientsToSupabase,
+        usesKilojoules,
+        dayStartOffsetHours,
+        dayStartOffsetMinutes,
+        useMaterialYou,
+        accentColor,
       ];
 }

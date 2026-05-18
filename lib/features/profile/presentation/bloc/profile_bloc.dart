@@ -63,12 +63,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           usesImperialUnits: userConfig.usesImperialUnits,
           isPolarActive: isPolarActive,
           influxWeightKg: influxWeightKg,
+          effectiveWaterGoalMl: userConfig.effectiveDailyWaterGoalMl(
+            user.gender,
+            caloriesProfile: user.caloriesProfile,
+          ),
         ),
       );
     });
   }
 
   Future<UserEntity> getUser() => _getUserUsecase.getUserData();
+
+  /// Persist the opt-in calorie-deficit taper. Toggling re-runs the
+  /// kcal-goal calc on today's tracked day so the saved goal reflects
+  /// the new value immediately rather than waiting for the next day.
+  Future<void> setCaloriesTaperEnabled(bool enabled) async {
+    final user = await _getUserUsecase.getUserData();
+    user.caloriesTaperEnabled = enabled;
+    await updateUser(user);
+  }
 
   Future<void> updateUser(UserEntity userEntity) async {
     // Update user in DB
@@ -112,8 +125,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   /// Returns the user's weight in kg or lbs based on the user's config
   String getDisplayWeight(UserEntity user, bool usesImperialUnits) {
-    final displayWeight =
-        usesImperialUnits ? UnitCalc.kgToLbs(user.weightKG) : user.weightKG;
+    final displayWeight = usesImperialUnits
+        ? UnitCalc.kgToLbs(user.weightKG)
+        : user.weightKG;
 
     return formatProfileWeight(displayWeight);
   }

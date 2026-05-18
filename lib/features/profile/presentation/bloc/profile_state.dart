@@ -20,15 +20,28 @@ class ProfileLoadedState extends ProfileState {
   final bool usesImperialUnits;
   final bool isPolarActive;
   final double? influxWeightKg;
+  // #32: resolved daily water goal in millilitres, with the user's
+  // override applied (or the gendered seed if none is stored yet). The
+  // profile entry subtitle shows this so the user sees the value the
+  // home chip is using without opening the dialog.
+  final int effectiveWaterGoalMl;
 
   const ProfileLoadedState({
     required this.userBMI,
     required this.userEntity,
     required this.usesImperialUnits,
+    required this.effectiveWaterGoalMl,
     this.isPolarActive = false,
     this.influxWeightKg,
   });
 
   @override
-  List<Object?> get props => [userBMI, userEntity, usesImperialUnits, isPolarActive, influxWeightKg];
+  List<Object?> get props => [
+        userBMI,
+        userEntity,
+        usesImperialUnits,
+        isPolarActive,
+        influxWeightKg,
+        effectiveWaterGoalMl,
+      ];
 }
