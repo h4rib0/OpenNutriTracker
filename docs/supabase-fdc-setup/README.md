@@ -5,6 +5,23 @@ This guide explains how to populate the `fdc_food`, `fdc_portions`, and
 USDA FoodData Central (FDC) data — including optional German translations
 via Google Translate.
 
+## Quickstart — use the pre-built files
+
+Pre-filtered and German-translated CSV files (FDC release 2026-04-30) are
+included in `data/supabase-fdc/`:
+
+| File | Table | Rows |
+|---|---|---|
+| `fdc_food_20260430_de.csv` | `fdc_food` | 8 262 |
+| `fdc_portions_20260430.csv` | `fdc_portions` | 14 636 |
+| `fdc_nutrients_20260430.csv` | `fdc_nutrients` | 665 551 |
+
+If you use these files, skip directly to **Step 5** (create tables) and then
+**Step 6** (import). Steps 1–4 are only needed when building from a newer
+FDC release.
+
+---
+
 ## Prerequisites
 
 - A Supabase project (Free tier is sufficient)
@@ -177,11 +194,9 @@ ALTER TABLE fdc_nutrients DISABLE ROW LEVEL SECURITY;
 
 ---
 
-## Step 6 – Import the data via Python
+## Step 6 – Import the data into Supabase
 
-Use the Supabase Python client to import `fdc_food` and `fdc_portions`.
-For `fdc_nutrients` (665 000 rows) use the Supabase **Table Editor →
-Import CSV** button instead.
+### fdc_food and fdc_portions — Python script
 
 ```bash
 pip install supabase
@@ -195,7 +210,16 @@ url = "https://<your-project-ref>.supabase.co"
 key = "<your-anon-key>"
 sb  = create_client(url, key)
 
-base  = '/path/to/filtered/import'
+# Quickstart: use the pre-built files from the repo
+base = 'data/supabase-fdc'
+food_file     = 'fdc_food_20260430_de.csv'
+portions_file = 'fdc_portions_20260430.csv'
+
+# DIY (built from Step 4): use your own files instead
+# base = '/path/to/unzipped-fdc-data/filtered/import'
+# food_file     = 'fdc_food.csv'
+# portions_file = 'fdc_portions.csv'
+
 CHUNK = 200
 
 def import_table(table, csv_file, row_fn):
@@ -208,19 +232,29 @@ def import_table(table, csv_file, row_fn):
         print(f'{table}: {min(i+CHUNK, total)}/{total}')
         time.sleep(0.2)
 
-import_table('fdc_food', 'fdc_food.csv',
+import_table('fdc_food', 'fdc_food_20260430_de.csv',
     lambda r: {'fdc_id': int(r['fdc_id']),
                'description_en': r['description_en'],
                'description_de': r['description_de'] or None})
 
-import_table('fdc_portions', 'fdc_portions.csv',
+import_table('fdc_portions', 'fdc_portions_20260430.csv',
     lambda r: {'fdc_id': int(r['fdc_id']),
                'measure_unit_id': int(r['measure_unit_id']) if r['measure_unit_id'] else None,
                'amount': float(r['amount']) if r['amount'] else None,
                'gram_weight': float(r['gram_weight']) if r['gram_weight'] else None})
+
+print("Done. Now import fdc_nutrients_20260430.csv via Supabase Table Editor.")
 ```
 
-For `fdc_nutrients`: Supabase **Table Editor → fdc_nutrients → Insert → Import data from CSV** → select `fdc_nutrients.csv`.
+### fdc_nutrients — Supabase Table Editor (CSV import)
+
+The nutrients file has 665 000 rows and is too large for the Python REST
+client. Use the Supabase web UI instead:
+
+1. Open your Supabase project → **Table Editor** → select `fdc_nutrients`
+2. Click **Insert** → **Import data from CSV**
+3. Select `data/supabase-fdc/fdc_nutrients_20260430.csv`
+4. Confirm the column mapping (`fdc_id`, `nutrient_id`, `amount`) and import
 
 ---
 
