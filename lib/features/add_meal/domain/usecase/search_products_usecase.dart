@@ -54,7 +54,8 @@ class SearchProductsUseCase {
     // get their timestamp refreshed and stay until 90 days after the
     // last selection.
     await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.off});
   }
 
   Future<SearchProductsResult> searchFDCFoodByString(String searchString) async {
@@ -63,7 +64,8 @@ class SearchProductsUseCase {
       () => _productsRepository.getSupabaseFDCFoodsByString(searchString),
     );
     await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.fdc});
   }
 
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
@@ -99,8 +101,12 @@ class SearchProductsUseCase {
 
   Future<SearchProductsResult> _buildResult(
     String searchString,
-    List<MealEntity> remoteResults,
-  ) async {
+    List<MealEntity> remoteResults, {
+    Set<MealSourceEntity> cacheSourceFilter = const {
+      MealSourceEntity.off,
+      MealSourceEntity.fdc,
+    },
+  }) async {
     final remoteSourceEmpty = remoteResults.isEmpty;
 
     final normalizedSearchString = searchString.trim().toLowerCase();
@@ -152,6 +158,7 @@ class SearchProductsUseCase {
     final fromOffCache = _cachedOffMealDataSource
         .getAllByMostRecentlyTouched()
         .map(MealEntity.fromMealDBO)
+        .where((meal) => cacheSourceFilter.contains(meal.source))
         .where((meal) => _mealMatchesSearch(meal, normalizedSearchString))
         .toList();
 
