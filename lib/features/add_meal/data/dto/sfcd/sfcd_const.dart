@@ -1,7 +1,7 @@
 class SfcdConst {
   static const String baseUrl =
       'https://api.webapp.prod.blv.foodcase-services.com/BLV_WebApp_WS/webresources/BLV';
-  static const int searchLimit = 10;
+  static const int searchLimit = 20;
 
   // SFCD component codes → nutrient field
   static const String codeEnergyKcal = 'ENERCC';
