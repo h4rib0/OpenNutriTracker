@@ -8,7 +8,7 @@ class SfcdFoodDto {
   factory SfcdFoodDto.fromJson(Map<String, dynamic> json) {
     return SfcdFoodDto(
       id: json['id'] as int,
-      name: (json['name'] as String?) ?? '',
+      name: (json['foodName'] as String?) ?? '',
     );
   }
 }

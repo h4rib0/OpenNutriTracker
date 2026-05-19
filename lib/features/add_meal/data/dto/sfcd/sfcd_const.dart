@@ -1,10 +1,11 @@
 class SfcdConst {
-  static const String baseUrl = 'https://naehrwertdaten.ch/rest/v2';
+  static const String baseUrl =
+      'https://api.webapp.prod.blv.foodcase-services.com/BLV_WebApp_WS/webresources/BLV';
   static const int searchLimit = 10;
 
   // SFCD component codes → nutrient field
-  static const String codeEnergyKcal = 'ENERC';
-  static const String codeProtein = 'PROT';
+  static const String codeEnergyKcal = 'ENERCC';
+  static const String codeProtein = 'PROT625';
   static const String codeFat = 'FAT';
   static const String codeCarbs = 'CHO';
   static const String codeSugar = 'SUGAR';
@@ -12,7 +13,7 @@ class SfcdConst {
   static const String codeMonounsaturatedFat = 'FAMS';
   static const String codePolyunsaturatedFat = 'FAPU';
   static const String codeTransFat = 'FATRN';
-  static const String codeCholesterol = 'CHOLE';
+  static const String codeCholesterol = 'CHORL';
   static const String codeFiber = 'FIBT';
   static const String codeSodium = 'NA';
   static const String codePotassium = 'K';
@@ -24,7 +25,7 @@ class SfcdConst {
   static const String codeVitaminA = 'VITARAE';
   static const String codeVitaminC = 'VITC';
   static const String codeVitaminD = 'VITD';
-  static const String codeVitaminB6 = 'VITB6A';
+  static const String codeVitaminB6 = 'VITB6';
   static const String codeVitaminB12 = 'VITB12';
-  static const String codeNiacin = 'NIAV';
+  static const String codeNiacin = 'NIA';
 }
