@@ -6,6 +6,7 @@ import 'package:opennutritracker/core/data/data_source/nutrient_override_data_so
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/custom_meal_supabase_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/recipe_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/physical_activity_data_source.dart';
@@ -113,30 +114,19 @@ Future<void> initLocator() async {
   // Init secure storage and Hive database;
   final secureAppStorageProvider = SecureAppStorageProvider();
   final hiveDBProvider = HiveDBProvider();
-  await hiveDBProvider.initHiveDB(
-    await secureAppStorageProvider.getHiveEncryptionKey(),
-  );
+  await hiveDBProvider.initHiveDB(await secureAppStorageProvider.getHiveEncryptionKey());
   locator.registerLazySingleton<HiveDBProvider>(() => hiveDBProvider);
-  locator.registerLazySingleton<DeleteAllUserDataUsecase>(
-    () => DeleteAllUserDataUsecase(locator()),
-  );
+  locator.registerLazySingleton<DeleteAllUserDataUsecase>(() => DeleteAllUserDataUsecase(locator()));
 
   // Backend
-  await Supabase.initialize(
-    url: Env.supabaseProjectUrl,
-    anonKey: Env.supabaseProjectAnonKey,
-  );
+  await Supabase.initialize(url: Env.supabaseProjectUrl, anonKey: Env.supabaseProjectAnonKey);
   locator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
 
   // Notification service (#312)
-  locator.registerLazySingleton<NotificationService>(
-    () => NotificationService(),
-  );
+  locator.registerLazySingleton<NotificationService>(() => NotificationService());
 
   // Cache manager
-  locator.registerLazySingleton<CacheManager>(
-    () => OntImageCacheManager.instance,
-  );
+  locator.registerLazySingleton<CacheManager>(() => OntImageCacheManager.instance);
 
   // BLoCs
   locator.registerLazySingleton<OnboardingBloc>(
@@ -184,12 +174,8 @@ Future<void> initLocator() async {
     () => ProfileBloc(locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerLazySingleton<RecipesBloc>(() => RecipesBloc(locator()));
-  locator.registerFactory<RecipeBuilderBloc>(
-    () => RecipeBuilderBloc(locator(), locator()),
-  );
-  locator.registerFactory<RecipeDetailBloc>(
-    () => RecipeDetailBloc(locator(), locator()),
-  );
+  locator.registerFactory<RecipeBuilderBloc>(() => RecipeBuilderBloc(locator(), locator()));
+  locator.registerFactory<RecipeDetailBloc>(() => RecipeDetailBloc(locator(), locator()));
   locator.registerLazySingleton(
     () => SettingsBloc(
       locator(),
@@ -202,99 +188,44 @@ Future<void> initLocator() async {
     ),
   );
   locator.registerFactory(
-    () => ExportImportBloc(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => ExportImportBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator(), locator()),
   );
   // Lazy singleton: shared between RecipesPage's Custom Meals tab and the
   // create-from-popup flow on the same tab — both must mutate / observe the
   // same instance so the list refreshes after a new entry is created.
   locator.registerLazySingleton<CustomMealsBloc>(
-    () => CustomMealsBloc(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => CustomMealsBloc(locator(), locator(), locator(), locator(), locator()),
   );
 
   locator.registerFactory<ActivitiesBloc>(() => ActivitiesBloc(locator()));
-  locator.registerFactory<RecentActivitiesBloc>(
-    () => RecentActivitiesBloc(locator()),
-  );
+  locator.registerFactory<RecentActivitiesBloc>(() => RecentActivitiesBloc(locator()));
   locator.registerFactory<ActivityDetailBloc>(
-    () => ActivityDetailBloc(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => ActivityDetailBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerFactory<MealDetailBloc>(
-    () => MealDetailBloc(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => MealDetailBloc(locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
   locator.registerFactory<EditMealBloc>(
     () => EditMealBloc(locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerFactory<AddMealBloc>(() => AddMealBloc(locator()));
-  locator.registerFactory<ProductsBloc>(
-    () => ProductsBloc(locator(), locator()),
-  );
+  locator.registerFactory<ProductsBloc>(() => ProductsBloc(locator(), locator()));
   locator.registerFactory<FoodBloc>(() => FoodBloc(locator(), locator()));
   locator.registerFactory(() => RecentMealBloc(locator(), locator()));
   // #84: fasting timer. Factory so the screen-scoped timer and dialog
   // state reset cleanly each time the user opens the screen.
   locator.registerFactory<FastingBloc>(
-    () => FastingBloc(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => FastingBloc(locator(), locator(), locator(), locator(), locator(), locator()),
   );
 
   // UseCases
-  locator.registerLazySingleton<GetConfigUsecase>(
-    () => GetConfigUsecase(locator()),
-  );
-  locator.registerLazySingleton<AddConfigUsecase>(
-    () => AddConfigUsecase(locator()),
-  );
-  locator.registerLazySingleton<GetUserUsecase>(
-    () => GetUserUsecase(locator()),
-  );
-  locator.registerLazySingleton<AddUserUsecase>(
-    () => AddUserUsecase(locator()),
-  );
+  locator.registerLazySingleton<GetConfigUsecase>(() => GetConfigUsecase(locator()));
+  locator.registerLazySingleton<AddConfigUsecase>(() => AddConfigUsecase(locator()));
+  locator.registerLazySingleton<GetUserUsecase>(() => GetUserUsecase(locator()));
+  locator.registerLazySingleton<AddUserUsecase>(() => AddUserUsecase(locator()));
   locator.registerLazySingleton<SearchProductsUseCase>(
-    () => SearchProductsUseCase(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => SearchProductsUseCase(locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerLazySingleton<SearchProductByBarcodeUseCase>(
     () => SearchProductByBarcodeUseCase(locator(), locator(), locator()),
@@ -324,12 +255,8 @@ Future<void> initLocator() async {
     () => UpdateUserActivityUsecase(locator(), locator()),
   );
   // #70 follow-up: saved Custom activity templates.
-  locator.registerLazySingleton<AddCustomActivityTemplateUsecase>(
-    () => AddCustomActivityTemplateUsecase(locator()),
-  );
-  locator.registerLazySingleton<GetCustomActivityTemplatesUsecase>(
-    () => GetCustomActivityTemplatesUsecase(locator()),
-  );
+  locator.registerLazySingleton<AddCustomActivityTemplateUsecase>(() => AddCustomActivityTemplateUsecase(locator()));
+  locator.registerLazySingleton<GetCustomActivityTemplatesUsecase>(() => GetCustomActivityTemplatesUsecase(locator()));
   locator.registerLazySingleton<DeleteCustomActivityTemplateUsecase>(
     () => DeleteCustomActivityTemplateUsecase(locator()),
   );
@@ -365,39 +292,16 @@ Future<void> initLocator() async {
   );
   locator.registerLazySingleton(() => GetMacroGoalUsecase(locator()));
   locator.registerLazySingleton(
-    () => ExportDataUsecase(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => ExportDataUsecase(locator(), locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerLazySingleton(
-    () => ImportDataUsecase(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
+    () => ImportDataUsecase(locator(), locator(), locator(), locator(), locator(), locator()),
   );
   locator.registerLazySingleton(() => ImportMealsCsvUsecase(locator()));
   locator.registerLazySingleton(() => ImportRecipesCsvUsecase(locator()));
   locator.registerLazySingleton(() => DownloadSampleCsvUsecase());
   locator.registerLazySingleton(() => DownloadSampleJsonUsecase());
-  locator.registerLazySingleton(
-    () => ImportMealsJsonUsecase(
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-      locator(),
-    ),
-  );
+  locator.registerLazySingleton(() => ImportMealsJsonUsecase(locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() => ImportRecipesJsonUsecase(locator()));
 
   // Fasting use cases (#84)
@@ -413,97 +317,47 @@ Future<void> initLocator() async {
   locator.registerLazySingleton(() => GetAllRecipesUseCase(locator()));
   locator.registerLazySingleton(() => GetRecipeByIdUseCase(locator()));
   locator.registerLazySingleton(() => DeleteRecipeUseCase(locator()));
-  locator.registerLazySingleton(
-    () => MergeCustomMealsUseCase(locator(), locator(), locator()),
-  );
+  locator.registerLazySingleton(() => MergeCustomMealsUseCase(locator(), locator(), locator()));
 
   // Repositories
   locator.registerLazySingleton(() => ConfigRepository(locator()));
-  locator.registerLazySingleton<UserRepository>(
-    () => UserRepository(locator()),
-  );
-  locator.registerLazySingleton<IntakeRepository>(
-    () => IntakeRepository(locator()),
-  );
-  locator.registerLazySingleton<ProductsRepository>(
-    () => ProductsRepository(locator(), locator(), locator()),
-  );
-  locator.registerLazySingleton<UserActivityRepository>(
-    () => UserActivityRepository(locator()),
-  );
-  locator.registerLazySingleton<PhysicalActivityRepository>(
-    () => PhysicalActivityRepository(locator()),
-  );
-  locator.registerLazySingleton<TrackedDayRepository>(
-    () => TrackedDayRepository(locator()),
-  );
-  locator.registerLazySingleton<WeightLogRepository>(
-    () => WeightLogRepository(locator()),
-  );
-  locator.registerLazySingleton<WaterIntakeRepository>(
-    () => WaterIntakeRepository(locator()),
-  );
-  locator.registerLazySingleton<RecipeRepository>(
-    () => RecipeRepository(locator()),
-  );
-  locator.registerLazySingleton<CustomActivityTemplateRepository>(
-    () => CustomActivityTemplateRepository(locator()),
-  );
-  locator.registerLazySingleton<FastingRepository>(
-    () => FastingRepository(locator()),
-  );
+  locator.registerLazySingleton<UserRepository>(() => UserRepository(locator()));
+  locator.registerLazySingleton<IntakeRepository>(() => IntakeRepository(locator()));
+  locator.registerLazySingleton<ProductsRepository>(() => ProductsRepository(locator(), locator(), locator()));
+  locator.registerLazySingleton<UserActivityRepository>(() => UserActivityRepository(locator()));
+  locator.registerLazySingleton<PhysicalActivityRepository>(() => PhysicalActivityRepository(locator()));
+  locator.registerLazySingleton<TrackedDayRepository>(() => TrackedDayRepository(locator()));
+  locator.registerLazySingleton<WeightLogRepository>(() => WeightLogRepository(locator()));
+  locator.registerLazySingleton<WaterIntakeRepository>(() => WaterIntakeRepository(locator()));
+  locator.registerLazySingleton<RecipeRepository>(() => RecipeRepository(locator()));
+  locator.registerLazySingleton<CustomActivityTemplateRepository>(() => CustomActivityTemplateRepository(locator()));
+  locator.registerLazySingleton<FastingRepository>(() => FastingRepository(locator()));
 
   // DataSources
-  locator.registerLazySingleton(
-    () => ConfigDataSource(hiveDBProvider.configBox),
-  );
-  locator.registerLazySingleton<UserDataSource>(
-    () => UserDataSource(hiveDBProvider.userBox),
-  );
-  locator.registerLazySingleton<IntakeDataSource>(
-    () => IntakeDataSource(hiveDBProvider.intakeBox),
-  );
-  locator.registerLazySingleton<UserActivityDataSource>(
-    () => UserActivityDataSource(hiveDBProvider.userActivityBox),
-  );
-  locator.registerLazySingleton<PhysicalActivityDataSource>(
-    () => PhysicalActivityDataSource(),
-  );
+  locator.registerLazySingleton(() => ConfigDataSource(hiveDBProvider.configBox));
+  locator.registerLazySingleton<UserDataSource>(() => UserDataSource(hiveDBProvider.userBox));
+  locator.registerLazySingleton<IntakeDataSource>(() => IntakeDataSource(hiveDBProvider.intakeBox));
+  locator.registerLazySingleton<UserActivityDataSource>(() => UserActivityDataSource(hiveDBProvider.userActivityBox));
+  locator.registerLazySingleton<PhysicalActivityDataSource>(() => PhysicalActivityDataSource());
   locator.registerLazySingleton<OFFDataSource>(() => OFFDataSource());
   locator.registerLazySingleton<FDCDataSource>(() => FDCDataSource());
   locator.registerLazySingleton<SpFdcDataSource>(() => SpFdcDataSource());
+  locator.registerLazySingleton(() => TrackedDayDataSource(hiveDBProvider.trackedDayBox));
+  locator.registerLazySingleton<WeightLogDataSource>(() => WeightLogDataSource(hiveDBProvider.weightLogBox));
+  locator.registerLazySingleton<WaterIntakeDataSource>(() => WaterIntakeDataSource(hiveDBProvider.waterIntakeBox));
+  locator.registerLazySingleton(() => CustomMealSupabaseDataSource(locator()));
+  locator.registerLazySingleton(() => CustomMealDataSource(hiveDBProvider.customMealBox, locator()));
+  locator.registerLazySingleton(() => RecipeDataSource(hiveDBProvider.recipeBox));
   locator.registerLazySingleton(
-    () => TrackedDayDataSource(hiveDBProvider.trackedDayBox),
-  );
-  locator.registerLazySingleton<WeightLogDataSource>(
-    () => WeightLogDataSource(hiveDBProvider.weightLogBox),
-  );
-  locator.registerLazySingleton<WaterIntakeDataSource>(
-    () => WaterIntakeDataSource(hiveDBProvider.waterIntakeBox),
-  );
-  locator.registerLazySingleton(
-    () => CustomMealDataSource(hiveDBProvider.customMealBox),
-  );
-  locator.registerLazySingleton(
-    () => RecipeDataSource(hiveDBProvider.recipeBox),
-  );
-  locator.registerLazySingleton(
-    () => RemoteSearchCacheDataSource(
-      hiveDBProvider.cachedOffMealBox,
-      hiveDBProvider.cachedOffMealTimestampsBox,
-    ),
+    () => RemoteSearchCacheDataSource(hiveDBProvider.cachedOffMealBox, hiveDBProvider.cachedOffMealTimestampsBox),
   );
   locator.registerLazySingleton<CustomActivityTemplateDataSource>(
-    () => CustomActivityTemplateDataSource(
-      hiveDBProvider.customActivityTemplateBox,
-    ),
-  );
-  locator.registerLazySingleton<FastingDataSource>(
-    () => FastingDataSource(hiveDBProvider.fastingBox),
+    () => CustomActivityTemplateDataSource(hiveDBProvider.customActivityTemplateBox),
   );
   locator.registerLazySingleton<NutrientOverrideDataSource>(
     () => NutrientOverrideDataSource(locator<SupabaseClient>()),
   );
+  locator.registerLazySingleton<FastingDataSource>(() => FastingDataSource(hiveDBProvider.fastingBox));
 
   await _initializeConfig(locator());
 }

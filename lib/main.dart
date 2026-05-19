@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
@@ -56,7 +57,7 @@ Future<void> main() async {
     locator<RemoteSearchCacheDataSource>().pruneStale(const Duration(days: 90)),
   );
 
-  // Anonymous Supabase auth + optional nutrient-override restore.
+  // Anonymous Supabase auth + restore custom meals and nutrient overrides from the cloud.
   unawaited(_initSupabaseSync());
 
   final isUserInitialized = await locator<UserDataSource>().hasUserData();
@@ -255,6 +256,9 @@ class OpenNutriTrackerApp extends StatelessWidget {
 Future<void> _initSupabaseSync() async {
   final overrideDs = locator<NutrientOverrideDataSource>();
   await overrideDs.ensureSignedIn();
+
+  // Restore custom meals from Supabase — runs for all users regardless of syncNutrientsToSupabase.
+  await locator<CustomMealDataSource>().syncFromSupabase();
 
   final configRepo = locator<ConfigRepository>();
   final config = await configRepo.getConfig();
