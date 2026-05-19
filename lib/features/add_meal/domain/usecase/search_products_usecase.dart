@@ -68,6 +68,18 @@ class SearchProductsUseCase {
         cacheSourceFilter: {MealSourceEntity.fdc});
   }
 
+  Future<SearchProductsResult> searchSfcdFoodByString(
+    String searchString,
+  ) async {
+    final remote = await _safeRemoteCall(
+      'SFCD',
+      () => _productsRepository.getSfcdFoodsByString(searchString),
+    );
+    await _cacheRemoteResults(remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.sfcd});
+  }
+
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
     if (remote.isEmpty) return;
     // cacheFromSearch (vs cacheAll) preserves timestamps for entries
@@ -155,6 +167,8 @@ class SearchProductsUseCase {
     // Sorted with the most recently touched entries first so an item the
     // user just selected (logged) appears at the top of the next search
     // result list, ahead of other cached items they haven't touched.
+    // Filtered by cacheSource so OFF results don't bleed into the FDC/SFCD
+    // tabs and vice versa.
     final fromOffCache = _cachedOffMealDataSource
         .getAllByMostRecentlyTouched()
         .map(MealEntity.fromMealDBO)

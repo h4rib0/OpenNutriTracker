@@ -1039,6 +1039,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("Jedzenie"),
         "searchLabel": MessageLookupByLibrary.simpleMessage("Szukaj"),
         "searchProductsPage": MessageLookupByLibrary.simpleMessage("Produkty"),
+        "searchSwissFoodPage": MessageLookupByLibrary.simpleMessage(""),
         "searchResultsLabel":
             MessageLookupByLibrary.simpleMessage("Wyniki wyszukiwania"),
         "selectGenderDialogLabel":

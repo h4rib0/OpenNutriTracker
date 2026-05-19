@@ -8,6 +8,7 @@ import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc_sp/sp_fdc_food_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 
 class MealEntity extends Equatable {
@@ -160,6 +161,24 @@ class MealEntity extends Equatable {
     );
   }
 
+  factory MealEntity.fromSfcdFood(SfcdFoodDetailDto food) {
+    return MealEntity(
+      code: food.id.toString(),
+      name: food.name,
+      brands: null,
+      thumbnailImageUrl: null,
+      mainImageUrl: null,
+      url: null,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: 'g',
+      servingSize: null,
+      nutriments: MealNutrimentsEntity.fromSfcdNutrients(food.values),
+      source: MealSourceEntity.sfcd,
+    );
+  }
+
   /// Value returned from OFF can either be String, int or double.
   /// Try casting it to a double value for calculation
   static double? _tryQuantityCast(dynamic value) {
@@ -203,7 +222,8 @@ enum MealSourceEntity {
   custom,
   off,
   fdc,
-  recipe;
+  recipe,
+  sfcd;
 
   factory MealSourceEntity.fromMealSourceDBO(MealSourceDBO mealSourceDBO) {
     MealSourceEntity mealSourceEntity;
@@ -222,6 +242,9 @@ enum MealSourceEntity {
         break;
       case MealSourceDBO.recipe:
         mealSourceEntity = MealSourceEntity.recipe;
+        break;
+      case MealSourceDBO.sfcd:
+        mealSourceEntity = MealSourceEntity.sfcd;
         break;
     }
     return mealSourceEntity;
