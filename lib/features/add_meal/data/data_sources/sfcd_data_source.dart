@@ -32,8 +32,29 @@ class SfcdDataSource {
   }
 
   Future<List<SfcdFoodDto>> search(String searchString) async {
+    final term = searchString.trim();
+
+    // German plurals often end in 'n' (Kartoffeln, Erdbeeren, Tomaten).
+    // The API matches substrings, so "Kartoffeln" misses "Kartoffel*" entries.
+    // Run both the original term and the stem (without trailing 'n') in
+    // parallel and merge, capped at searchLimit unique results.
+    final futures = [_searchRaw(term)];
+    if (term.length > 3 && term.toLowerCase().endsWith('n')) {
+      futures.add(_searchRaw(term.substring(0, term.length - 1)));
+    }
+
+    final results = await Future.wait(futures);
+    final seen = <int>{};
+    return results
+        .expand((list) => list)
+        .where((f) => seen.add(f.id))
+        .take(SfcdConst.searchLimit)
+        .toList();
+  }
+
+  Future<List<SfcdFoodDto>> _searchRaw(String term) async {
     final uri = _buildUri('foods', {
-      'search': searchString,
+      'search': term,
       'lang': _langCode(),
       'limit': SfcdConst.searchLimit.toString(),
     });
@@ -52,7 +73,7 @@ class SfcdDataSource {
       }
       return [];
     } catch (e) {
-      _log.warning('SFCD search failed: $e');
+      _log.warning('SFCD search "$term" failed: $e');
       return [];
     }
   }
