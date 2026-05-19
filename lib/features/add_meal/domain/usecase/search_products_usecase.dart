@@ -66,6 +66,17 @@ class SearchProductsUseCase {
     return _buildResult(searchString, remote);
   }
 
+  Future<SearchProductsResult> searchSfcdFoodByString(
+    String searchString,
+  ) async {
+    final remote = await _safeRemoteCall(
+      'SFCD',
+      () => _productsRepository.getSfcdFoodsByString(searchString),
+    );
+    await _cacheRemoteResults(remote);
+    return _buildResult(searchString, remote);
+  }
+
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
     if (remote.isEmpty) return;
     // cacheFromSearch (vs cacheAll) preserves timestamps for entries

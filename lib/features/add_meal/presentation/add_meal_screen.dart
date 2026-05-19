@@ -7,6 +7,7 @@ import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.da
 import 'package:opennutritracker/features/add_meal/presentation/bloc/add_meal_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/food_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/recent_meal_bloc.dart';
+import 'package:opennutritracker/features/add_meal/presentation/bloc/sfcd_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/default_results_widget.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/meal_search_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,6 +35,7 @@ class _AddMealScreenState extends State<AddMealScreen>
 
   late ProductsBloc _productsBloc;
   late FoodBloc _foodBloc;
+  late SfcdBloc _sfcdBloc;
   late RecentMealBloc _recentMealBloc;
 
   late TabController _tabController;
@@ -42,8 +44,9 @@ class _AddMealScreenState extends State<AddMealScreen>
   void initState() {
     _productsBloc = locator<ProductsBloc>();
     _foodBloc = locator<FoodBloc>();
+    _sfcdBloc = locator<SfcdBloc>();
     _recentMealBloc = locator<RecentMealBloc>();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       // Update search results when tab changes
       _onSearchSubmit(_searchStringListener.value);
@@ -103,16 +106,20 @@ class _AddMealScreenState extends State<AddMealScreen>
                 tabs: [
                   Tab(text: S.of(context).searchProductsPage),
                   Tab(text: S.of(context).searchFoodPage),
+                  Tab(text: S.of(context).searchSwissFoodPage),
                   Tab(text: S.of(context).recentlyAddedLabel),
                 ],
                 controller: _tabController,
                 indicatorSize: TabBarIndicatorSize.tab,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
+                    // Tab 0: Products (OFF)
                     Column(
                       children: [
                         Container(
@@ -171,6 +178,7 @@ class _AddMealScreenState extends State<AddMealScreen>
                         ),
                       ],
                     ),
+                    // Tab 1: Food (FDC via Supabase)
                     Column(
                       children: [
                         Container(
@@ -228,6 +236,65 @@ class _AddMealScreenState extends State<AddMealScreen>
                         ),
                       ],
                     ),
+                    // Tab 2: Swiss Food (SFCD)
+                    Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            S.of(context).searchResultsLabel,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ),
+                        BlocBuilder<SfcdBloc, SfcdState>(
+                          bloc: _sfcdBloc,
+                          builder: (context, state) {
+                            if (state is SfcdInitial) {
+                              return const DefaultsResultsWidget();
+                            } else if (state is SfcdLoadingState) {
+                              return const Padding(
+                                padding: EdgeInsets.only(top: 32),
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (state is SfcdLoadedState) {
+                              if (state.food.isEmpty) {
+                                return const NoResultsWidget();
+                              }
+                              return Flexible(
+                                child: ListView.builder(
+                                  itemCount:
+                                      state.food.length +
+                                      (state.remoteSourceEmpty ? 1 : 0),
+                                  itemBuilder: (context, index) {
+                                    if (index == state.food.length) {
+                                      return const NoResultsWidget();
+                                    }
+                                    return MealItemCard(
+                                      day: _day,
+                                      mealEntity: state.food[index],
+                                      addMealType: _mealType,
+                                      usesImperialUnits:
+                                          state.usesImperialUnits,
+                                    );
+                                  },
+                                ),
+                              );
+                            } else if (state is SfcdFailedState) {
+                              return ErrorDialog(
+                                errorText: S
+                                    .of(context)
+                                    .errorFetchingProductData,
+                                onRefreshPressed: _onSfcdRefreshButtonPressed,
+                              );
+                            } else {
+                              return const SizedBox();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    // Tab 3: Recently Added
                     Column(
                       children: [
                         BlocBuilder<RecentMealBloc, RecentMealState>(
@@ -293,6 +360,10 @@ class _AddMealScreenState extends State<AddMealScreen>
     _foodBloc.add(const RefreshFoodEvent());
   }
 
+  void _onSfcdRefreshButtonPressed() {
+    _sfcdBloc.add(const RefreshSfcdEvent());
+  }
+
   void _onRecentMealsRefreshButtonPressed() {
     _recentMealBloc.add(const LoadRecentMealEvent(searchString: ""));
   }
@@ -316,6 +387,8 @@ class _AddMealScreenState extends State<AddMealScreen>
       case 1:
         _foodBloc.add(LoadFoodEvent(searchString: inputText));
       case 2:
+        _sfcdBloc.add(LoadSfcdEvent(searchString: inputText));
+      case 3:
         _recentMealBloc.add(LoadRecentMealEvent(searchString: inputText));
     }
   }

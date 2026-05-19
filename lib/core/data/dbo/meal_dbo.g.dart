@@ -114,6 +114,8 @@ class MealSourceDBOAdapter extends TypeAdapter<MealSourceDBO> {
         writer.writeByte(3);
       case MealSourceDBO.recipe:
         writer.writeByte(4);
+      case MealSourceDBO.sfcd:
+        writer.writeByte(5);
     }
   }
 
@@ -174,4 +176,5 @@ const _$MealSourceDBOEnumMap = {
   MealSourceDBO.off: 'off',
   MealSourceDBO.fdc: 'fdc',
   MealSourceDBO.recipe: 'recipe',
+  MealSourceDBO.sfcd: 'sfcd',
 };

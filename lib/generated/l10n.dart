@@ -830,6 +830,16 @@ class S {
     );
   }
 
+  /// `Swiss Food`
+  String get searchSwissFoodPage {
+    return Intl.message(
+      'Swiss Food',
+      name: 'searchSwissFoodPage',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Food`
   String get searchFoodPage {
     return Intl.message(

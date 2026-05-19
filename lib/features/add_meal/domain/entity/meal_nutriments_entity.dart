@@ -5,6 +5,8 @@ import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_nutriment_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_nutriments_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_const.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
 
 class MealNutrimentsEntity extends Equatable {
   final double? energyKcal100;
@@ -222,6 +224,40 @@ class MealNutrimentsEntity extends Equatable {
       vitaminB6100: fdcAmount(FDCConst.fdcVitaminB6Id),
       vitaminB12100: fdcAmount(FDCConst.fdcVitaminB12Id),
       niacin100: fdcAmount(FDCConst.fdcNiacinId),
+    );
+  }
+
+  factory MealNutrimentsEntity.fromSfcdNutrients(
+    List<SfcdNutrientDto> nutrients,
+  ) {
+    double? val(String code) {
+      for (final n in nutrients) {
+        if (n.componentCode == code) return n.value;
+      }
+      return null;
+    }
+
+    return MealNutrimentsEntity(
+      energyKcal100: val(SfcdConst.codeEnergyKcal),
+      proteins100: val(SfcdConst.codeProtein),
+      fat100: val(SfcdConst.codeFat),
+      carbohydrates100: val(SfcdConst.codeCarbs),
+      sugars100: val(SfcdConst.codeSugar),
+      saturatedFat100: val(SfcdConst.codeSaturatedFat),
+      fiber100: val(SfcdConst.codeFiber),
+      sodium100: val(SfcdConst.codeSodium),
+      potassium100: val(SfcdConst.codePotassium),
+      magnesium100: val(SfcdConst.codeMagnesium),
+      calcium100: val(SfcdConst.codeCalcium),
+      iron100: val(SfcdConst.codeIron),
+      zinc100: val(SfcdConst.codeZinc),
+      phosphorus100: val(SfcdConst.codePhosphorus),
+      vitaminA100: val(SfcdConst.codeVitaminA),
+      vitaminC100: val(SfcdConst.codeVitaminC),
+      vitaminD100: val(SfcdConst.codeVitaminD),
+      vitaminB6100: val(SfcdConst.codeVitaminB6),
+      vitaminB12100: val(SfcdConst.codeVitaminB12),
+      niacin100: val(SfcdConst.codeNiacin),
     );
   }
 
