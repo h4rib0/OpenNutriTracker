@@ -114,14 +114,21 @@ class PolarInfluxdbDataSource {
       ..write(',proteins_g=${intake.totalProteinsGram}')
       ..write(',amount=${intake.amount}');
 
-    final sugar = n.sugars100;
-    if (sugar != null) fields.write(',sugar_g=${intake.amount * sugar / 100}');
-    final fiber = n.fiber100;
-    if (fiber != null) fields.write(',fiber_g=${intake.amount * fiber / 100}');
-    final sodium = n.sodium100;
-    if (sodium != null) {
-      fields.write(',sodium=${intake.amount * sodium / 100}');
+    final amount = intake.amount;
+    void writeField(String key, double? per100) {
+      if (per100 != null) fields.write(',$key=${amount * per100 / 100}');
     }
+
+    writeField('sugar_g', n.sugars100);
+    writeField('fiber_g', n.fiber100);
+    writeField('sodium_g', n.sodium100);
+    writeField('saturated_fat_g', n.saturatedFat100);
+    writeField('potassium_g', n.potassium100);
+    writeField('calcium_g', n.calcium100);
+    writeField('iron_mg', n.iron100);
+    writeField('magnesium_g', n.magnesium100);
+    writeField('vitamin_d_ug', n.vitaminD100);
+    writeField('vitamin_b12_ug', n.vitaminB12100);
 
     final ns = intake.dateTime.microsecondsSinceEpoch * 1000;
     return 'nutrition,meal=$meal,food=$food $fields $ns';
