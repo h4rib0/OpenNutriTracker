@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/recipe_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
@@ -257,8 +258,9 @@ Future<void> _initSupabaseSync() async {
   final overrideDs = locator<NutrientOverrideDataSource>();
   await overrideDs.ensureSignedIn();
 
-  // Restore custom meals from Supabase — runs for all users regardless of syncNutrientsToSupabase.
+  // Restore custom meals and recipes from Supabase — runs for all users regardless of syncNutrientsToSupabase.
   await locator<CustomMealDataSource>().syncFromSupabase();
+  await locator<RecipeDataSource>().syncFromSupabase();
 
   final configRepo = locator<ConfigRepository>();
   final config = await configRepo.getConfig();
