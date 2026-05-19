@@ -9,6 +9,10 @@ class SfcdConst {
   static const String codeCarbs = 'CHO';
   static const String codeSugar = 'SUGAR';
   static const String codeSaturatedFat = 'FASAT';
+  static const String codeMonounsaturatedFat = 'FAMS';
+  static const String codePolyunsaturatedFat = 'FAPU';
+  static const String codeTransFat = 'FATRN';
+  static const String codeCholesterol = 'CHOLE';
   static const String codeFiber = 'FIBT';
   static const String codeSodium = 'NA';
   static const String codePotassium = 'K';
