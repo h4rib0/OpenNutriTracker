@@ -282,7 +282,6 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     ),
                     childWhenDragging: Row(
                       children: [
-                        const SizedBox(width: 0),
                         SizedBox(
                           width: 120,
                           height: 120,

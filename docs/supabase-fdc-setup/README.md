@@ -2,32 +2,14 @@
 
 This guide explains how to populate the `fdc_food`, `fdc_portions`, and
 `fdc_nutrients` tables in your Supabase project using freely available
-USDA FoodData Central (FDC) data — including optional German translations
-via Google Translate.
-
-## Quickstart — use the pre-built files
-
-Pre-filtered and German-translated CSV files (FDC release 2026-04-30) are
-included in `data/supabase-fdc/`:
-
-| File | Table | Rows |
-|---|---|---|
-| `fdc_food_20260430_de.csv` | `fdc_food` | 8 262 |
-| `fdc_portions_20260430.csv` | `fdc_portions` | 14 636 |
-| `fdc_nutrients_20260430.csv` | `fdc_nutrients` | 665 551 |
-
-If you use these files, skip directly to **Step 5** (create tables) and then
-**Step 6** (import). Steps 1–4 are only needed when building from a newer
-FDC release.
-
----
+USDA FoodData Central (FDC) data.
 
 ## Prerequisites
 
 - A Supabase project (Free tier is sufficient)
-- Access to the Supabase SQL editor
+- `psql` installed locally **or** access to the Supabase SQL editor
 - ~500 MB of free disk space for the downloaded data
-- Python 3 with `deep-translator` (`pip install deep-translator`)
+- Python 3 (for the optional filter script) **or** any CSV tool
 
 ---
 
@@ -55,117 +37,121 @@ Unzip the archive. You will find many CSV files; you only need three:
 
 The full dataset includes hundreds of thousands of branded products that
 would exceed Supabase's 500 MB free limit. Filter `food.csv` to keep
-only **Foundation** and **SR Legacy** rows (~8 000–9 000 items total).
+only **Foundation** and **SR Legacy** rows (~9 000 items total).
 
-Run the script from the directory containing the unzipped CSV files:
+### Option A – Python script
+
+Save the following as `scripts/filter_fdc.py` and run it from the
+directory that contains the unzipped CSV files:
+
+```python
+#!/usr/bin/env python3
+"""
+Filter FDC CSV exports to Foundation + SR Legacy data types only.
+Run from the directory that contains the unzipped FDC CSV files.
+
+Usage:
+    python3 filter_fdc.py
+
+Output files (written to ./filtered/):
+    fdc_food_filtered.csv
+    fdc_food_portion_filtered.csv
+    fdc_food_nutrient_filtered.csv
+"""
+
+import csv
+import os
+
+KEEP_DATA_TYPES = {"Foundation", "SR Legacy"}
+OUT_DIR = "filtered"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+
+def filter_food(src="food.csv", dst=f"{OUT_DIR}/fdc_food_filtered.csv"):
+    kept_ids = set()
+    with open(src, newline="", encoding="utf-8") as f_in, \
+         open(dst, "w", newline="", encoding="utf-8") as f_out:
+        reader = csv.DictReader(f_in)
+        writer = csv.DictWriter(f_out, fieldnames=reader.fieldnames)
+        writer.writeheader()
+        for row in reader:
+            if row.get("data_type") in KEEP_DATA_TYPES:
+                writer.writerow(row)
+                kept_ids.add(row["fdc_id"])
+    print(f"food.csv: kept {len(kept_ids)} rows → {dst}")
+    return kept_ids
+
+
+def filter_related(src, dst, kept_ids, id_col="fdc_id"):
+    count = 0
+    with open(src, newline="", encoding="utf-8") as f_in, \
+         open(dst, "w", newline="", encoding="utf-8") as f_out:
+        reader = csv.DictReader(f_in)
+        writer = csv.DictWriter(f_out, fieldnames=reader.fieldnames)
+        writer.writeheader()
+        for row in reader:
+            if row.get(id_col) in kept_ids:
+                writer.writerow(row)
+                count += 1
+    print(f"{src}: kept {count} rows → {dst}")
+
+
+if __name__ == "__main__":
+    kept = filter_food()
+    filter_related(
+        "food_portion.csv",
+        f"{OUT_DIR}/fdc_food_portion_filtered.csv",
+        kept,
+    )
+    filter_related(
+        "food_nutrient.csv",
+        f"{OUT_DIR}/fdc_food_nutrient_filtered.csv",
+        kept,
+    )
+    print("Done. Import the files from the ./filtered/ directory.")
+```
+
+Run it:
 
 ```bash
 cd /path/to/unzipped-fdc-data
 python3 /path/to/repo/scripts/filter_fdc.py
 ```
 
-Output files are written to `./filtered/`:
+### Option B – Manual filter in any spreadsheet tool
 
-| File | Rows |
-|---|---|
-| `filtered/fdc_food_filtered.csv` | ~8 200 |
-| `filtered/fdc_food_portion_filtered.csv` | ~14 000 |
-| `filtered/fdc_food_nutrient_filtered.csv` | ~665 000 |
+Open `food.csv`, filter the `data_type` column to keep only rows where
+the value is `Foundation` or `SR Legacy`, and delete everything else.
+Repeat for the other two files using the remaining `fdc_id` values.
 
 ---
 
-## Step 3 – Translate food names to German (optional but recommended)
+## Step 3 – Create the tables in Supabase
 
-The FDC data only contains English names. The app shows German names when
-the device locale is German. To populate `description_de`, run the
-translation script using Google Translate (no API key required):
-
-```bash
-pip install deep-translator
-
-python3 /path/to/repo/scripts/translate_fdc_de.py \
-    --input  filtered/fdc_food_filtered.csv \
-    --output filtered/fdc_food_translated.csv
-```
-
-The script translates ~8 200 names in batches. Progress is saved after
-each batch — if interrupted, re-run the same command to continue where
-it left off.
-
-**Note:** Translation takes approximately 20–30 minutes. Google Translate
-may rate-limit after ~6 000 requests; the script will pause and resume
-automatically on re-run.
-
----
-
-## Step 4 – Prepare import CSVs
-
-The filtered CSVs have different column names than the Supabase tables.
-Run the following Python snippet to create import-ready files in
-`filtered/import/`:
-
-```python
-import csv, os
-
-base = '/path/to/unzipped-fdc-data/filtered'
-out  = f'{base}/import'
-os.makedirs(out, exist_ok=True)
-
-def esc(s): return s.replace("'", "''") if s else ''
-def to_num(s): return float(s) if s and s.strip() else None
-def to_int(s): return int(s) if s and s.strip() else None
-
-# fdc_food
-with open(f'{base}/fdc_food_translated.csv', newline='', encoding='utf-8') as f_in, \
-     open(f'{out}/fdc_food.csv', 'w', newline='', encoding='utf-8') as f_out:
-    reader = csv.DictReader(f_in)
-    writer = csv.DictWriter(f_out, fieldnames=['fdc_id','description_en','description_de'])
-    writer.writeheader()
-    for r in reader:
-        writer.writerow({'fdc_id': r['fdc_id'], 'description_en': r['description'], 'description_de': r['description_de']})
-
-# fdc_portions
-with open(f'{base}/fdc_food_portion_filtered.csv', newline='', encoding='utf-8') as f_in, \
-     open(f'{out}/fdc_portions.csv', 'w', newline='', encoding='utf-8') as f_out:
-    reader = csv.DictReader(f_in)
-    writer = csv.DictWriter(f_out, fieldnames=['fdc_id','measure_unit_id','amount','gram_weight'])
-    writer.writeheader()
-    for r in reader:
-        writer.writerow({'fdc_id': r['fdc_id'], 'measure_unit_id': r['measure_unit_id'] or None,
-                         'amount': r['amount'] or None, 'gram_weight': r['gram_weight'] or None})
-
-# fdc_nutrients (only rows with a value)
-with open(f'{base}/fdc_food_nutrient_filtered.csv', newline='', encoding='utf-8') as f_in, \
-     open(f'{out}/fdc_nutrients.csv', 'w', newline='', encoding='utf-8') as f_out:
-    reader = csv.DictReader(f_in)
-    writer = csv.DictWriter(f_out, fieldnames=['fdc_id','nutrient_id','amount'])
-    writer.writeheader()
-    for r in reader:
-        if r['amount']:
-            writer.writerow({'fdc_id': r['fdc_id'], 'nutrient_id': r['nutrient_id'], 'amount': r['amount']})
-```
-
----
-
-## Step 5 – Create the tables in Supabase
-
-Open the **Supabase SQL Editor** and run:
+Open the **Supabase SQL Editor** (or connect via `psql`) and run:
 
 ```sql
+-- ============================================================
 -- fdc_food
+-- ============================================================
 CREATE TABLE IF NOT EXISTS fdc_food (
     fdc_id          INTEGER PRIMARY KEY,
     description_en  TEXT NOT NULL,
-    description_de  TEXT
+    description_de  TEXT          -- optional: add translated names later
 );
 
+-- Full-text search index (used by the app)
 CREATE INDEX IF NOT EXISTS fdc_food_fts_en
-    ON fdc_food USING GIN (to_tsvector('english', description_en));
+    ON fdc_food
+    USING GIN (to_tsvector('english', description_en));
 
 CREATE INDEX IF NOT EXISTS fdc_food_fts_de
-    ON fdc_food USING GIN (to_tsvector('german', COALESCE(description_de, description_en)));
+    ON fdc_food
+    USING GIN (to_tsvector('german', COALESCE(description_de, description_en)));
 
+-- ============================================================
 -- fdc_portions
+-- ============================================================
 CREATE TABLE IF NOT EXISTS fdc_portions (
     id              SERIAL PRIMARY KEY,
     fdc_id          INTEGER NOT NULL REFERENCES fdc_food(fdc_id) ON DELETE CASCADE,
@@ -176,7 +162,9 @@ CREATE TABLE IF NOT EXISTS fdc_portions (
 
 CREATE INDEX IF NOT EXISTS fdc_portions_fdc_id_idx ON fdc_portions (fdc_id);
 
+-- ============================================================
 -- fdc_nutrients
+-- ============================================================
 CREATE TABLE IF NOT EXISTS fdc_nutrients (
     id          SERIAL PRIMARY KEY,
     fdc_id      INTEGER NOT NULL REFERENCES fdc_food(fdc_id) ON DELETE CASCADE,
@@ -185,82 +173,51 @@ CREATE TABLE IF NOT EXISTS fdc_nutrients (
 );
 
 CREATE INDEX IF NOT EXISTS fdc_nutrients_fdc_id_idx ON fdc_nutrients (fdc_id);
-
--- Disable RLS so the import script can write without policies
-ALTER TABLE fdc_food     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE fdc_portions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE fdc_nutrients DISABLE ROW LEVEL SECURITY;
 ```
 
 ---
 
-## Step 6 – Import the data into Supabase
+## Step 4 – Import the CSV data
 
-### fdc_food and fdc_portions — Python script
+### Via Supabase SQL Editor (easiest)
+
+Use the **Table Editor → Import CSV** button for each table, selecting
+the filtered files from `Step 2`:
+
+| Table | File |
+|---|---|
+| `fdc_food` | `fdc_food_filtered.csv` – map `fdc_id` → `fdc_id`, `description` → `description_en` |
+| `fdc_portions` | `fdc_food_portion_filtered.csv` – map `fdc_id`, `measure_unit_id`, `amount`, `gram_weight` |
+| `fdc_nutrients` | `fdc_food_nutrient_filtered.csv` – map `fdc_id`, `nutrient_id`, `amount` |
+
+> **Note:** `description_de` can be left empty for now. The app falls
+> back to `description_en` when `description_de` is `NULL`.
+
+### Via psql (alternative)
 
 ```bash
-pip install supabase
+# Connect to your Supabase Postgres instance
+# (find the connection string in Supabase → Settings → Database)
+psql "postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres"
+
+\COPY fdc_food (fdc_id, description_en)
+  FROM 'filtered/fdc_food_filtered.csv'
+  CSV HEADER;
+
+\COPY fdc_portions (fdc_id, measure_unit_id, amount, gram_weight)
+  FROM 'filtered/fdc_food_portion_filtered.csv'
+  CSV HEADER;
+
+\COPY fdc_nutrients (fdc_id, nutrient_id, amount)
+  FROM 'filtered/fdc_food_nutrient_filtered.csv'
+  CSV HEADER;
 ```
-
-```python
-import csv, time
-from supabase import create_client
-
-url = "https://<your-project-ref>.supabase.co"
-key = "<your-anon-key>"
-sb  = create_client(url, key)
-
-# Quickstart: use the pre-built files from the repo
-base = 'data/supabase-fdc'
-food_file     = 'fdc_food_20260430_de.csv'
-portions_file = 'fdc_portions_20260430.csv'
-
-# DIY (built from Step 4): use your own files instead
-# base = '/path/to/unzipped-fdc-data/filtered/import'
-# food_file     = 'fdc_food.csv'
-# portions_file = 'fdc_portions.csv'
-
-CHUNK = 200
-
-def import_table(table, csv_file, row_fn):
-    with open(f'{base}/{csv_file}', newline='', encoding='utf-8') as f:
-        rows = list(csv.DictReader(f))
-    total = len(rows)
-    for i in range(0, total, CHUNK):
-        batch = [row_fn(r) for r in rows[i:i+CHUNK]]
-        sb.table(table).upsert(batch).execute()
-        print(f'{table}: {min(i+CHUNK, total)}/{total}')
-        time.sleep(0.2)
-
-import_table('fdc_food', 'fdc_food_20260430_de.csv',
-    lambda r: {'fdc_id': int(r['fdc_id']),
-               'description_en': r['description_en'],
-               'description_de': r['description_de'] or None})
-
-import_table('fdc_portions', 'fdc_portions_20260430.csv',
-    lambda r: {'fdc_id': int(r['fdc_id']),
-               'measure_unit_id': int(r['measure_unit_id']) if r['measure_unit_id'] else None,
-               'amount': float(r['amount']) if r['amount'] else None,
-               'gram_weight': float(r['gram_weight']) if r['gram_weight'] else None})
-
-print("Done. Now import fdc_nutrients_20260430.csv via Supabase Table Editor.")
-```
-
-### fdc_nutrients — Supabase Table Editor (CSV import)
-
-The nutrients file has 665 000 rows and is too large for the Python REST
-client. Use the Supabase web UI instead:
-
-1. Open your Supabase project → **Table Editor** → select `fdc_nutrients`
-2. Click **Insert** → **Import data from CSV**
-3. Select `data/supabase-fdc/fdc_nutrients_20260430.csv`
-4. Confirm the column mapping (`fdc_id`, `nutrient_id`, `amount`) and import
 
 ---
 
-## Step 7 – Verify
+## Step 5 – Verify
 
-Run in the Supabase SQL Editor:
+Run this in the Supabase SQL Editor to confirm data was loaded:
 
 ```sql
 SELECT
@@ -269,36 +226,46 @@ SELECT
     (SELECT COUNT(*) FROM fdc_nutrients) AS nutrients;
 ```
 
-Expected:
+Expected output (Foundation + SR Legacy):
 
 | foods | portions | nutrients |
 |---|---|---|
-| ~8 200 | ~14 000 | ~665 000 |
+| ~9 000 | ~30 000 | ~650 000 |
 
----
+Test the full-text search the app uses:
 
-## Step 8 – Configure the app
-
-Add your Supabase credentials to `.env` in the project root
-(this file is gitignored — never commit it):
-
-```
-SUPABASE_PROJECT_URL="https://<your-project-ref>.supabase.co"
-SUPABASE_PROJECT_ANON_KEY="eyJ..."
-FDC_API_KEY="DEMO_KEY"
-SENTRY_DNS=""
-```
-
-Then regenerate the obfuscated env file:
-
-```bash
-dart run build_runner build --delete-conflicting-outputs
+```sql
+SELECT fdc_id, description_en
+FROM fdc_food
+WHERE to_tsvector('english', description_en)
+      @@ websearch_to_tsquery('english', 'chicken breast')
+LIMIT 5;
 ```
 
 ---
 
 ## Notes
 
-- **German translations:** Generated with Google Translate via `scripts/translate_fdc_de.py`. Quality is good for most food names but may be imperfect for highly specific scientific terms.
-- **Updating data:** FDC releases updates twice a year. Re-run `filter_fdc.py`, `translate_fdc_de.py`, and re-import to refresh.
-- **Branded foods / barcodes:** Not included. The app uses OpenFoodFacts for the Products tab and barcode scanning.
+- **Branded foods / barcodes:** The FDC Branded dataset contains
+  `gtin_upc` barcode values but is ~3 GB and exceeds the Supabase Free
+  tier limit. For barcode lookup, consider using the
+  [Open Food Facts](https://world.openfoodfacts.org/data) dataset as a
+  complement.
+- **German translations:** `description_de` is not provided by FDC.
+  You can populate it later via the FDC API
+  (`https://api.nal.usda.gov/fdc/v1/food/{fdc_id}`) or a translation
+  service.
+- **Updating data:** FDC releases updates twice a year. Re-run
+  `filter_fdc.py` and re-import to refresh.
+
+---
+
+## File structure added by this guide
+
+```
+docs/
+  supabase-fdc/
+    README.md          ← this file
+scripts/
+  filter_fdc.py        ← CSV filter script
+```
