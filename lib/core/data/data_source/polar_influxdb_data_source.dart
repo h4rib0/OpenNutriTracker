@@ -17,17 +17,13 @@ class PolarInfluxdbDataSource {
   static const double _defaultFatGPerKg = 0.8;
 
   final _log = Logger('PolarInfluxdbDataSource');
-  final FlutterSecureStorage _storage =
-      SecureAppStorageProvider.secureAppStorage;
+  final FlutterSecureStorage _storage = SecureAppStorageProvider.secureAppStorage;
 
   Future<String> getUrl() async => await _storage.read(key: _keyUrl) ?? '';
-  Future<String> getDatabase() async =>
-      await _storage.read(key: _keyDatabase) ?? '';
-  Future<bool> getIsV2() async =>
-      (await _storage.read(key: _keyIsV2)) == 'true';
+  Future<String> getDatabase() async => await _storage.read(key: _keyDatabase) ?? '';
+  Future<bool> getIsV2() async => (await _storage.read(key: _keyIsV2)) == 'true';
   Future<String> getToken() async => await _storage.read(key: _keyToken) ?? '';
-  Future<String> getTriggerUrl() async =>
-      await _storage.read(key: _keyTriggerUrl) ?? '';
+  Future<String> getTriggerUrl() async => await _storage.read(key: _keyTriggerUrl) ?? '';
   Future<bool> isPolarConfigured() async => (await getUrl()).isNotEmpty;
   Future<double> getProteinGPerKg() async {
     final raw = await _storage.read(key: _keyProteinGPerKg);
@@ -47,13 +43,7 @@ class PolarInfluxdbDataSource {
     await _storage.write(key: _keyFatGPerKg, value: value.toString());
   }
 
-  Future<void> saveConfig({
-    required String url,
-    required String database,
-    required bool isV2,
-    required String token,
-    required String triggerUrl,
-  }) async {
+  Future<void> saveConfig({required String url, required String database, required bool isV2, required String token, required String triggerUrl}) async {
     await _storage.write(key: _keyUrl, value: url);
     await _storage.write(key: _keyDatabase, value: database);
     await _storage.write(key: _keyIsV2, value: isV2.toString());
@@ -67,9 +57,7 @@ class PolarInfluxdbDataSource {
     final triggerUrl = await getTriggerUrl();
     if (triggerUrl.isEmpty) return false;
     try {
-      final response = await http
-          .get(Uri.parse(triggerUrl))
-          .timeout(const Duration(seconds: 30));
+      final response = await http.get(Uri.parse(triggerUrl)).timeout(const Duration(seconds: 30));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
       _log.warning('triggerSync failed: $e');
@@ -134,10 +122,7 @@ class PolarInfluxdbDataSource {
     return 'nutrition,meal=$meal,food=$food $fields $ns';
   }
 
-  String _escapeTag(String value) => value
-      .replaceAll(',', '\\,')
-      .replaceAll('=', '\\=')
-      .replaceAll(' ', '\\ ');
+  String _escapeTag(String value) => value.replaceAll(',', '\\,').replaceAll('=', '\\=').replaceAll(' ', '\\ ');
 
   Future<void> _writeLine(String line) async {
     final url = await getUrl();
@@ -148,14 +133,12 @@ class PolarInfluxdbDataSource {
     final token = await getToken();
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
 
-    final uri = Uri.parse('$baseUrl/write')
-        .replace(queryParameters: {'db': database});
+    final uri = Uri.parse('$baseUrl/write').replace(queryParameters: {'db': database});
     final request = http.Request('POST', uri)..body = line;
     if (isV2 && token.isNotEmpty) {
       request.headers['Authorization'] = 'Token $token';
     }
-    final streamed =
-        await http.Client().send(request).timeout(const Duration(seconds: 10));
+    final streamed = await http.Client().send(request).timeout(const Duration(seconds: 10));
     if (streamed.statusCode >= 300) {
       _log.warning('InfluxDB write HTTP ${streamed.statusCode}');
     }
@@ -170,8 +153,7 @@ class PolarInfluxdbDataSource {
     final token = await getToken();
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
 
-    final uri = Uri.parse('$baseUrl/query')
-        .replace(queryParameters: {'db': database, 'q': q});
+    final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
     final request = http.Request('GET', uri);
     if (isV2 && token.isNotEmpty) {
       request.headers['Authorization'] = 'Token $token';
@@ -190,23 +172,18 @@ class PolarInfluxdbDataSource {
 
     const q = 'SELECT last(weight) FROM koerpergewicht';
     try {
-      final uri = Uri.parse('$baseUrl/query').replace(
-        queryParameters: {'db': database, 'q': q},
-      );
+      final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
       final request = http.Request('GET', uri);
       if (isV2 && token.isNotEmpty) {
         request.headers['Authorization'] = 'Token $token';
       }
-      final streamed = await http.Client()
-          .send(request)
-          .timeout(const Duration(seconds: 10));
+      final streamed = await http.Client().send(request).timeout(const Duration(seconds: 10));
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode != 200) return null;
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final series =
-          (json['results'] as List?)?.firstOrNull?['series'] as List?;
+      final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
       if (series == null || series.isEmpty) return null;
 
       final values = series[0]['values'] as List?;
@@ -215,6 +192,49 @@ class PolarInfluxdbDataSource {
       return (values[0][1] as num?)?.toDouble();
     } catch (e) {
       _log.warning('Failed to fetch weight from InfluxDB: $e');
+      return null;
+    }
+  }
+
+  /// Fetches the total calories burned for [date] from the `polar_activity`
+  /// measurement (field: `calories`). Returns null when Polar is not reachable.
+  Future<double?> fetchTotalKcalForDate(DateTime date) async {
+    final url = await getUrl();
+    final database = await getDatabase();
+    if (url.isEmpty || database.isEmpty) return null;
+
+    final isV2 = await getIsV2();
+    final token = await getToken();
+
+    final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+    final start = DateTime(date.year, date.month, date.day).toUtc();
+    final stop = start.add(const Duration(days: 1));
+
+    final q = "SELECT last(\"calories\") FROM \"polar_activity\" WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
+    try {
+      final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
+      final request = http.Request('GET', uri);
+      if (isV2 && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Token $token';
+      }
+      final streamedResponse = await http.Client().send(request).timeout(const Duration(seconds: 10));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        _log.warning('InfluxDB query HTTP ${response.statusCode}');
+        return null;
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
+      if (series == null || series.isEmpty) return null;
+
+      final values = series[0]['values'] as List?;
+      if (values == null || values.isEmpty) return null;
+
+      return (values[0][1] as num?)?.toDouble();
+    } catch (e) {
+      _log.warning('Failed to fetch Polar total kcal from InfluxDB: $e');
       return null;
     }
   }
@@ -232,18 +252,14 @@ class PolarInfluxdbDataSource {
     final stop = start.add(const Duration(days: 1));
 
     // Use InfluxQL via the v1 compatibility endpoint (works for both v1 and v2)
-    final q =
-        "SELECT last(active_calories) FROM polar_activity WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
+    final q = "SELECT last(active_calories) FROM polar_activity WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
     try {
-      final uri = Uri.parse('$baseUrl/query').replace(
-        queryParameters: {'db': database, 'q': q},
-      );
+      final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
       final request = http.Request('GET', uri);
       if (isV2 && token.isNotEmpty) {
         request.headers['Authorization'] = 'Token $token';
       }
-      final streamedResponse =
-          await http.Client().send(request).timeout(const Duration(seconds: 10));
+      final streamedResponse = await http.Client().send(request).timeout(const Duration(seconds: 10));
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode != 200) {
@@ -252,8 +268,7 @@ class PolarInfluxdbDataSource {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final series =
-          (json['results'] as List?)?.firstOrNull?['series'] as List?;
+      final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
       if (series == null || series.isEmpty) return null;
 
       final values = series[0]['values'] as List?;
