@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
                   children: [
                     const Icon(Icons.menu_book_outlined),
                     const SizedBox(width: 12),
-                    Text(S.of(context).createRecipeTitle),
+                    Flexible(child: Text(S.of(context).createRecipeTitle)),
                   ],
                 ),
               ),
@@ -65,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
                   children: [
                     const Icon(Icons.restaurant_outlined),
                     const SizedBox(width: 12),
-                    Text(S.of(context).newCustomMealLabel),
+                    Flexible(child: Text(S.of(context).newCustomMealLabel)),
                   ],
                 ),
               ),
@@ -75,7 +75,7 @@ class _MainScreenState extends State<MainScreen> {
                   children: [
                     const Icon(Icons.qr_code_scanner_outlined),
                     const SizedBox(width: 12),
-                    Text(S.of(context).importRecipeLabel),
+                    Flexible(child: Text(S.of(context).importRecipeLabel)),
                   ],
                 ),
               ),

@@ -5,9 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "OpenNutriTracker",
+            "name": "OpenNutriTracker (develop)",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": ["--flavor", "develop"]
+        },
+        {
+            "name": "OpenNutriTracker (full)",
+            "request": "launch",
+            "type": "dart",
+            "args": ["--flavor", "full"]
         }
     ]
 }
