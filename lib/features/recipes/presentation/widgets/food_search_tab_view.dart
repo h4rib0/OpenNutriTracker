@@ -75,6 +75,7 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
             searchStringListener: _searchStringListener,
             onSearchSubmit: _onSearchSubmit,
             onBarcodePressed: widget.onBarcodePressed,
+            autofocus: true,
           ),
           const SizedBox(height: 16),
           TabBar(

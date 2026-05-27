@@ -8,6 +8,7 @@ class MealSearchBar extends StatelessWidget {
   // Nullable so callers that don't surface a barcode flow (e.g. the recipe
   // ingredient picker) can omit the suffix icon entirely.
   final Function()? onBarcodePressed;
+  final bool autofocus;
 
   final _searchTextController = TextEditingController();
 
@@ -16,6 +17,7 @@ class MealSearchBar extends StatelessWidget {
     required this.searchStringListener,
     required this.onSearchSubmit,
     required this.onBarcodePressed,
+    this.autofocus = false,
   });
 
   @override
@@ -26,6 +28,7 @@ class MealSearchBar extends StatelessWidget {
           flex: 1,
           child: TextField(
             controller: _searchTextController,
+            autofocus: autofocus,
             textInputAction: TextInputAction.search,
             onChanged: (input) {
               searchStringListener.value = input;

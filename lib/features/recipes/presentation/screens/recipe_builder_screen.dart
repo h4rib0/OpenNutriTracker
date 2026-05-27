@@ -39,6 +39,7 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
   late TextEditingController _tagsController;
 
   bool _initialized = false;
+  final FocusNode _addIngredientFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -77,6 +78,7 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
     _servingsController.dispose();
     _totalWeightController.dispose();
     _tagsController.dispose();
+    _addIngredientFocusNode.dispose();
     super.dispose();
   }
 
@@ -241,6 +243,7 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                 ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
+                focusNode: _addIngredientFocusNode,
                 onPressed: () => _onAddIngredient(context),
                 icon: const Icon(Icons.add),
                 label: Text(S.of(context).recipeAddIngredientLabel),
@@ -356,6 +359,7 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
         unit: selection.unit,
       ),
     );
+    _addIngredientFocusNode.requestFocus();
   }
 
   Future<void> _onEditIngredient(BuildContext context, int index) async {
