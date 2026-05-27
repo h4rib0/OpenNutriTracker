@@ -119,7 +119,10 @@ const Map<String, Map<_LifeStage, DriReference>> _driTable = {
   NutrientPanelKeys.sodium: {
     // IOM CDRR / UL: 2300 mg/day for all adults. The IOM does not publish
     // a sodium RDA — the figure below is the chronic-disease-risk
-    // reduction intake, the same number the FDA Daily Value uses.
+    // reduction intake from the 2019 sodium/potassium update, the same
+    // number the FDA Daily Value uses. Because it is a ceiling rather than
+    // a target, the panel labels this row a "limit" (see _NutrientRow).
+    // https://www.nationalacademies.org/projects/HMD-FNB-17-01
     _LifeStage.m19to30: DriReference(amount: 2300, unit: 'mg', basis: 'UL'),
     _LifeStage.m31to50: DriReference(amount: 2300, unit: 'mg', basis: 'UL'),
     _LifeStage.m51to70: DriReference(amount: 2300, unit: 'mg', basis: 'UL'),
@@ -131,7 +134,10 @@ const Map<String, Map<_LifeStage, DriReference>> _driTable = {
   },
   NutrientPanelKeys.calcium: {
     // IOM RDA: 1000 mg adults 19 to 50 (and men 51 to 70),
-    // 1200 mg women 51+ and everyone 71+.
+    // 1200 mg women 51+ and everyone 71+. The 2011 IOM report set an EAR
+    // and RDA for calcium, replacing the 1997 AI — so these adult figures
+    // are RDAs, not the AI the older table listed.
+    // https://www.nationalacademies.org/our-work/dietary-reference-intakes-for-calcium-and-vitamin-d
     _LifeStage.m19to30: DriReference(amount: 1000, unit: 'mg', basis: 'RDA'),
     _LifeStage.m31to50: DriReference(amount: 1000, unit: 'mg', basis: 'RDA'),
     _LifeStage.m51to70: DriReference(amount: 1000, unit: 'mg', basis: 'RDA'),
@@ -155,6 +161,7 @@ const Map<String, Map<_LifeStage, DriReference>> _driTable = {
   },
   NutrientPanelKeys.potassium: {
     // IOM AI (2019 update): men 3400 mg, women 2600 mg.
+    // https://www.nationalacademies.org/projects/HMD-FNB-17-01
     _LifeStage.m19to30: DriReference(amount: 3400, unit: 'mg', basis: 'AI'),
     _LifeStage.m31to50: DriReference(amount: 3400, unit: 'mg', basis: 'AI'),
     _LifeStage.m51to70: DriReference(amount: 3400, unit: 'mg', basis: 'AI'),
@@ -165,7 +172,11 @@ const Map<String, Map<_LifeStage, DriReference>> _driTable = {
     _LifeStage.f71plus: DriReference(amount: 2600, unit: 'mg', basis: 'AI'),
   },
   NutrientPanelKeys.vitaminD: {
-    // IOM RDA: 15 µg (600 IU) adults to age 70, 20 µg (800 IU) 71+.
+    // IOM RDA: 15 µg (600 IU) adults to age 70, 20 µg (800 IU) 71+. The
+    // 2011 IOM report established an EAR and RDA for vitamin D, superseding
+    // the older 1997 AI values (5/5/10/15 µg by age band) — so these are
+    // current RDAs, not the AI the 1997 table listed.
+    // https://www.nationalacademies.org/our-work/dietary-reference-intakes-for-calcium-and-vitamin-d
     _LifeStage.m19to30: DriReference(amount: 15, unit: 'µg', basis: 'RDA'),
     _LifeStage.m31to50: DriReference(amount: 15, unit: 'µg', basis: 'RDA'),
     _LifeStage.m51to70: DriReference(amount: 15, unit: 'µg', basis: 'RDA'),

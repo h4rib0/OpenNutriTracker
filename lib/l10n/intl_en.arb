@@ -1,188 +1,5 @@
 {
-  "appTitle": "OpenNutriTracker",
-  "appVersionName": "Version {versionNumber}",
-  "appDescription": "OpenNutriTracker is a free and open-source calorie and nutrient tracker that respects your privacy.",
-  "alphaVersionName": "[Alpha]",
-  "betaVersionName": "[Beta]",
-  "addLabel": "Add",
-  "warningLabel": "Warning",
-  "duplicateMealDialogContent": "This food has already been added to this meal today. Add it again?",
-  "createCustomDialogTitle": "Create custom meal item?",
-  "createCustomDialogContent": "Do you want create a custom meal item?",
-  "settingsLabel": "Settings",
-  "homeLabel": "Home",
-  "diaryLabel": "Diary",
-  "diaryFutureDateWarning": "You are editing a future date",
-  "recipesLabel": "Recipes",
-  "recipesEmptyLabel": "No recipes yet",
-  "recipesEmptyHint": "Build a meal from multiple ingredients and reuse it like any other food.",
-  "createRecipeTitle": "Create Recipe",
-  "newCustomMealLabel": "New Custom Food",
-  "discardChangesTitle": "Discard changes?",
-  "discardChangesContent": "Your unsaved changes will be lost.",
-  "discardChangesConfirmLabel": "Discard",
-  "editRecipeTitle": "Edit Recipe",
-  "recipeNameLabel": "Recipe name",
-  "recipeDescriptionLabel": "Description (optional)",
-  "recipeServingsCountLabel": "Servings (optional)",
-  "recipeServingsCountHelper": "Lets you log this recipe by serving instead of grams.",
-  "recipeIngredientsLabel": "Ingredients",
-  "recipeAddIngredientLabel": "Add Ingredient",
-  "recipeNoIngredientsLabel": "No ingredients yet",
-  "recipeTotalWeightLabel": "Total weight (g)",
-  "recipeTotalWeightHelper": "Defaults to sum of ingredients. Liquids approximated as 1 ml ≈ 1 g.",
-  "recipeNutritionPreviewLabel": "Nutrition (total)",
-  "recipeNutritionPer100Label": "Per 100 g",
-  "recipeIngredientAmountLabel": "Amount",
-  "recipeIngredientUnitLabel": "Unit",
-  "recipeSaveLabel": "Save Recipe",
-  "recipeSaveErrorLabel": "Could not save recipe.",
-  "recipeNameRequiredLabel": "Recipe needs a name",
-  "recipeNeedsIngredientsLabel": "Add at least one ingredient",
-  "recipeInvalidTotalWeightLabel": "Total weight must be greater than zero",
-  "shareRecipeLabel": "Share recipe",
-  "duplicateRecipeLabel": "Duplicate",
-  "duplicateRecipeNameSuffix": "(copy)",
-  "recipeTagsLabel": "Tags",
-  "recipeTagsHelper": "Comma-separated, e.g. \"breakfast, vegan\"",
-  "recipesFilterAllLabel": "All",
-  "selectionCountLabel": "{count} selected",
-  "@selectionCountLabel": {
-    "placeholders": {"count": {"type": "int"}}
-  },
-  "importRecipesCsvAction": "Import recipes (csv)",
-  "deleteSelectedRecipesConfirmTitle": "Delete {count} recipe(s)?",
-  "@deleteSelectedRecipesConfirmTitle": {
-    "placeholders": {"count": {"type": "int"}}
-  },
-  "importRecipeLabel": "Import recipe",
-  "importRecipeSuccessLabel": "Recipe imported",
-  "importRecipeErrorLabel": "Could not parse recipe code",
-  "recipesLoadErrorLabel": "Could not load recipes. Try again later.",
-  "importRecipeConfirmContent": "Import this recipe with {count} ingredient(s)?",
-  "@importRecipeConfirmContent": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "recipeDeleteConfirmTitle": "Delete recipe?",
-  "recipeDeleteConfirmContent": "Past diary entries logged from this recipe will be kept.",
-  "recipeLogCtaLabel": "Log this Recipe",
-  "recipeIngredientCountLabel": "{count} ingredient(s)",
-  "@recipeIngredientCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "profileLabel": "Profile",
-  "searchLabel": "Search",
-  "searchProductsPage": "Products",
-  "searchFoodPage": "Food",
-  "searchResultsLabel": "Search results",
-  "searchDefaultLabel": "Please enter a search word",
-  "allItemsLabel": "All",
-  "recentlyAddedLabel": "Recently",
-  "noMealsRecentlyAddedLabel": "No meals recently added",
-  "noActivityRecentlyAddedLabel": "No activity recently added",
-  "dialogOKLabel": "OK",
-  "dialogCancelLabel": "CANCEL",
-  "buttonStartLabel": "START",
-  "buttonNextLabel": "NEXT",
-  "buttonSaveLabel": "Save",
-  "buttonYesLabel": "YES",
-  "buttonResetLabel": "Reset",
-  "onboardingWelcomeLabel": "Welcome to",
-  "onboardingOverviewLabel": "Overview",
-  "onboardingYourGoalLabel": "Your calorie goal:",
-  "onboardingYourMacrosGoalLabel": "Your macronutrient goals:",
-  "onboardingKcalPerDayLabel": "kcal per day",
-  "onboardingIntroDescription": "To start, the app needs some information about you to calculate your daily calorie goal.\nAll information about you is stored securely on your device.",
-  "onboardingIntroSourcesLinkLabel": "Read our medical calculation sources",
-  "onboardingGenderQuestionSubtitle": "What's your gender?",
-  "onboardingEnterBirthdayLabel": "Birthday",
-  "onboardingBirthdayHint": "Enter Date",
-  "onboardingBirthdayQuestionSubtitle": "When is your birthday?",
-  "onboardingHeightQuestionSubtitle": "Whats your current height?",
-  "onboardingWeightQuestionSubtitle": "Whats your current weight?",
-  "onboardingWrongHeightLabel": "Enter correct height",
-  "onboardingWrongWeightLabel": "Enter correct weight",
-  "onboardingWeightExampleHintKg": "e.g. 60",
-  "onboardingWeightExampleHintLbs": "e.g. 132",
-  "onboardingHeightExampleHintCm": "e.g. 170",
-  "onboardingHeightExampleHintFt": "e.g. 5.8",
-  "onboardingActivityQuestionSubtitle": "How active are you? (without workouts)",
-  "onboardingGoalQuestionSubtitle": "What's your current weight goal?",
-  "onboardingSaveUserError": "Wrong input, please try again",
-  "settingsUnitsLabel": "Units",
-  "settingsCalculationsLabel": "Calculations",
-  "settingsThemeLabel": "Theme",
-  "settingsThemeLightLabel": "Light",
-  "settingsThemeDarkLabel": "Dark",
-  "settingsThemeSystemDefaultLabel": "System default",
-  "settingsLicensesLabel": "Licenses",
-  "settingsDisclaimerLabel": "Disclaimer",
-  "settingsSourcesLabel": "Sources & References",
-  "sourcesIconTooltip": "View sources",
-  "sourcesScreenIntro": "OpenNutriTracker uses well-established, peer-reviewed methodologies for every calculation it shows. The citations below link to the original sources so you can verify any number yourself.",
-  "sourcesEnergyTitle": "Energy needs (TDEE, BMR & activity level)",
-  "sourcesEnergyDescription": "Daily calorie targets, basal metabolic rate, and physical activity coefficients use the equations from the Institute of Medicine. Source: Institute of Medicine (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids, Chapter 5 and Table 5-5.",
-  "sourcesBmiTitle": "Body Mass Index (BMI)",
-  "sourcesBmiDescription": "BMI is computed as weight (kg) divided by height squared (m²). The health categories (underweight, normal, pre-obesity, obesity class I–III) follow the World Health Organization's adult BMI classification.",
-  "sourcesMacrosTitle": "Macronutrient distribution",
-  "sourcesMacrosDescription": "The default split of 60% carbohydrates, 25% fat, and 15% protein falls within the population nutrient intake ranges published by the WHO. You can adjust this in Settings → Calculations. Source: WHO Technical Report Series 916 (2003), Diet, Nutrition and the Prevention of Chronic Diseases.",
-  "sourcesActivityTitle": "Activity calories (MET values)",
-  "sourcesActivityDescription": "Calories burned during an activity are estimated as MET × body weight (kg) × duration (hours), using values from the Adult Compendium of Physical Activities.",
-  "sourcesNonBinaryTitle": "Non-binary calorie estimation",
-  "sourcesNonBinaryDescription": "Energy-expenditure research has historically used binary sex categories, so there is no single validated TDEE formula for non-binary people. OpenNutriTracker therefore lets you choose between an averaged reference, an estrogen-typical reference, or a testosterone-typical reference under Settings → Calculations. If an accurate number genuinely matters for your care, please speak to a clinician familiar with your hormone status.",
-  "sourcesOpenSourceLabel": "View source",
-  "settingsReportErrorLabel": "Report Error",
-  "settingsPrivacySettings": "Privacy Settings",
-  "settingsShowActivityTracking": "Show Activity Tracking",
-  "settingsShowMealMacros": "Show Meal Macros",
-  "settingsNotificationsLabel": "Daily Reminder",
-  "settingsNotificationsTimeLabel": "Reminder time: {time}",
-  "@settingsNotificationsTimeLabel": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "notificationsPermissionDeniedSnack": "Notification permission denied.",
-  "notificationsDailyReminderTitle": "OpenNutriTracker",
-  "notificationsDailyReminderBody": "Don't forget to log your meals today!",
-  "settingsSourceCodeLabel": "Source Code",
-  "settingFeedbackLabel": "Feedback",
-  "settingAboutLabel": "About",
-  "settingsMassLabel": "Mass",
-  "settingsSystemLabel": "System",
-  "settingsMetricLabel": "Metric (kg, cm, ml)",
-  "settingsImperialLabel": "Imperial (lbs, ft, oz)",
-  "settingsShowMicronutrientsLabel": "Show Micronutrients",
-  "settingsDistanceLabel": "Distance",
-  "settingsVolumeLabel": "Volume",
-  "disclaimerText": "OpenNutriTracker is not a medical application. All data provided is not validated and should be used with caution. Please maintain a healthy lifestyle and consult a professional if you have any problems. Use during illness, pregnancy or lactation is not recommended. For the peer-reviewed sources behind each calculation, tap the info icon on the Home or Profile screen.",
-  "reportErrorDialogText": "Do you want to report an error to the developer?",
-  "sendAnonymousUserData": "Send anonymous usage data",
-  "appLicenseLabel": "GPL-3.0 license",
-  "calculationsTDEELabel": "TDEE equation",
-  "calculationsTDEEIOM2006Label": "Institute of Medicine Equation (2005)",
-  "calculationsRecommendedLabel": "(recommended)",
-  "calculationsMacronutrientsDistributionLabel": "Macros distribution",
-  "calculationsMacrosDistribution": "{pctCarbs}% carbs, {pctFats}% fats, {pctProteins}% proteins",
-  "dailyKcalAdjustmentLabel": "Daily Kcal adjustment:",
-  "macroDistributionLabel": "Macronutrient Distribution:",
-  "settingsCustomMealsLabel": "Custom Meals",
-  "customMealsEmptyLabel": "No custom meals saved yet.",
-  "customMealsDeleteConfirmTitle": "Delete custom meal?",
-  "customMealsDeleteConfirmContent": "All diary entries using this meal will also be removed.",
-  "exportImportAppDataLabel": "Export / Import App Data",
-  "importCustomFoodDataLabel": "Import Custom Food Data",
-  "importCustomFoodDataDescription": "Import your own meals from a CSV file. Download a sample to see the expected column shape and required fields.",
-  "clearOffCacheLabel": "Clear cached items",
-  "clearOffCacheSubtitle": "{count} item(s) · {size}",
+  "@PHYSICAL_ACTIVITIES": {},
   "@clearOffCacheSubtitle": {
     "placeholders": {
       "count": {
@@ -204,6 +21,13 @@
     }
   },
   "@csvImportSuccessLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@deleteSelectedRecipesConfirmTitle": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -255,6 +79,30 @@
       }
     }
   },
+  "@importRecipeConfirmContent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@mealDetailCurrentSelectionLabel": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "@mealDetailDayTotalLabel": {
+    "placeholders": {
+      "consumed": {
+        "type": "String"
+      },
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
   "@mealNutrientsPerQtyLabel": {
     "placeholders": {
       "qty": {
@@ -269,6 +117,27 @@
     "placeholders": {
       "value": {
         "type": "String"
+      }
+    }
+  },
+  "@quickAddAddedSnack": {
+    "placeholders": {
+      "mealType": {
+        "type": "String"
+      }
+    }
+  },
+  "@recipeIngredientCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@selectionCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },
@@ -293,6 +162,13 @@
     "placeholders": {
       "amount": {
         "type": "int"
+      }
+    }
+  },
+  "@settingsNotificationsTimeLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
       }
     }
   },
@@ -323,20 +199,38 @@
   "activityExample": "e.g. running, biking, yoga ...",
   "activityLabel": "Activity",
   "addItemLabel": "Add new Item:",
+  "addLabel": "Add",
   "additionalInfoLabelCompendium2011": "Information provided\n by the \n'2024 Compendium\n of Physical Activities'",
   "additionalInfoLabelCustom": "Custom Meal Item",
   "additionalInfoLabelFDC": "More Information at\nFoodData Central",
   "additionalInfoLabelOFF": "More Information at\nOpenFoodFacts",
   "additionalInfoLabelUnknown": "Unknown Meal Item",
   "ageLabel": "Age",
+  "allItemsLabel": "All",
+  "alphaVersionName": "[Alpha]",
+  "appDescription": "OpenNutriTracker is a free and open-source calorie and nutrient tracker that respects your privacy.",
+  "appLicenseLabel": "GPL-3.0 license",
+  "appTitle": "OpenNutriTracker",
+  "appVersionName": "Version {versionNumber}",
   "barcodeInvalidEan13CheckDigit": "This 13-digit barcode looks miskeyed: its last digit doesn't match the rest",
   "baseQuantityLabel": "Base quantity (g/ml)",
+  "betaVersionName": "[Beta]",
   "bmiInfo": "Body Mass Index (BMI) is a index to classify overweight and obesity in adults. It is defined as weight in kilograms divided by the square of height in meters (kg/m²).\n\nBMI does not differentiate between fat and muscle mass and can be misleading for some individuals.",
   "bmiLabel": "BMI",
   "breakfastExample": "e.g. cereal, milk, coffee ...",
   "breakfastLabel": "Breakfast",
   "burnedLabel": "burned",
+  "buttonNextLabel": "NEXT",
+  "buttonResetLabel": "Reset",
+  "buttonSaveLabel": "Save",
+  "buttonStartLabel": "START",
+  "buttonYesLabel": "YES",
   "calciumLabel": "calcium",
+  "calculationsMacronutrientsDistributionLabel": "Macros distribution",
+  "calculationsMacrosDistribution": "{pctCarbs}% carbs, {pctFats}% fats, {pctProteins}% proteins",
+  "calculationsRecommendedLabel": "(recommended)",
+  "calculationsTDEEIOM2006Label": "Institute of Medicine Equation (2005)",
+  "calculationsTDEELabel": "TDEE equation",
   "caloriesProfileAveragedLabel": "Averaged reference (default)",
   "caloriesProfileEstrogenTypicalLabel": "Estrogen-typical reference",
   "caloriesProfileInfoBody": "There isn't a published non-binary calorie baseline — the reference equations are built around male and female samples. We use an average of the two by default, a neutral starting point that doesn't ask you to disclose more about your body. The kcal slider in Settings is always available to fine-tune; this is a starting point, not a precise estimate.",
@@ -350,12 +244,17 @@
   "chooseWeightGoalLabel": "Choose Weight Goal",
   "clearOffCacheConfirmContent": "Removes the locally cached search and scan results from Open Food Facts and FDC. The cache rebuilds automatically as you search and scan products. Your custom meals are not affected.",
   "clearOffCacheConfirmTitle": "Clear cached items?",
+  "clearOffCacheLabel": "Clear cached items",
+  "clearOffCacheSubtitle": "{count} item(s) · {size}",
   "cmLabel": "cm",
   "codeCopiedLabel": "Code copied",
   "copyCodeLabel": "Copy code",
   "copyDialogTitle": "Which meal type do you want to copy to?",
   "copyOrDeleteTimeDialogContent": "With \"Copy to today\" you can copy the meal to today. With \"Delete\" you can delete the meal.",
   "copyOrDeleteTimeDialogTitle": "What do you want to do?",
+  "createCustomDialogContent": "Do you want create a custom meal item?",
+  "createCustomDialogTitle": "Create custom meal item?",
+  "createRecipeTitle": "Create Recipe",
   "csvImportContributeOffAndroidLink": "Android",
   "csvImportContributeOffIosLink": "iOS",
   "csvImportContributeOffPrefix": "Have a barcode? Help everyone by contributing the product to Open Food Facts:",
@@ -389,6 +288,10 @@
       }
     }
   },
+  "customMealsDeleteConfirmContent": "All diary entries using this meal will also be removed.",
+  "customMealsDeleteConfirmTitle": "Delete custom meal?",
+  "customMealsEmptyLabel": "No custom meals saved yet.",
+  "dailyKcalAdjustmentLabel": "Daily Kcal adjustment:",
   "dailyKjAdjustmentLabel": "Daily kJ adjustment:",
   "dataCollectionLabel": "Send anonymous crash reports to help fix bugs. No food log, weight, or personal data is included.",
   "deleteAllLabel": "Delete all",
@@ -407,12 +310,17 @@
     }
   },
   "lowKcalWarningViewDisclaimer": "View disclaimer",
+  "deleteSelectedRecipesConfirmTitle": "Delete {count} recipe(s)?",
   "deleteTimeDialogContent": "Do want to delete the selected item?",
   "deleteTimeDialogPluralContent": "Do want to delete all items of this meal?",
   "deleteTimeDialogPluralTitle": "Delete Items?",
   "deleteTimeDialogTitle": "Delete Item?",
+  "dialogCancelLabel": "CANCEL",
   "dialogCopyLabel": "Copy to today",
   "dialogDeleteLabel": "DELETE",
+  "dialogOKLabel": "OK",
+  "diaryFutureDateWarning": "You are editing a future date",
+  "diaryLabel": "Diary",
   "diaryMealKcalConsumedOfTarget": "{consumed} / {target} kcal",
   "diaryNutrientPanelDataDisclaimer": "Only nutrients tracked on the meals you logged are summed here. A meal missing a value contributes nothing to that nutrient — so these totals may underreport.",
   "diaryNutrientPanelTitle": "Today's nutrients",
@@ -428,12 +336,20 @@
   "diarySortByTime": "Time added",
   "dinnerExample": "e.g. soup, chicken, wine ...",
   "dinnerLabel": "Dinner",
+  "discardChangesConfirmLabel": "Discard",
+  "discardChangesContent": "Your unsaved changes will be lost.",
+  "discardChangesTitle": "Discard changes?",
+  "disclaimerText": "OpenNutriTracker is not a medical application. All data provided is not validated and should be used with caution. Please maintain a healthy lifestyle and consult a professional if you have any problems. Use during illness, pregnancy or lactation is not recommended. For the peer-reviewed sources behind each calculation, tap the info icon on the Home or Profile screen.",
   "downloadSampleCsvAction": "Sample meals (csv)",
   "downloadSampleJsonAction": "Sample meals (json)",
   "downloadSampleRecipesCsvAction": "Sample recipes (csv)",
   "downloadSampleRecipesJsonAction": "Sample recipes (json)",
+  "duplicateMealDialogContent": "This food has already been added to this meal today. Add it again?",
+  "duplicateRecipeLabel": "Duplicate",
+  "duplicateRecipeNameSuffix": "(copy)",
   "editItemDialogTitle": "Edit item",
   "editMealLabel": "Edit meal",
+  "editRecipeTitle": "Edit Recipe",
   "energyLabel": "energy",
   "energyLeftLabel": "left",
   "energyTooMuchLabel": "too much",
@@ -446,6 +362,7 @@
   "errorOpeningEmail": "Error while opening email app",
   "errorProductNotFound": "Product not found",
   "exportAction": "Export",
+  "exportImportAppDataLabel": "Export / Import App Data",
   "exportImportCsvRecipesNote": "CSV keeps your activity, meal log and tracked days. Recipes and any photos you've attached are JSON-only — switch to JSON if you want them in your backup.",
   "exportImportDescription": "You can export the app data to a zip file and import it later. This is useful if you want to backup your data or transfer it to another device.\n\nThe app does not use any cloud service to store your data.",
   "exportImportErrorLabel": "Export / Import error",
@@ -466,11 +383,14 @@
   "gramMilliliterUnit": "g/ml",
   "gramUnit": "g",
   "heightLabel": "Height",
+  "homeLabel": "Home",
   "importAction": "Import",
   "importActivityConfirmContent": "These activities will be added to today.",
   "importActivityConfirmTitle": "Import {count} activities?",
   "importActivityLabel": "Import shared workout",
   "importActivitySuccessLabel": "Workout imported",
+  "importCustomFoodDataDescription": "Import your own meals from a CSV file or by pasting JSON. Download a sample to see the expected shape and required fields.",
+  "importCustomFoodDataLabel": "Import Custom Food Data",
   "importMealConfirmContent": "These items will be added to your {mealType}.",
   "importMealConfirmTitle": "Import {count} items?",
   "importMealErrorLabel": "Invalid QR code",
@@ -479,6 +399,11 @@
   "importMealsCsvAction": "Import meals (csv)",
   "importMealsJsonAction": "Import meals (json)",
   "importOffFetchFailedLabel": "{count} item(s) could not be fetched from OpenFoodFacts.",
+  "importRecipeConfirmContent": "Import this recipe with {count} ingredient(s)?",
+  "importRecipeErrorLabel": "Could not parse recipe code",
+  "importRecipeLabel": "Import recipe",
+  "importRecipeSuccessLabel": "Recipe imported",
+  "importRecipesCsvAction": "Import recipes (csv)",
   "importRecipesJsonAction": "Import recipes (json)",
   "inconsistentNutritionWarningBody": "These values don't quite line up — the calories you've entered don't match the energy in the carbs, fat and protein below. Save anyway, or take a second look?",
   "inconsistentNutritionWarningEdit": "Take another look",
@@ -497,9 +422,12 @@
   "lbsLabel": "lbs",
   "lunchExample": "e.g. pizza, salad, rice ...",
   "lunchLabel": "Lunch",
+  "macroDistributionLabel": "Macronutrient Distribution:",
   "magnesiumLabel": "magnesium",
   "mealBrandsLabel": "Brands",
   "mealCarbsLabel": "Carbohydrates",
+  "mealDetailCurrentSelectionLabel": "(+{kcal} kcal current selection)",
+  "mealDetailDayTotalLabel": "Day total: {consumed} / {goal}",
   "mealEnergyLabel": "Energy",
   "mealFatLabel": "Fat",
   "mealImageLabel": "Add a photo",
@@ -526,11 +454,20 @@
   "milliliterUnit": "ml",
   "missingProductInfo": "Product missing required kcal or macronutrients information",
   "monounsaturatedFatLabel": "monounsaturated fat",
+  "newCustomMealLabel": "New Custom Food",
   "niacinLabel": "niacin (B3)",
+  "noActivityRecentlyAddedLabel": "No activity recently added",
+  "noMealsRecentlyAddedLabel": "No meals recently added",
   "noResultsFound": "No results found",
   "notAvailableLabel": "N/A",
   "nothingAddedLabel": "Nothing added",
+  "notificationsDailyReminderBody": "Don't forget to log your meals today!",
+  "notificationsDailyReminderChannelName": "Daily Reminders",
+  "notificationsDailyReminderChannelDescription": "Daily meal logging reminder",
+  "notificationsDailyReminderTitle": "OpenNutriTracker",
+  "notificationsPermissionDeniedSnack": "Notification permission denied.",
   "nutrientPanelAllHiddenLabel": "All nutrients hidden — turn some on in Settings → Nutrients.",
+  "nutrientPanelLimitLabel": "limit",
   "nutrientPanelDayLabel": "Day",
   "nutrientPanelWeekLabel": "Week",
   "nutritionInfoLabel": "Nutrition Information",
@@ -548,10 +485,32 @@
   "nutritionalStatusRiskVerySevere": "Very severe",
   "nutritionalStatusUnderweight": "Underweight",
   "offDisclaimer": "The data provided to you by this app are retrieved from the Open Food Facts database. No guarantees can be made for the accuracy, completeness, or reliability of the information provided. The data are provided \"as is\" and the originating source for the data (Open Food Facts) is not liable for any damages arising out of the use of the data.",
+  "onboardingActivityQuestionSubtitle": "How active are you? (without workouts)",
+  "onboardingBirthdayHint": "Enter Date",
+  "onboardingBirthdayQuestionSubtitle": "When is your birthday?",
+  "onboardingEnterBirthdayLabel": "Birthday",
+  "onboardingGenderQuestionSubtitle": "What's your gender?",
+  "onboardingGoalQuestionSubtitle": "What's your current weight goal?",
+  "onboardingHeightExampleHintCm": "e.g. 170",
+  "onboardingHeightExampleHintFt": "e.g. 5.8",
+  "onboardingHeightQuestionSubtitle": "What's your current height?",
+  "onboardingIntroDescription": "To start, the app needs some information about you to calculate your daily calorie goal.\nAll information about you is stored securely on your device.",
+  "onboardingIntroSourcesLinkLabel": "Read our medical calculation sources",
+  "onboardingKcalPerDayLabel": "kcal per day",
   "onboardingKjPerDayLabel": "kJ per day",
   "onboardingNonBinaryDisclaimer": "There's no published non-binary calorie baseline, so by default we use an average of the male and female formulas — a starting point, not a precise estimate. You can fine-tune anytime in Settings → Calculations.",
+  "onboardingOverviewLabel": "Overview",
+  "onboardingSaveUserError": "Wrong input, please try again",
   "onboardingTargetWeightHintOptional": "Optional",
   "onboardingTargetWeightSubtitle": "Is there a weight you're working towards? You can leave this blank or change it later in Profile.",
+  "onboardingWeightExampleHintKg": "e.g. 60",
+  "onboardingWeightExampleHintLbs": "e.g. 132",
+  "onboardingWeightQuestionSubtitle": "What's your current weight?",
+  "onboardingWelcomeLabel": "Welcome to",
+  "onboardingWrongHeightLabel": "Enter correct height",
+  "onboardingWrongWeightLabel": "Enter correct weight",
+  "onboardingYourGoalLabel": "Your calorie goal:",
+  "onboardingYourMacrosGoalLabel": "Your macronutrient goals:",
   "ozUnit": "oz",
   "paActiveVideoGames": "active video games",
   "paActiveVideoGamesDesc": "Wii Sports, Dance Dance Revolution, general",
@@ -786,6 +745,7 @@
   "polyunsaturatedFatLabel": "polyunsaturated fat",
   "potassiumLabel": "potassium",
   "privacyPolicyLabel": "Privacy policy",
+  "profileLabel": "Profile",
   "profileTargetWeightClearAction": "Clear",
   "profileTargetWeightLabel": "Target weight",
   "profileTargetWeightNotSetLabel": "Not set",
@@ -795,14 +755,56 @@
   "proteinLabel": "protein",
   "proteinLabelShort": "p",
   "quantityLabel": "Quantity",
+  "quickAddAddedSnack": "Added to {mealType}",
+  "quickAddBottomSheetTitle": "Quick add",
+  "quickAddCardLabel": "Quick add",
+  "quickAddCarbsHint": "Carbs (g, optional)",
+  "quickAddDefaultName": "Quick add",
+  "quickAddEnergyLabelKcal": "Energy (kcal)",
+  "quickAddEnergyLabelKj": "Energy (kJ)",
+  "quickAddFatHint": "Fat (g, optional)",
+  "quickAddProteinHint": "Protein (g, optional)",
+  "quickAddSubmitLabel": "Add",
+  "quickAddTitleHint": "Title",
   "readLabel": "I have read and accept the privacy policy.",
+  "recentlyAddedLabel": "Recently",
+  "recipeAddIngredientLabel": "Add Ingredient",
+  "recipeDeleteConfirmContent": "Past diary entries logged from this recipe will be kept.",
+  "recipeDeleteConfirmTitle": "Delete recipe?",
+  "recipeDescriptionLabel": "Description (optional)",
   "recipeImageLabel": "Add a photo",
   "recipeImagePickFromGallery": "Choose from gallery",
   "recipeImageRemove": "Remove photo",
   "recipeImageReplace": "Replace photo",
   "recipeImageTakePhoto": "Take photo",
+  "recipeIngredientAmountLabel": "Amount",
+  "recipeIngredientCountLabel": "{count} ingredient(s)",
+  "recipeIngredientUnitLabel": "Unit",
+  "recipeIngredientsLabel": "Ingredients",
+  "recipeInvalidTotalWeightLabel": "Total weight must be greater than zero",
+  "recipeLogCtaLabel": "Log this Recipe",
+  "recipeNameLabel": "Recipe name",
+  "recipeNameRequiredLabel": "Recipe needs a name",
+  "recipeNeedsIngredientsLabel": "Add at least one ingredient",
+  "recipeNoIngredientsLabel": "No ingredients yet",
+  "recipeNutritionPer100Label": "Per 100 g",
+  "recipeNutritionPreviewLabel": "Nutrition (total)",
+  "recipeSaveErrorLabel": "Could not save recipe.",
   "recipeSaveForLaterDescription": "Turn this on to keep this meal in your saved list for next time. Leave it off for a one-off you won't eat again.",
   "recipeSaveForLaterLabel": "Save for next time",
+  "recipeSaveLabel": "Save Recipe",
+  "recipeServingsCountHelper": "Lets you log this recipe by serving instead of grams.",
+  "recipeServingsCountLabel": "Servings (optional)",
+  "recipeTagsHelper": "Comma-separated, e.g. \"breakfast, vegan\"",
+  "recipeTagsLabel": "Tags",
+  "recipeTotalWeightHelper": "Defaults to sum of ingredients. Liquids approximated as 1 ml ≈ 1 g.",
+  "recipeTotalWeightLabel": "Total weight (g)",
+  "recipesEmptyHint": "Build a meal from multiple ingredients and reuse it like any other food.",
+  "recipesEmptyLabel": "No recipes yet",
+  "recipesFilterAllLabel": "All",
+  "recipesLabel": "Recipes",
+  "recipesLoadErrorLabel": "Could not load recipes. Try again later.",
+  "reportErrorDialogText": "Do you want to report an error to the developer?",
   "retryLabel": "Retry",
   "saturatedFatLabel": "saturated fat",
   "scanProductLabel": "Scan Product",
@@ -816,31 +818,41 @@
   "searchFoodPage": "Food",
   "searchLabel": "Search",
   "searchProductsPage": "Products",
-  "searchSwissFoodPage": "Swiss Food",
   "searchResultsLabel": "Search results",
+  "searchSwissFoodPage": "Swiss Food",
   "selectGenderDialogLabel": "Select Gender",
   "selectHeightDialogLabel": "Select Height",
   "selectPalCategoryLabel": "Select Activity Level",
   "selectWeightDialogLabel": "Select Weight",
+  "selectionCountLabel": "{count} selected",
+  "sendAnonymousUserData": "Send anonymous usage data",
   "servingLabel": "Serving",
   "servingSizeLabelImperial": "Serving size (oz/fl oz)",
   "servingSizeLabelMetric": "Serving size (g/ml)",
+  "settingAboutLabel": "About",
+  "settingFeedbackLabel": "Feedback",
   "settingsCalciumGoalDescription": "Daily calcium target in milligrams. Default reference is 1000mg.",
   "settingsCalciumGoalLabel": "Calcium goal",
+  "settingsCalculationsLabel": "Calculations",
   "settingsCaloriesTaperDescription": "Reduces the daily deficit gradually so the last few kg don't feel like a wall.",
   "settingsCaloriesTaperLabel": "Adjust calorie goal as you approach target",
+  "settingsCustomMealsLabel": "Custom Meals",
   "settingsDayStartDescription": "Choose the hour at which your day begins. Meals and activities logged before this hour count toward the previous day — useful if you work nights or eat late.",
   "settingsDayStartHourLabel": "{hour}:00",
   "settingsDayStartHoursPickerLabel": "Hours",
   "settingsDayStartLabel": "Day starts at",
   "settingsDayStartMinutesPickerLabel": "Minutes",
   "settingsDayStartTimeLabel": "{hour}:{minute}",
+  "settingsDisclaimerLabel": "Disclaimer",
+  "settingsDistanceLabel": "Distance",
   "settingsEnergyUnitLabel": "Energy unit",
   "settingsFibreGoalDescription": "Daily fibre target in grams. Default reference is 30g.",
   "settingsFibreGoalLabel": "Fibre goal",
+  "settingsImperialLabel": "Imperial (lbs, ft, oz)",
   "settingsKcalAdjustmentLabel": "Daily kcal adjustment",
   "settingsIronGoalDescription": "Daily iron target in milligrams. Default varies by gender (8mg male, 18mg female, 14mg otherwise).",
   "settingsIronGoalLabel": "Iron goal",
+  "settingsLabel": "Settings",
   "settingsLanguageLabel": "Language",
   "settingsMaterialYouTitle": "Use system colours",
   "settingsMaterialYouSubtitle": "Match your wallpaper accent on Android 12 and newer.",
@@ -857,8 +869,13 @@
   "settingsAccentHueDisabledHint": "Turn off system colours to choose a custom accent.",
   "settingsAccentHueReset": "Reset",
   "settingsMacroSplitLabel": "Macro split",
+  "settingsLicensesLabel": "Licenses",
   "settingsMagnesiumGoalDescription": "Daily magnesium target in milligrams. Default varies by gender (400mg male, 310mg female, 355mg otherwise).",
   "settingsMagnesiumGoalLabel": "Magnesium goal",
+  "settingsMassLabel": "Mass",
+  "settingsMetricLabel": "Metric (kg, cm, ml)",
+  "settingsNotificationsLabel": "Daily Reminder",
+  "settingsNotificationsTimeLabel": "Reminder time: {time}",
   "settingsNutrientGoalsHint": "Personal targets for every nutrient on the daily panel. The diary uses these in place of the default daily references whenever you set one.",
   "settingsNutrientGoalsLabel": "Nutrient goals",
   "settingsNutrientsHelp": "Choose which nutrients are visible on the daily panel. Hidden ones can be turned back on at any time.",
@@ -872,24 +889,52 @@
   "settingsPerMealKcalShareSnack": "Snack",
   "settingsPotassiumGoalDescription": "Daily potassium target in milligrams. Default reference is 3500mg.",
   "settingsPotassiumGoalLabel": "Potassium goal",
+  "settingsPrivacySettings": "Privacy Settings",
+  "settingsReportErrorLabel": "Report Error",
   "settingsSaturatedFatGoalDescription": "Daily saturated fat cap in grams. Default reference is 20g.",
   "settingsSaturatedFatGoalLabel": "Saturated fat goal",
+  "settingsShowActivityTracking": "Show Activity Tracking",
+  "settingsShowMealMacros": "Show Meal Macros",
+  "settingsShowMicronutrientsLabel": "Show Micronutrients",
   "settingsSodiumGoalDescription": "Daily sodium cap in milligrams. Default reference is 2300mg.",
   "settingsSodiumGoalLabel": "Sodium goal",
+  "settingsSourceCodeLabel": "Source Code",
+  "settingsSourcesLabel": "Sources & References",
   "settingsSugarsGoalDescription": "Daily sugars cap in grams. Default reference is 50g.",
   "settingsSugarsGoalLabel": "Sugars goal",
+  "settingsSystemLabel": "System",
+  "settingsThemeDarkLabel": "Dark",
+  "settingsThemeLabel": "Theme",
+  "settingsThemeLightLabel": "Light",
+  "settingsThemeSystemDefaultLabel": "System default",
+  "settingsUnitsLabel": "Units",
   "settingsVitaminB12GoalDescription": "Daily vitamin B12 target in micrograms. Default reference is 2.4µg.",
   "settingsVitaminB12GoalLabel": "Vitamin B12 goal",
   "settingsVitaminDGoalDescription": "Daily vitamin D target in micrograms. Default reference is 15µg.",
   "settingsVitaminDGoalLabel": "Vitamin D goal",
+  "settingsVolumeLabel": "Volume",
   "shareActivityLabel": "Share workout",
   "shareCodeLabel": "Share code",
   "shareMealLabel": "Share meal",
+  "shareRecipeLabel": "Share recipe",
   "snackExample": "e.g. apple, ice cream, chocolate ...",
   "snackLabel": "Snack",
   "sodiumLabel": "sodium",
+  "sourcesActivityDescription": "Calories burned during an activity are estimated as MET × body weight (kg) × duration (hours), using values from the Adult Compendium of Physical Activities.",
+  "sourcesActivityTitle": "Activity calories (MET values)",
+  "sourcesBmiDescription": "BMI is computed as weight (kg) divided by height squared (m²). The health categories (underweight, normal, pre-obesity, obesity class I–III) follow the World Health Organization's adult BMI classification.",
+  "sourcesBmiTitle": "Body Mass Index (BMI)",
+  "sourcesEnergyDescription": "Daily calorie targets, basal metabolic rate, and physical activity coefficients use the equations from the Institute of Medicine. Source: Institute of Medicine (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids, Chapter 5 and Table 5-5.",
+  "sourcesEnergyTitle": "Energy needs (TDEE, BMR & activity level)",
+  "sourcesIconTooltip": "View sources",
+  "sourcesMacrosDescription": "The default split of 60% carbohydrates, 25% fat, and 15% protein falls within the population nutrient intake ranges published by the WHO. You can adjust this in Settings → Calculations. Source: WHO Technical Report Series 916 (2003), Diet, Nutrition and the Prevention of Chronic Diseases.",
+  "sourcesMacrosTitle": "Macronutrient distribution",
+  "sourcesNonBinaryDescription": "Energy-expenditure research has historically used binary sex categories, so there is no single validated TDEE formula for non-binary people. OpenNutriTracker therefore lets you choose between an averaged reference, an estrogen-typical reference, or a testosterone-typical reference under Settings → Calculations. If an accurate number genuinely matters for your care, please speak to a clinician familiar with your hormone status.",
   "sourcesNutrientReferenceTitle": "Nutrient reference intakes",
   "sourcesNutrientReferenceDescription": "Daily reference amounts shown on the diary nutrient panel come from the Institute of Medicine's Dietary Reference Intakes summary, which covers per-nutrient targets for adults.",
+  "sourcesNonBinaryTitle": "Non-binary calorie estimation",
+  "sourcesOpenSourceLabel": "View source",
+  "sourcesScreenIntro": "OpenNutriTracker uses well-established, peer-reviewed methodologies for every calculation it shows. The citations below link to the original sources so you can verify any number yourself.",
   "sugarLabel": "sugar",
   "suppliedLabel": "supplied",
   "transFatLabel": "trans fat",
@@ -899,6 +944,7 @@
   "vitaminB6Label": "vitamin B6",
   "vitaminCLabel": "vitamin C",
   "vitaminDLabel": "vitamin D",
+  "warningLabel": "Warning",
   "weeklyWeightGoalKgPerWeek": "{rate} kg/week",
   "weeklyWeightGoalLabel": "Weekly rate",
   "weeklyWeightGoalLbsPerWeek": "{rate} lbs/week",
@@ -963,42 +1009,30 @@
   "customMealsMergeConfirmContent": "This will replace all entries logged with {loser} so they show {winner} instead, and remove {loser} from your custom foods. This can't be undone.",
   "@customMealsMergeConfirmContent": {
     "placeholders": {
-      "loser": {
-        "type": "String"
-      },
-      "winner": {
-        "type": "String"
-      }
+      "loser": { "type": "String" },
+      "winner": { "type": "String" }
     }
   },
   "customMealsMergeConfirmAction": "Merge",
   "customMealsMergeSuccessSnackbarOne": "Merged — {winner} now has 1 logged entry.",
   "@customMealsMergeSuccessSnackbarOne": {
-    "placeholders": {
-      "winner": {
-        "type": "String"
-      }
-    }
+    "placeholders": { "winner": { "type": "String" } }
   },
   "customMealsMergeSuccessSnackbarOther": "Merged — {winner} now has {count} logged entries.",
   "@customMealsMergeSuccessSnackbarOther": {
     "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "winner": {
-        "type": "String"
-      }
+      "count": { "type": "int" },
+      "winner": { "type": "String" }
     }
   },
   "fastingHomeChipBody": "Fasting · {remaining} left",
   "@fastingHomeChipBody": {
     "placeholders": {
-      "remaining": {
-        "type": "String"
-      }
+      "remaining": { "type": "String" }
     }
   },
+  "fastingNotificationChannelName": "Fasting timer",
+  "fastingNotificationChannelDescription": "One-off pings when a fasting session reaches its target.",
   "fastingNotificationCompleteTitle": "Fasting session complete",
   "fastingNotificationCompleteBody": "Your target time has been reached."
 }

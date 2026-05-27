@@ -64,24 +64,35 @@ Future<void> main() async {
   final isUserInitialized = await locator<UserDataSource>().hasUserData();
   final configRepo = locator<ConfigRepository>();
 
-  // #312: Restore scheduled notifications after app start / device reboot
   final config = await configRepo.getConfig();
+  final savedLocaleCode = await configRepo.getSelectedLocale();
+  final savedLocale =
+      savedLocaleCode != null ? Locale(savedLocaleCode) : null;
+
+  // #312: Restore scheduled notifications after app start / device reboot.
+  // Load the user's localized strings first — there's no widget tree yet, so
+  // S is driven directly off the saved (or device) locale. Android re-applies
+  // the channel name/description on every (re)registration, and they surface
+  // in the OS settings, so this keeps them in the user's language instead of
+  // reverting to English on each launch.
   if (config.notificationsEnabled) {
+    await S.load(
+        savedLocale ?? WidgetsBinding.instance.platformDispatcher.locale);
+    final s = S.current;
     final notificationService = locator<NotificationService>();
     await notificationService.initialize();
     await notificationService.scheduleDailyReminder(
       hour: config.notificationHour,
       minute: config.notificationMinute,
-      title: 'OpenNutriTracker',
-      body: 'Don\'t forget to log your meals today!',
+      title: s.notificationsDailyReminderTitle,
+      body: s.notificationsDailyReminderBody,
+      channelName: s.notificationsDailyReminderChannelName,
+      channelDescription: s.notificationsDailyReminderChannelDescription,
     );
   }
   final hasAcceptedAnonymousData =
       await configRepo.getConfigHasAcceptedAnonymousData();
   final savedAppTheme = await configRepo.getConfigAppTheme();
-  final savedLocaleCode = await configRepo.getSelectedLocale();
-  final savedLocale =
-      savedLocaleCode != null ? Locale(savedLocaleCode) : null;
   final savedUsesKilojoules = config.usesKilojoules;
   final savedUseMaterialYou = config.useMaterialYou;
   final savedAccentColor = config.accentColor;

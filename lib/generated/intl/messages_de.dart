@@ -100,8 +100,21 @@ class MessageLookup extends MessageLookupByLibrary {
   static String mMergeOneDe(winner) => "Zusammengeführt — ${winner} hat jetzt 1 Eintrag.";
   static String mFastingChipDe(remaining) => "Fasten · noch ${remaining}";
 
+  static String mMealDetailDayTotal(consumed, goal) =>
+      "Tagessumme: ${consumed} / ${goal}";
+
+  static String mMealDetailCurrentSelection(kcal) =>
+      "(+${kcal} kcal aktuelle Auswahl)";
+
+  static String mQuickAddAdded(mealType) => "Zu ${mealType} hinzugefügt";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("Limit"),
+        "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Tägliche Erinnerungen"),
+        "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Tägliche Erinnerung zum Erfassen deiner Mahlzeiten"),
+        "fastingNotificationChannelName": MessageLookupByLibrary.simpleMessage("Fasten-Timer"),
+        "fastingNotificationChannelDescription": MessageLookupByLibrary.simpleMessage("Einmalige Hinweise, wenn eine Fastenphase ihr Ziel erreicht."),
         "activityExample": MessageLookupByLibrary.simpleMessage(
             "z. B. Laufen, Radfahren, Yoga ..."),
         "activityLabel": MessageLookupByLibrary.simpleMessage("Aktivität"),
@@ -448,6 +461,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "mealBrandsLabel": MessageLookupByLibrary.simpleMessage("Marken"),
         "mealCarbsLabel":
             MessageLookupByLibrary.simpleMessage("Kohlenhydrate"),
+        "mealDetailCurrentSelectionLabel": mMealDetailCurrentSelection,
+        "mealDetailDayTotalLabel": mMealDetailDayTotal,
         "mealFatLabel":
             MessageLookupByLibrary.simpleMessage("Fett"),
         "mealKcalLabel":
@@ -947,6 +962,26 @@ class MessageLookup extends MessageLookupByLibrary {
         "proteinLabel": MessageLookupByLibrary.simpleMessage("Protein"),
         "proteinLabelShort": MessageLookupByLibrary.simpleMessage("p"),
         "quantityLabel": MessageLookupByLibrary.simpleMessage("Menge"),
+        "quickAddAddedSnack": mQuickAddAdded,
+        "quickAddBottomSheetTitle":
+            MessageLookupByLibrary.simpleMessage("Schnelles Tracking"),
+        "quickAddCardLabel":
+            MessageLookupByLibrary.simpleMessage("Schnelles Tracking"),
+        "quickAddCarbsHint": MessageLookupByLibrary.simpleMessage(
+            "Kohlenhydrate (g, optional)"),
+        "quickAddDefaultName":
+            MessageLookupByLibrary.simpleMessage("Schnelles Tracking"),
+        "quickAddEnergyLabelKcal":
+            MessageLookupByLibrary.simpleMessage("Energie (kcal)"),
+        "quickAddEnergyLabelKj":
+            MessageLookupByLibrary.simpleMessage("Energie (kJ)"),
+        "quickAddFatHint":
+            MessageLookupByLibrary.simpleMessage("Fett (g, optional)"),
+        "quickAddProteinHint":
+            MessageLookupByLibrary.simpleMessage("Protein (g, optional)"),
+        "quickAddSubmitLabel":
+            MessageLookupByLibrary.simpleMessage("Hinzufügen"),
+        "quickAddTitleHint": MessageLookupByLibrary.simpleMessage("Titel"),
         "readLabel": MessageLookupByLibrary.simpleMessage(
             "Ich habe die Datenschutzbestimmungen gelesen und akzeptiere sie."),
         "recentlyAddedLabel": MessageLookupByLibrary.simpleMessage("Kürzlich"),

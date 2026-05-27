@@ -154,6 +154,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _settingsBloc.setShowActivityTracking(value);
                     _settingsBloc.add(LoadSettingsEvent());
                     _homeBloc.add(LoadItemsEvent());
+                    // DiaryBloc is a lazy singleton so its loaded state
+                    // survives navigation. Without an explicit reload here the
+                    // diary keeps the stale flag and the per-day Activity
+                    // section stays visible after the user has toggled off.
+                    _diaryBloc.add(const LoadDiaryYearEvent());
                   },
                 ),
                 SwitchListTile(
@@ -401,6 +406,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         minute: state.notificationMinute,
         title: l10n.notificationsDailyReminderTitle,
         body: l10n.notificationsDailyReminderBody,
+        channelName: l10n.notificationsDailyReminderChannelName,
+        channelDescription: l10n.notificationsDailyReminderChannelDescription,
       );
     } else {
       await notificationService.cancelDailyReminder();
@@ -423,6 +430,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       minute: picked.minute,
       title: l10n.notificationsDailyReminderTitle,
       body: l10n.notificationsDailyReminderBody,
+      channelName: l10n.notificationsDailyReminderChannelName,
+      channelDescription: l10n.notificationsDailyReminderChannelDescription,
     );
     _settingsBloc.add(LoadSettingsEvent());
   }
@@ -958,7 +967,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         applicationName: S.of(context).appTitle,
         applicationIcon: SizedBox(
           width: 40,
-          child: Image.asset('assets/icon/ont_logo_square.png'),
+          child: Image.asset(
+            Theme.of(context).brightness == Brightness.dark
+                ? 'assets/icon/ont_logo_square_color_white_1024x1024.png'
+                : 'assets/icon/ont_logo_square_color_back_1024x1024.png',
+          ),
         ),
         applicationVersion: packageInfo.version,
         applicationLegalese: S.of(context).appLicenseLabel,

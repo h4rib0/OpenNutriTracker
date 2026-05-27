@@ -749,6 +749,7 @@ class _NutrientRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final ratio = reference > 0 ? value / reference : 0.0;
     final clamped = ratio.clamp(0.0, 1.0).toDouble();
     final color = _colorForRatio(context, ratio);
@@ -770,14 +771,36 @@ class _NutrientRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                valueLabel,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // For ceiling nutrients (sodium, saturated fat, sugar) the
+                  // reference is a limit to stay under, not a target to reach.
+                  // A small qualifier says so, since the bare "x / y" reads as
+                  // a goal otherwise.
+                  if (excessMatters) ...[
+                    Text(
+                      s.nutrientPanelLimitLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.6),
+                            fontStyle: FontStyle.italic,
+                          ),
                     ),
+                    const SizedBox(width: 6.0),
+                  ],
+                  Text(
+                    valueLabel,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.8),
+                        ),
+                  ),
+                ],
               ),
             ],
           ),

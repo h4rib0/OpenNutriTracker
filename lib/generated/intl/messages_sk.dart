@@ -98,8 +98,21 @@ class MessageLookup extends MessageLookupByLibrary {
   static String mMergeOneSk(winner) => "Zlúčené — ${winner} má teraz 1 záznam.";
   static String mFastingChipSk(remaining) => "Pôst · zostáva ${remaining}";
 
+  static String mMealDetailDayTotal(consumed, goal) =>
+      "Denný súčet: ${consumed} / ${goal}";
+
+  static String mMealDetailCurrentSelection(kcal) =>
+      "(+${kcal} kcal aktuálny výber)";
+
+  static String mQuickAddAdded(mealType) => "Pridané do ${mealType}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("limit"),
+        "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Denné pripomenutia"),
+        "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Denné pripomenutie na zaznamenanie jedál"),
+        "fastingNotificationChannelName": MessageLookupByLibrary.simpleMessage("Časovač pôstu"),
+        "fastingNotificationChannelDescription": MessageLookupByLibrary.simpleMessage("Jednorazové upozornenia, keď pôst dosiahne svoj cieľ."),
         "activityExample": MessageLookupByLibrary.simpleMessage(
             "napr. beh, cyklistika, joga ..."),
         "activityLabel": MessageLookupByLibrary.simpleMessage("Aktivita"),
@@ -424,6 +437,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "magnesiumLabel": MessageLookupByLibrary.simpleMessage("horčík"),
         "mealBrandsLabel": MessageLookupByLibrary.simpleMessage("Značky"),
         "mealCarbsLabel": MessageLookupByLibrary.simpleMessage("Sacharidy"),
+        "mealDetailCurrentSelectionLabel": mMealDetailCurrentSelection,
+        "mealDetailDayTotalLabel": mMealDetailDayTotal,
         "mealFatLabel": MessageLookupByLibrary.simpleMessage("Tuky"),
         "mealKcalLabel": MessageLookupByLibrary.simpleMessage("kcal"),
         "mealNameLabel": MessageLookupByLibrary.simpleMessage("Názov jedla"),
@@ -504,6 +519,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Aká je vaša aktuálna výška?"),
         "onboardingIntroDescription": MessageLookupByLibrary.simpleMessage(
             "Na začiatok potrebuje aplikácia o vás niekoľko informácií, aby mohla vypočítať váš denný kalorický cieľ.\nVšetky informácie o vás sú bezpečne uložené iba vo vašom zariadení."),
+        "onboardingIntroSourcesLinkLabel": MessageLookupByLibrary.simpleMessage(
+            "Prečítať zdroje našich zdravotných výpočtov"),
         "onboardingKcalPerDayLabel":
             MessageLookupByLibrary.simpleMessage("kcal za deň"),
         "onboardingNonBinaryDisclaimer": MessageLookupByLibrary.simpleMessage(
@@ -909,6 +926,25 @@ class MessageLookup extends MessageLookupByLibrary {
         "proteinLabel": MessageLookupByLibrary.simpleMessage("bielkoviny"),
         "proteinLabelShort": MessageLookupByLibrary.simpleMessage("b"),
         "quantityLabel": MessageLookupByLibrary.simpleMessage("Množstvo"),
+        "quickAddAddedSnack": mQuickAddAdded,
+        "quickAddBottomSheetTitle":
+            MessageLookupByLibrary.simpleMessage("Rýchle pridanie"),
+        "quickAddCardLabel":
+            MessageLookupByLibrary.simpleMessage("Rýchle pridanie"),
+        "quickAddCarbsHint":
+            MessageLookupByLibrary.simpleMessage("Sacharidy (g, voliteľné)"),
+        "quickAddDefaultName":
+            MessageLookupByLibrary.simpleMessage("Rýchle pridanie"),
+        "quickAddEnergyLabelKcal":
+            MessageLookupByLibrary.simpleMessage("Energia (kcal)"),
+        "quickAddEnergyLabelKj":
+            MessageLookupByLibrary.simpleMessage("Energia (kJ)"),
+        "quickAddFatHint":
+            MessageLookupByLibrary.simpleMessage("Tuky (g, voliteľné)"),
+        "quickAddProteinHint":
+            MessageLookupByLibrary.simpleMessage("Bielkoviny (g, voliteľné)"),
+        "quickAddSubmitLabel": MessageLookupByLibrary.simpleMessage("Pridať"),
+        "quickAddTitleHint": MessageLookupByLibrary.simpleMessage("Názov"),
         "readLabel": MessageLookupByLibrary.simpleMessage(
             "Prečítal/a som si a súhlasím so zásadami ochrany súkromia."),
         "recentlyAddedLabel": MessageLookupByLibrary.simpleMessage("Nedávno"),

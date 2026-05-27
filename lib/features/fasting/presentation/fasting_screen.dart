@@ -363,6 +363,8 @@ class _FastingScreenState extends State<FastingScreen> {
       when: when,
       title: l10n.fastingNotificationCompleteTitle,
       body: l10n.fastingNotificationCompleteBody,
+      channelName: l10n.fastingNotificationChannelName,
+      channelDescription: l10n.fastingNotificationChannelDescription,
     );
   }
 

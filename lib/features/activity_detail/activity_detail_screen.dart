@@ -181,7 +181,10 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                   const SizedBox(height: 8.0),
                   const Divider(),
                   const SizedBox(height: 48.0),
-                  const ActivityInfoButton(),
+                  // The Compendium attribution only makes sense for the
+                  // built-in activities it actually sourced. Custom activities
+                  // are user-entered, so the citation would be misleading.
+                  if (!activityEntity.isCustom) const ActivityInfoButton(),
                   const SizedBox(height: 200.0), // height added to scroll
                 ],
               ),

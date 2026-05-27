@@ -8,13 +8,13 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationService {
   static const int _dailyReminderId = 0;
   static const int _fastingCompleteId = 1;
+  // Channel IDs are stable, locale-independent handles the OS keys each
+  // channel by — they must never be translated. The user-facing channel
+  // name and description are passed in localized by the caller (see
+  // scheduleDailyReminder / scheduleFastingComplete), since they surface in
+  // the system notification settings.
   static const String _channelId = 'daily_reminder';
-  static const String _channelName = 'Daily Reminders';
-  static const String _channelDesc = 'Daily meal logging reminder';
   static const String _fastingChannelId = 'fasting_complete';
-  static const String _fastingChannelName = 'Fasting timer';
-  static const String _fastingChannelDesc =
-      'One-off pings when a fasting session reaches its target.';
 
   final _log = Logger('NotificationService');
   final FlutterLocalNotificationsPlugin _plugin =
@@ -70,14 +70,16 @@ class NotificationService {
     required int minute,
     required String title,
     required String body,
+    required String channelName,
+    required String channelDescription,
   }) async {
     await _ensureInitialized();
     await _plugin.cancel(_dailyReminderId);
 
     final androidDetails = AndroidNotificationDetails(
       _channelId,
-      _channelName,
-      channelDescription: _channelDesc,
+      channelName,
+      channelDescription: channelDescription,
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
     );
@@ -118,6 +120,8 @@ class NotificationService {
     required DateTime when,
     required String title,
     required String body,
+    required String channelName,
+    required String channelDescription,
   }) async {
     await _ensureInitialized();
     await _plugin.cancel(_fastingCompleteId);
@@ -125,8 +129,8 @@ class NotificationService {
     final scheduled = tz.TZDateTime.from(when, tz.local);
     final androidDetails = AndroidNotificationDetails(
       _fastingChannelId,
-      _fastingChannelName,
-      channelDescription: _fastingChannelDesc,
+      channelName,
+      channelDescription: channelDescription,
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
     );
