@@ -94,7 +94,9 @@ class ConfigDBO extends HiveObject {
   // the static palette elsewhere.
   @HiveField(26)
   int? accentColor;
-  @HiveField(27)
+  // Fork-only field: kept far above upstream's range so upstream can keep
+  // adding fields without colliding (27 was taken by scannerPortraitLock).
+  @HiveField(200)
   bool? syncNutrientsToSupabase; // null means default (false)
 
   ConfigDBO(

@@ -41,7 +41,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         fastingWarningAcknowledged: fields[25] as bool?,
         useMaterialYou: fields[20] as bool?,
         accentColor: (fields[26] as num?)?.toInt(),
-        syncNutrientsToSupabase: fields[27] as bool?,
+        syncNutrientsToSupabase: fields[200] as bool?,
       )
       ..userCarbGoalPct = (fields[6] as num?)?.toDouble()
       ..userProteinGoalPct = (fields[7] as num?)?.toDouble()
@@ -106,7 +106,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..write(obj.fastingWarningAcknowledged)
       ..writeByte(26)
       ..write(obj.accentColor)
-      ..writeByte(27)
+      ..writeByte(200)
       ..write(obj.syncNutrientsToSupabase);
   }
 

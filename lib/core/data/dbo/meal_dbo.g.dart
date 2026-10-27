@@ -96,6 +96,8 @@ class MealSourceDBOAdapter extends TypeAdapter<MealSourceDBO> {
         return MealSourceDBO.fdc;
       case 4:
         return MealSourceDBO.recipe;
+      case 5:
+        return MealSourceDBO.sfcd;
       default:
         return MealSourceDBO.unknown;
     }
