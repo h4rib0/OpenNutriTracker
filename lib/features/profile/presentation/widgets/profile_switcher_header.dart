@@ -7,7 +7,8 @@ import 'package:opennutritracker/features/profile/presentation/widgets/profile_s
 import 'package:opennutritracker/generated/l10n.dart';
 
 /// Tappable header at the top of the Profile tab showing who is active
-/// and opening the switcher sheet.
+/// and opening the switcher sheet. Not `const` — the active profile may
+/// have been renamed, so the header needs to rebuild after a save.
 class ProfileSwitcherHeader extends StatelessWidget {
   const ProfileSwitcherHeader({super.key});
 

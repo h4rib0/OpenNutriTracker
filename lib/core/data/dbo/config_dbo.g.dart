@@ -46,6 +46,11 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         usesImperialHeightUnits: fields[29] as bool?,
         bodyWeightUnitIndex: (fields[30] as num?)?.toInt(),
         foodSourceToggles: (fields[31] as Map?)?.cast<String, bool>(),
+        isDemoData: fields[32] as bool?,
+        healthImportEnabled: fields[33] as bool?,
+        healthWorkoutKcalMultiplier: (fields[34] as num?)?.toDouble(),
+        healthLastImportAt: fields[35] as DateTime?,
+        healthDeletedExternalIds: (fields[36] as List?)?.cast<String>(),
         syncNutrientsToSupabase: fields[200] as bool?,
         useBodyWeightMacros: fields[201] as bool?,
       )
@@ -57,7 +62,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
   @override
   void write(BinaryWriter writer, ConfigDBO obj) {
     writer
-      ..writeByte(34)
+      ..writeByte(39)
       ..writeByte(0)
       ..write(obj.hasAcceptedDisclaimer)
       ..writeByte(1)
@@ -122,6 +127,16 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..write(obj.bodyWeightUnitIndex)
       ..writeByte(31)
       ..write(obj.foodSourceToggles)
+      ..writeByte(32)
+      ..write(obj.isDemoData)
+      ..writeByte(33)
+      ..write(obj.healthImportEnabled)
+      ..writeByte(34)
+      ..write(obj.healthWorkoutKcalMultiplier)
+      ..writeByte(35)
+      ..write(obj.healthLastImportAt)
+      ..writeByte(36)
+      ..write(obj.healthDeletedExternalIds)
       ..writeByte(200)
       ..write(obj.syncNutrientsToSupabase)
       ..writeByte(201)
@@ -182,6 +197,17 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) =>
         bodyWeightUnitIndex: (json['bodyWeightUnitIndex'] as num?)?.toInt(),
         foodSourceToggles: (json['foodSourceToggles'] as Map<String, dynamic>?)
             ?.map((k, e) => MapEntry(k, e as bool)),
+        isDemoData: json['isDemoData'] as bool?,
+        healthImportEnabled: json['healthImportEnabled'] as bool?,
+        healthWorkoutKcalMultiplier:
+            (json['healthWorkoutKcalMultiplier'] as num?)?.toDouble(),
+        healthLastImportAt: json['healthLastImportAt'] == null
+            ? null
+            : DateTime.parse(json['healthLastImportAt'] as String),
+        healthDeletedExternalIds:
+            (json['healthDeletedExternalIds'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList(),
         syncNutrientsToSupabase: json['syncNutrientsToSupabase'] as bool?,
         useBodyWeightMacros: json['useBodyWeightMacros'] as bool?,
       )
@@ -222,6 +248,11 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
   'usesImperialHeightUnits': instance.usesImperialHeightUnits,
   'bodyWeightUnitIndex': instance.bodyWeightUnitIndex,
   'foodSourceToggles': instance.foodSourceToggles,
+  'isDemoData': instance.isDemoData,
+  'healthImportEnabled': instance.healthImportEnabled,
+  'healthWorkoutKcalMultiplier': instance.healthWorkoutKcalMultiplier,
+  'healthLastImportAt': instance.healthLastImportAt?.toIso8601String(),
+  'healthDeletedExternalIds': instance.healthDeletedExternalIds,
   'syncNutrientsToSupabase': instance.syncNutrientsToSupabase,
   'useBodyWeightMacros': instance.useBodyWeightMacros,
 };

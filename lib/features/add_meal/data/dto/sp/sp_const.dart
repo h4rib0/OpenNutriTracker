@@ -38,6 +38,12 @@ class SPConst {
   static const translationFoodId = 'food_id';
   static const translationLocale = 'locale';
   static const translationDescription = 'description';
+  static const translationSource = 'source';
+
+  /// food_translation.source value for unreviewed machine translations
+  /// (DeepL/LLM). The app shows a small disclosure hint for these; the
+  /// other values (native, community, verified) involve a human and don't.
+  static const translationSourceMachine = 'machine';
 
   // Text-search configs matching the indexes in schema.sql:
   // food.description uses to_tsvector('english', ...), food_translation
@@ -49,6 +55,14 @@ class SPConst {
   /// (fdc_foundation, fdc_sr_legacy, fdc_survey). Only these foods have a
   /// public detail page to link to.
   static const fdcSourcePrefix = 'fdc';
+
+  /// food_source.code of the Bundeslebensmittelschlüssel.
+  static const blsSourceCode = 'bls';
+
+  /// BLS food-group letters (first character of the BLS code) that denote
+  /// beverages: N = alkoholfreie Getränke, P = alkoholische Getränke.
+  /// Used to default drinks to millilitre entry in the app.
+  static const blsBeverageGroups = {'N', 'P'};
 
   /// Human-readable names of the backend food sources, keyed by
   /// food_source.code. Proper nouns — shown as-is in every app language.

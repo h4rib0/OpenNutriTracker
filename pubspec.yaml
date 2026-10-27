@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.5.0+58
+version: 2.0.2+61
 
 environment:
   sdk: '>=3.11.0 <4.0.0'
@@ -34,12 +34,13 @@ dependencies:
 
 
   collection: ^1.19.1
+  meta: ^1.17.0
   intl: ^0.20.2
   get_it: ^9.2.1
   provider: ^6.1.5+1
   http: ^1.6.0
-  uuid: ^4.5.3
-  json_annotation: ^4.11.0
+  uuid: ^4.6.0
+  json_annotation: ^4.12.0
   logging: ^1.3.0
   path_provider: ^2.1.5
   flutter_secure_storage: ^10.0.0
@@ -48,15 +49,15 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_svg: ^2.2.4
   cached_network_image: ^3.4.1
-  flutter_cache_manager: ^3.4.1
-  envied: ^1.3.4
+  flutter_cache_manager: ^3.4.2
+  envied: ^1.3.8
   archive: 4.0.9
   file_picker: ^11.0.2
 
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0
   stream_transform: ^2.1.1
-  equatable: ^2.0.8
+  equatable: ^2.1.0
 
   percent_indicator: ^4.2.5
   horizontal_picker: ^1.2.0
@@ -68,22 +69,28 @@ dependencies:
 
   mobile_scanner: ^7.2.0
   qr_flutter: ^4.1.0
-  share_plus: ^10.0.0
-  image_picker: ^1.1.2
-  flutter_image_compress: ^2.4.0
+  share_plus: ^12.0.2
+  image_picker: ^1.2.3
+  flutter_image_compress: ^2.5.1
 
   hive_ce: ^2.19.3
   hive_ce_flutter: ^2.3.4
 
-  sentry_flutter: ^9.19.0
+  sentry_flutter: ^9.26.0
 
-  supabase_flutter: ^2.12.4
-  flutter_local_notifications: ^19.5.0
+  supabase_flutter: ^2.16.0
+  flutter_local_notifications: ^20.1.0
   timezone: ^0.10.1
-  flutter_timezone: ^3.0.0
+  flutter_timezone: ^5.1.0
 
   dynamic_color: ^1.7.0
   shared_preferences: ^2.3.5
+
+  # Health Connect (Android) / Apple Health (iOS) workout import. Every call
+  # sits behind HealthService so the plugin never loads under `flutter test`.
+  # Pinned below 13.3.2: that release pulls device_info_plus ^13.2.0, whose
+  # win32 ^6 constraint collides with package_info_plus ^9.0.1's win32 ^5.
+  health: ^13.1.4
 
 dev_dependencies:
   flutter_test:
@@ -91,29 +98,42 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
-  build_runner: ^2.15.0
-  json_serializable: ^6.13.2
+  build_runner: ^2.15.1
+  json_serializable: ^6.14.1
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
-  hive_ce_generator: ^1.11.1
-  envied_generator: ^1.3.4
+  hive_ce_generator: ^1.11.2
+  envied_generator: ^1.3.8
   mockito: ^5.6.4
   # Transitively required by image_picker; declared explicitly so tests
   # can stub PathProviderPlatform.instance for filesystem round-trips.
-  path_provider_platform_interface: ^2.1.2
+  path_provider_platform_interface: ^2.1.3
+  # Transitively required by share_plus; declared explicitly so widget tests
+  # can verify ShareParams at the plugin boundary.
+  share_plus_platform_interface: ^6.1.0
   plugin_platform_interface: ^2.1.8
 
 flutter:
+  generate: true
 
   uses-material-design: true
 
   assets:
     - assets/icon/ont_logo_square.svg
+    - assets/icon/ont_splash_rings.svg
+    - assets/icon/ont_splash_spoon.svg
     - assets/icon/ont_logo_square_color_back_1024x1024.png
     - assets/icon/ont_logo_square_color_white_1024x1024.png
     - assets/icon/ont_banner_top.png
     - assets/icon/ont_banner_top_light.png
     - assets/icon/nonbinary_symbol.svg
+    # Offline demo profile portrait (bundled Unsplash photo; credit in
+    # unsplash_attribution.dart). Avoids a hot network download on Try Demo.
+    - assets/demo/alex_demo_avatar.jpg
+    # Bundled demo meal photos, one JPEG per curated Unsplash id (credits
+    # in unsplash_attribution.dart). Shipping them means Try Demo never
+    # contacts Unsplash's CDN, at seed time or at render time.
+    - assets/demo/meals/
 
   fonts:
     - family: CustomIcons
@@ -148,15 +168,11 @@ flutter:
       - asset: fonts/Poppins-Thin.ttf
       - asset: fonts/Poppins-ThinItalic.ttf
         style: italic
-    - family: Fredoka
-      fonts:
-      - asset: fonts/Fredoka.ttf
+    # Nunito.ttf is a variable font (wght 200-1000); Flutter instances the
+    # axis from TextStyle.fontWeight, so one asset covers the whole scale.
     - family: Nunito
       fonts:
       - asset: fonts/Nunito.ttf
-
-flutter_intl:
-  enabled: true
 
 flutter_launcher_icons:
   android: true

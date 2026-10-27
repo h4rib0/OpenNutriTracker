@@ -12,6 +12,7 @@ import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dar
 import 'package:opennutritracker/features/add_meal/presentation/bloc/food_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/products_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/recent_meal_bloc.dart';
+import 'package:opennutritracker/features/add_meal/presentation/bloc/search_debounce.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/default_results_widget.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/meal_search_bar.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/no_results_widget.dart';
@@ -104,25 +105,41 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
     );
   }
 
+  static const _pendingSpinner = Center(
+    child: Padding(
+      padding: EdgeInsets.only(top: 32),
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: CircularProgressIndicator(),
+      ),
+    ),
+  );
+
   Widget _buildProductsTab(BuildContext context) {
-    return BlocBuilder<ProductsBloc, ProductsState>(
-      bloc: _productsBloc,
-      builder: (context, state) {
-        if (state is ProductsInitial) return const DefaultsResultsWidget();
+    // Rebuild on keystrokes so an empty list can tell "no results for this
+    // query" apart from "the search for it is still debouncing/in flight"
+    // (loaded-state query lags behind the field) — the latter spins.
+    return ValueListenableBuilder<String>(
+      valueListenable: _searchStringListener,
+      builder: (context, query, _) => BlocBuilder<ProductsBloc, ProductsState>(
+        bloc: _productsBloc,
+        builder: (context, state) {
+        if (state is ProductsInitial) {
+          return query.trim().length >= minQueryLength
+              ? _pendingSpinner
+              : const DefaultsResultsWidget();
+        }
         if (state is ProductsLoadingState) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 32),
-              child: SizedBox(
-                width: 36,
-                height: 36,
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
+          return _pendingSpinner;
         }
         if (state is ProductsLoadedState) {
-          if (state.products.isEmpty) return const NoResultsWidget();
+          if (state.products.isEmpty) {
+            return query.trim().length >= minQueryLength &&
+                    state.query != query
+                ? _pendingSpinner
+                : const NoResultsWidget();
+          }
           return ListView.builder(
             itemCount:
                 state.products.length + (state.remoteSourceEmpty ? 1 : 0),
@@ -145,29 +162,32 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
           );
         }
         return const SizedBox.shrink();
-      },
+        },
+      ),
     );
   }
 
   Widget _buildFoodTab(BuildContext context) {
-    return BlocBuilder<FoodBloc, FoodState>(
-      bloc: _foodBloc,
-      builder: (context, state) {
-        if (state is FoodInitial) return const DefaultsResultsWidget();
+    return ValueListenableBuilder<String>(
+      valueListenable: _searchStringListener,
+      builder: (context, query, _) => BlocBuilder<FoodBloc, FoodState>(
+        bloc: _foodBloc,
+        builder: (context, state) {
+        if (state is FoodInitial) {
+          return query.trim().length >= minQueryLength
+              ? _pendingSpinner
+              : const DefaultsResultsWidget();
+        }
         if (state is FoodLoadingState) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 32),
-              child: SizedBox(
-                width: 36,
-                height: 36,
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
+          return _pendingSpinner;
         }
         if (state is FoodLoadedState) {
-          if (state.food.isEmpty) return const NoResultsWidget();
+          if (state.food.isEmpty) {
+            return query.trim().length >= minQueryLength &&
+                    state.query != query
+                ? _pendingSpinner
+                : const NoResultsWidget();
+          }
           return ListView.builder(
             itemCount: state.food.length + (state.remoteSourceEmpty ? 1 : 0),
             itemBuilder: (context, index) {
@@ -186,7 +206,8 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
           );
         }
         return const SizedBox.shrink();
-      },
+        },
+      ),
     );
   }
 

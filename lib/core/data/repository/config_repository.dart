@@ -27,6 +27,10 @@ class ConfigRepository {
     );
   }
 
+  Future<void> setConfigHasAcceptedPolicy(bool hasAcceptedPolicy) async {
+    await _configDataSource.setConfigAcceptedPolicy(hasAcceptedPolicy);
+  }
+
   Future<bool> getConfigHasAcceptedAnonymousData() async {
     return await _configDataSource.getHasAcceptedAnonymousData();
   }
@@ -156,6 +160,10 @@ class ConfigRepository {
     await _configDataSource.setFastingWarningAcknowledged(acknowledged);
   }
 
+  Future<void> setIsDemoData(bool isDemoData) async {
+    await _configDataSource.setIsDemoData(isDemoData);
+  }
+
   Future<void> setConfigUseMaterialYou(bool useMaterialYou) async {
     await _configDataSource.setConfigUseMaterialYou(useMaterialYou);
   }
@@ -170,6 +178,22 @@ class ConfigRepository {
 
   Future<void> setConfigFoodSourceToggles(Map<String, bool> toggles) async {
     await _configDataSource.setConfigFoodSourceToggles(toggles);
+  }
+
+  Future<void> setConfigHealthImportEnabled(bool enabled) async {
+    await _configDataSource.setConfigHealthImportEnabled(enabled);
+  }
+
+  Future<void> setConfigHealthWorkoutKcalMultiplier(double multiplier) async {
+    await _configDataSource.setConfigHealthWorkoutKcalMultiplier(multiplier);
+  }
+
+  Future<void> setConfigHealthLastImportAt(DateTime? importedAt) async {
+    await _configDataSource.setConfigHealthLastImportAt(importedAt);
+  }
+
+  Future<void> addConfigHealthDeletedExternalId(String externalId) async {
+    await _configDataSource.addConfigHealthDeletedExternalId(externalId);
   }
 
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {

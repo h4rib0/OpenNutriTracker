@@ -33,13 +33,14 @@ class MealDBOAdapter extends TypeAdapter<MealDBO> {
       localImagePath: fields[13] as String?,
       detailed: fields[14] as bool?,
       backendSource: fields[15] as String?,
+      machineTranslatedName: fields[16] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealDBO obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.code)
       ..writeByte(1)
@@ -71,7 +72,9 @@ class MealDBOAdapter extends TypeAdapter<MealDBO> {
       ..writeByte(14)
       ..write(obj.detailed)
       ..writeByte(15)
-      ..write(obj.backendSource);
+      ..write(obj.backendSource)
+      ..writeByte(16)
+      ..write(obj.machineTranslatedName);
   }
 
   @override
@@ -161,6 +164,7 @@ MealDBO _$MealDBOFromJson(Map<String, dynamic> json) => MealDBO(
   localImagePath: json['localImagePath'] as String?,
   detailed: json['detailed'] as bool?,
   backendSource: json['backendSource'] as String?,
+  machineTranslatedName: json['machineTranslatedName'] as bool?,
 );
 
 Map<String, dynamic> _$MealDBOToJson(MealDBO instance) => <String, dynamic>{
@@ -180,6 +184,7 @@ Map<String, dynamic> _$MealDBOToJson(MealDBO instance) => <String, dynamic>{
   'localImagePath': instance.localImagePath,
   'detailed': instance.detailed,
   'backendSource': instance.backendSource,
+  'machineTranslatedName': instance.machineTranslatedName,
 };
 
 const _$MealSourceDBOEnumMap = {

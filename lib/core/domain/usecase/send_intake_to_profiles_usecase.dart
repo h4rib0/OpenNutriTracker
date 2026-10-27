@@ -47,6 +47,13 @@ class SendIntakeToProfilesUsecase {
     ProfileEntity target,
   ) async {
     final suffix = target.boxSuffix;
+
+    // Guard against copying into the active profile — its boxes are live
+    // and open. Closing them in the finally-block would tear down the
+    // app's working set. The sheet already filters the active profile out
+    // today, but this keeps the usecase safe regardless of caller.
+    if (target.id == _hiveDBProvider.activeProfileId) return;
+
     final scoped = ScopedHiveDBProvider(
       intakeBox: await _hiveDBProvider.openScopedBox<IntakeDBO>(
         HiveDBProvider.intakeBoxName,
@@ -74,49 +81,82 @@ class SendIntakeToProfilesUsecase {
 
     final userRepository = UserRepository(UserDataSource(scoped));
     // A profile that hasn't finished onboarding has no user data and no
-    // goals to seed a tracked day with — skip it rather than guess.
-    if (!await userRepository.hasUserData()) return;
+    // goals to seed a tracked day with — skip it rather than guess. Still
+    // close the boxes we just opened so this early return doesn't leak them.
+    if (!await userRepository.hasUserData()) {
+      await _closeScoped(suffix);
+      return;
+    }
 
-    final intakeRepository = IntakeRepository(IntakeDataSource(scoped));
-    final addTrackedDay =
-        AddTrackedDayUsecase(TrackedDayRepository(TrackedDayDataSource(scoped)));
-    final configRepository = ConfigRepository(ConfigDataSource(scoped));
-    final getKcalGoal = GetKcalGoalUsecase(
-      userRepository,
-      configRepository,
-      UserActivityRepository(UserActivityDataSource(scoped)),
-    );
-    final getMacroGoal = GetMacroGoalUsecase(configRepository, userRepository);
-
-    for (final intake in intakes) {
-      final copy = IntakeEntity(
-        id: IdGenerator.getUniqueID(),
-        unit: intake.unit,
-        amount: intake.amount,
-        type: intake.type,
-        meal: intake.meal,
-        dateTime: intake.dateTime,
+    try {
+      final intakeRepository = IntakeRepository(IntakeDataSource(scoped));
+      final addTrackedDay = AddTrackedDayUsecase(
+        TrackedDayRepository(TrackedDayDataSource(scoped)),
       );
-      await intakeRepository.addIntake(copy);
+      final configRepository = ConfigRepository(ConfigDataSource(scoped));
+      final getKcalGoal = GetKcalGoalUsecase(
+        userRepository,
+        configRepository,
+        UserActivityRepository(UserActivityDataSource(scoped)),
+      );
+      final getMacroGoal = GetMacroGoalUsecase(configRepository, userRepository);
 
-      final day = copy.dateTime;
-      if (!await addTrackedDay.hasTrackedDay(day)) {
-        final kcalGoal = await getKcalGoal.getKcalGoal();
-        await addTrackedDay.addNewTrackedDay(
+      for (final intake in intakes) {
+        final copy = IntakeEntity(
+          id: IdGenerator.getUniqueID(),
+          unit: intake.unit,
+          amount: intake.amount,
+          type: intake.type,
+          meal: intake.meal,
+          dateTime: intake.dateTime,
+        );
+        await intakeRepository.addIntake(copy);
+
+        final day = copy.dateTime;
+        if (!await addTrackedDay.hasTrackedDay(day)) {
+          final kcalGoal = await getKcalGoal.getKcalGoal();
+          await addTrackedDay.addNewTrackedDay(
+            day,
+            kcalGoal,
+            await getMacroGoal.getCarbsGoal(kcalGoal),
+            await getMacroGoal.getFatsGoal(kcalGoal),
+            await getMacroGoal.getProteinsGoal(kcalGoal),
+          );
+        }
+        await addTrackedDay.addDayCaloriesTracked(day, copy.totalKcal);
+        await addTrackedDay.addDayMacrosTracked(
           day,
-          kcalGoal,
-          await getMacroGoal.getCarbsGoal(kcalGoal),
-          await getMacroGoal.getFatsGoal(kcalGoal),
-          await getMacroGoal.getProteinsGoal(kcalGoal),
+          carbsTracked: copy.totalCarbsGram,
+          fatTracked: copy.totalFatsGram,
+          proteinTracked: copy.totalProteinsGram,
         );
       }
-      await addTrackedDay.addDayCaloriesTracked(day, copy.totalKcal);
-      await addTrackedDay.addDayMacrosTracked(
-        day,
-        carbsTracked: copy.totalCarbsGram,
-        fatTracked: copy.totalFatsGram,
-        proteinTracked: copy.totalProteinsGram,
-      );
+    } finally {
+      // These boxes were opened solely for this copy — close them so they
+      // don't stay resident (memory/file handles) for the rest of the app's
+      // lifetime, mirroring how switching profiles closes the outgoing
+      // box-set. The shared appConfigBox is left untouched.
+      await _closeScoped(suffix);
     }
   }
+
+  Future<void> _closeScoped(String suffix) => Future.wait([
+    _hiveDBProvider.closeScopedBox<IntakeDBO>(
+      HiveDBProvider.intakeBoxName,
+      suffix,
+    ),
+    _hiveDBProvider.closeScopedBox<TrackedDayDBO>(
+      HiveDBProvider.trackedDayBoxName,
+      suffix,
+    ),
+    _hiveDBProvider.closeScopedBox<UserDBO>(HiveDBProvider.userBoxName, suffix),
+    _hiveDBProvider.closeScopedBox<ConfigDBO>(
+      HiveDBProvider.configBoxName,
+      suffix,
+    ),
+    _hiveDBProvider.closeScopedBox<UserActivityDBO>(
+      HiveDBProvider.userActivityBoxName,
+      suffix,
+    ),
+  ]);
 }

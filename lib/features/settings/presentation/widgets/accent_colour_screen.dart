@@ -4,34 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
+import 'package:opennutritracker/core/styles/accent_colors.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
 import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/theme_mode_provider.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
-
-/// Sixteen hand-picked accent colours that span the wheel and read well as
-/// circular swatches in a 4×4 grid. Each one drives `ColorScheme.fromSeed`
-/// to produce a coherent Material 3 palette.
-const List<Color> _presetColors = <Color>[
-  Color(0xFFE53935), // red
-  Color(0xFFFF6F61), // coral
-  Color(0xFFFB8C00), // orange
-  Color(0xFFFFB300), // amber
-  Color(0xFFFDD835), // yellow
-  Color(0xFFC0CA33), // chartreuse
-  Color(0xFF7CB342), // lime
-  Color(0xFF43A047), // green
-  Color(0xFF00897B), // teal
-  Color(0xFF00ACC1), // cyan
-  Color(0xFF039BE5), // sky
-  Color(0xFF1E88E5), // blue
-  Color(0xFF3949AB), // indigo
-  Color(0xFF8E24AA), // violet
-  Color(0xFFD81B60), // magenta
-  Color(0xFFEC407A), // pink
-];
 
 class AccentColourScreen extends StatefulWidget {
   const AccentColourScreen({super.key});
@@ -147,7 +126,7 @@ class _AccentColourScreenState extends State<AccentColourScreen> {
                 child: GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _presetColors.length,
+                  itemCount: accentPresetColors.length,
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
@@ -156,7 +135,7 @@ class _AccentColourScreenState extends State<AccentColourScreen> {
                     crossAxisSpacing: Dimens.spacing12,
                   ),
                   itemBuilder: (context, index) {
-                    final color = _presetColors[index];
+                    final color = accentPresetColors[index];
                     final selected =
                         !materialYouActive && currentArgb == color.toARGB32();
                     return Semantics(
@@ -226,7 +205,7 @@ class _AccentColourScreenState extends State<AccentColourScreen> {
       builder: (_) => _CustomColourDialog(
         initialColor: initialArgb != null
             ? Color(initialArgb)
-            : _presetColors.first,
+            : accentPresetColors.first,
       ),
     );
     if (picked != null) {

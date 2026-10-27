@@ -95,9 +95,20 @@ class SpFoodDTO {
   @JsonKey(includeFromJson: false, includeToJson: false)
   String? localizedName;
 
+  /// True when [localizedName] came from an unreviewed machine translation
+  /// (food_translation.source == 'machine'). Set alongside [localizedName]
+  /// by SpFoodDataSource; drives the disclosure hint in the meal detail.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool localizedNameIsMachineTranslated = false;
+
   /// Name to display: translation first, then the concise English short
   /// title (which the view already coalesces to the full description).
   String? get displayName => localizedName ?? shortTitle ?? name;
+
+  /// Whether the name shown by [displayName] is a machine translation —
+  /// only ever true when the localized name is actually the one displayed.
+  bool get displayNameIsMachineTranslated =>
+      localizedName != null && localizedNameIsMachineTranslated;
 
   bool get isFdc => source?.startsWith(SPConst.fdcSourcePrefix) ?? false;
 

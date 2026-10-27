@@ -22,12 +22,24 @@ import '../helpers/hive_test_setup.dart';
 /// "target profile" without the full Hive/encryption bootstrap.
 class _TestHiveDBProvider extends HiveDBProvider {
   final Map<String, Box<dynamic>> _scoped;
+  final List<(String, String)> closedBoxes = [];
 
   _TestHiveDBProvider(this._scoped);
 
   @override
   Future<Box<E>> openScopedBox<E>(String baseName, String boxSuffix) async {
     return _scoped[baseName] as Box<E>;
+  }
+
+  // The fake hands back long-lived boxes it doesn't own (the test keeps
+  // asserting on them after copyToProfiles returns), unlike production's
+  // openScopedBox which opens a dedicated box per suffix that the usecase
+  // is responsible for closing. Closing here would invalidate the test's
+  // box references, so this records the call instead of actually closing,
+  // letting tests assert the usecase asks every scoped box to be closed.
+  @override
+  Future<void> closeScopedBox<E>(String baseName, String boxSuffix) async {
+    closedBoxes.add((baseName, boxSuffix));
   }
 
   // App config is global; the goal calc reads it via ConfigDataSource. Reuse
@@ -46,6 +58,7 @@ void main() {
   late Box<ConfigDBO> configBox;
   late Box<UserActivityDBO> activityBox;
   late SendIntakeToProfilesUsecase sut;
+  late _TestHiveDBProvider provider;
 
   setUp(() async {
     Hive.init('.');
@@ -71,15 +84,14 @@ void main() {
     );
     await configBox.put('ConfigKey', ConfigDBO.empty());
 
-    sut = SendIntakeToProfilesUsecase(
-      _TestHiveDBProvider({
-        HiveDBProvider.intakeBoxName: intakeBox,
-        HiveDBProvider.trackedDayBoxName: trackedDayBox,
-        HiveDBProvider.userBoxName: userBox,
-        HiveDBProvider.configBoxName: configBox,
-        HiveDBProvider.userActivityBoxName: activityBox,
-      }),
-    );
+    provider = _TestHiveDBProvider({
+      HiveDBProvider.intakeBoxName: intakeBox,
+      HiveDBProvider.trackedDayBoxName: trackedDayBox,
+      HiveDBProvider.userBoxName: userBox,
+      HiveDBProvider.configBoxName: configBox,
+      HiveDBProvider.userActivityBoxName: activityBox,
+    });
+    sut = SendIntakeToProfilesUsecase(provider);
   });
 
   tearDown(() async {
@@ -87,32 +99,32 @@ void main() {
   });
 
   IntakeEntity buildIntake() => IntakeEntity(
-        id: 'source-intake',
-        unit: 'g',
-        amount: 100,
-        type: IntakeTypeEntity.breakfast,
-        dateTime: DateTime(2026, 1, 1, 8),
-        meal: MealEntity(
-          code: 'meal-1',
-          name: 'Test Meal',
-          url: null,
-          mealQuantity: '100',
-          mealUnit: 'g',
-          servingQuantity: null,
-          servingUnit: 'g',
-          servingSize: '100 g',
-          nutriments: MealNutrimentsEntity(
-            energyKcal100: 200,
-            carbohydrates100: 20,
-            fat100: 10,
-            proteins100: 5,
-            sugars100: null,
-            saturatedFat100: null,
-            fiber100: null,
-          ),
-          source: MealSourceEntity.custom,
-        ),
-      );
+    id: 'source-intake',
+    unit: 'g',
+    amount: 100,
+    type: IntakeTypeEntity.breakfast,
+    dateTime: DateTime(2026, 1, 1, 8),
+    meal: MealEntity(
+      code: 'meal-1',
+      name: 'Test Meal',
+      url: null,
+      mealQuantity: '100',
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: 'g',
+      servingSize: '100 g',
+      nutriments: MealNutrimentsEntity(
+        energyKcal100: 200,
+        carbohydrates100: 20,
+        fat100: 10,
+        proteins100: 5,
+        sugars100: null,
+        saturatedFat100: null,
+        fiber100: null,
+      ),
+      source: MealSourceEntity.custom,
+    ),
+  );
 
   test('copies the intake into the target profile with a fresh id', () async {
     final intake = buildIntake();
@@ -167,4 +179,50 @@ void main() {
     expect(intakeBox.isEmpty, isTrue);
     expect(trackedDayBox.isEmpty, isTrue);
   });
+
+  // Regression coverage: the scoped box-set opened for a copy used to never
+  // be closed, leaking it for the rest of the app's lifetime. The usecase
+  // now closes every box it opened via openScopedBox, for both the normal
+  // completion path and the early-return "no user data" path.
+  test('closes every scoped box it opened once the copy completes', () async {
+    final target = ProfileEntity(
+      id: 'target',
+      name: 'Target',
+      createdAt: DateTime(2026, 1, 1),
+      boxSuffix: 'target',
+    );
+
+    await sut.copyToProfiles([buildIntake()], [target]);
+
+    expect(provider.closedBoxes.toSet(), {
+      (HiveDBProvider.intakeBoxName, 'target'),
+      (HiveDBProvider.trackedDayBoxName, 'target'),
+      (HiveDBProvider.userBoxName, 'target'),
+      (HiveDBProvider.configBoxName, 'target'),
+      (HiveDBProvider.userActivityBoxName, 'target'),
+    });
+  });
+
+  test(
+    'closes every scoped box even when the target profile is skipped',
+    () async {
+      await userBox.delete('UserKey');
+      final target = ProfileEntity(
+        id: 'target',
+        name: 'Target',
+        createdAt: DateTime(2026, 1, 1),
+        boxSuffix: 'target',
+      );
+
+      await sut.copyToProfiles([buildIntake()], [target]);
+
+      expect(provider.closedBoxes.toSet(), {
+        (HiveDBProvider.intakeBoxName, 'target'),
+        (HiveDBProvider.trackedDayBoxName, 'target'),
+        (HiveDBProvider.userBoxName, 'target'),
+        (HiveDBProvider.configBoxName, 'target'),
+        (HiveDBProvider.userActivityBoxName, 'target'),
+      });
+    },
+  );
 }

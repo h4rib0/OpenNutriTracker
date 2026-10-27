@@ -4,6 +4,11 @@ Thanks for taking an interest in contributing! This guide covers the conventions
 
 For environment setup (Flutter / Android SDK / IDE), see [GettingStarted.md](GettingStarted.md).
 
+Looking for a small first contribution? See the seed list in
+[docs/first-timer-backlog.md](docs/first-timer-backlog.md) — concrete
+“good first issue” ideas with file paths and acceptance criteria. Agent and
+architecture conventions live in [AGENTS.md](AGENTS.md).
+
 ## Pull request target branch
 
 **All pull requests must target the `develop` branch, not `main`.**
@@ -12,6 +17,7 @@ For environment setup (Flutter / Android SDK / IDE), see [GettingStarted.md](Get
 
 ## Before you start
 
+- Check the [public board](https://github.com/users/simonoppowa/projects/2) before picking something up — it shows what is already in progress, so you don't duplicate work that is underway.
 - Create your branch from the latest `develop`:
   ```sh
   git fetch origin
@@ -53,7 +59,7 @@ When adding a new string key in the same PR you must:
 
 ## Code generation
 
-Some files are produced by `build_runner` (Hive type adapters and JSON serialization). Run `just build` after touching any `@HiveType`, `@HiveField`, or `@JsonSerializable` source file. See `CLAUDE.md` for the full list of triggers.
+Some files are produced by `build_runner` (Hive type adapters and JSON serialization). Run `just build` after touching any `@HiveType`, `@HiveField`, or `@JsonSerializable` source file. See `AGENTS.md` for the full list of triggers.
 
 ## Code style and tests
 

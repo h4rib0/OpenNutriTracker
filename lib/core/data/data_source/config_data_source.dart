@@ -11,9 +11,14 @@ import 'package:opennutritracker/core/utils/hive_db_provider.dart';
 ///   notifications, anonymous-data consent, legal acceptances, and the
 ///   various view toggles), so it stays consistent whichever profile is
 ///   active;
-/// - the **per-profile** [HiveDBProvider.configBox] holds only the personal
+/// - the **per-profile** [HiveDBProvider.configBox] holds the personal
 ///   nutrition goals (kcal adjustment, macro split, per-meal kcal shares and
-///   the daily water goal), which differ from one profile to the next.
+///   the daily water goal) plus the health-import settings (opt-in flag,
+///   calorie-credit multiplier, import watermark), which differ from one
+///   profile to the next. The health settings belong here because the
+///   activity box they write into is itself per-profile
+///   ([HiveDBProvider.perProfileBoxNames]): each profile opts in for itself,
+///   imports its own copy of a workout, and tracks its own watermark.
 ///
 /// Reads merge the two — shared fields from the app box, personal fields
 /// from the active profile's box. Writes store a detached copy of the merged
@@ -34,11 +39,16 @@ class ConfigDataSource {
   /// Builds a detached config from the shared app box with the personal
   /// fields overlaid from the active profile's box. Detached (via JSON) so
   /// callers can't accidentally mutate a stored instance.
+  ///
+  /// Personal fields come exclusively from the active profile's box — if
+  /// that box is absent (fresh profile or after a reset) they are cleared
+  /// so stale values don't leak from the app box.
   ConfigDBO _readMerged() {
     final app = _appBox.get(_configKey);
     final profile = _profileBox.get(_configKey);
-    final merged =
-        app != null ? ConfigDBO.fromJson(app.toJson()) : ConfigDBO.empty();
+    final merged = app != null
+        ? ConfigDBO.fromJson(app.toJson())
+        : ConfigDBO.empty();
     if (profile != null) {
       merged.userKcalAdjustment = profile.userKcalAdjustment;
       merged.userCarbGoalPct = profile.userCarbGoalPct;
@@ -47,6 +57,26 @@ class ConfigDataSource {
       merged.mealKcalSharesPct = profile.mealKcalSharesPct;
       merged.dailyWaterGoalMl = profile.dailyWaterGoalMl;
       merged.useBodyWeightMacros = profile.useBodyWeightMacros;
+      merged.healthImportEnabled = profile.healthImportEnabled;
+      merged.healthWorkoutKcalMultiplier = profile.healthWorkoutKcalMultiplier;
+      merged.healthLastImportAt = profile.healthLastImportAt;
+      merged.healthDeletedExternalIds = profile.healthDeletedExternalIds;
+    } else {
+      // Explicitly clear personal fields so they don't leak from the
+      // app box after a profile reset. A fresh profile therefore reads as
+      // opted out of the health import with no watermark of its own, which
+      // is what it is.
+      merged.userKcalAdjustment = null;
+      merged.userCarbGoalPct = null;
+      merged.userProteinGoalPct = null;
+      merged.userFatGoalPct = null;
+      merged.mealKcalSharesPct = null;
+      merged.dailyWaterGoalMl = null;
+      merged.healthImportEnabled = null;
+      merged.healthWorkoutKcalMultiplier = null;
+      merged.healthLastImportAt = null;
+      merged.healthDeletedExternalIds = null;
+      merged.useBodyWeightMacros = null;
     }
     return merged;
   }
@@ -105,8 +135,11 @@ class ConfigDataSource {
     );
   }
 
-  Future<AppThemeDBO> getAppTheme() async =>
-      _readMerged().selectedAppTheme;
+  Future<void> setConfigAcceptedPolicy(bool hasAcceptedPolicy) async {
+    await _update((c) => c.hasAcceptedPolicy = hasAcceptedPolicy);
+  }
+
+  Future<AppThemeDBO> getAppTheme() async => _readMerged().selectedAppTheme;
 
   Future<void> setConfigAppTheme(AppThemeDBO appTheme) async {
     await _update((c) => c.selectedAppTheme = appTheme);
@@ -251,6 +284,10 @@ class ConfigDataSource {
     await _update((c) => c.fastingWarningAcknowledged = acknowledged);
   }
 
+  Future<void> setIsDemoData(bool isDemoData) async {
+    await _update((c) => c.isDemoData = isDemoData);
+  }
+
   Future<void> setConfigUseMaterialYou(bool useMaterialYou) async {
     await _update((c) => c.useMaterialYou = useMaterialYou);
   }
@@ -274,9 +311,30 @@ class ConfigDataSource {
 
   Future<void> setConfigFoodSourceToggles(Map<String, bool> toggles) async {
     // Copy into a fresh map so Hive sees a distinct object reference on save.
-    await _update(
-      (c) => c.foodSourceToggles = Map<String, bool>.from(toggles),
-    );
+    await _update((c) => c.foodSourceToggles = Map<String, bool>.from(toggles));
+  }
+
+  Future<void> setConfigHealthImportEnabled(bool enabled) async {
+    await _update((c) => c.healthImportEnabled = enabled);
+  }
+
+  Future<void> setConfigHealthWorkoutKcalMultiplier(double multiplier) async {
+    await _update((c) => c.healthWorkoutKcalMultiplier = multiplier);
+  }
+
+  Future<void> setConfigHealthLastImportAt(DateTime? importedAt) async {
+    await _update((c) => c.healthLastImportAt = importedAt);
+  }
+
+  /// Records that the imported workout behind [externalId] was deleted, so
+  /// the importer stops re-creating it. Appends into a fresh list so Hive
+  /// sees a distinct object reference on save.
+  Future<void> addConfigHealthDeletedExternalId(String externalId) async {
+    await _update((c) {
+      final current = c.healthDeletedExternalIds;
+      if (current != null && current.contains(externalId)) return;
+      c.healthDeletedExternalIds = <String>[...?current, externalId];
+    });
   }
 
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {

@@ -14,6 +14,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/trends/presentation/bloc/trends_bloc.dart';
 
 part 'profile_event.dart';
 
@@ -25,25 +26,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final AddTrackedDayUsecase _addTrackedDayUsecase;
   final GetConfigUsecase _getConfigUsecase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
-  final PolarInfluxdbDataSource _polarDataSource;
+  // Optional so tests (and builds without Polar) can omit it.
+  final PolarInfluxdbDataSource? _polarDataSource;
 
   ProfileBloc(
     this._getUserUsecase,
     this._addUserUsecase,
     this._addTrackedDayUsecase,
     this._getConfigUsecase,
-    this._getKcalGoalUsecase,
+    this._getKcalGoalUsecase, [
     this._polarDataSource,
-  ) : super(ProfileInitial()) {
+  ]) : super(ProfileInitial()) {
     on<LoadProfileEvent>((event, emit) async {
       emit(ProfileLoadingState());
 
       final user = await _getUserUsecase.getUserData();
       final userConfig = await _getConfigUsecase.getConfig();
-      final isPolarActive = await _polarDataSource.isPolarConfigured();
-      final influxWeightKg = isPolarActive
-          ? await _polarDataSource.fetchLatestWeightKg()
-          : null;
+      final polar = _polarDataSource;
+      final isPolarActive = polar != null && await polar.isPolarConfigured();
+      final influxWeightKg = isPolarActive ? await polar.fetchLatestWeightKg() : null;
 
       // Use InfluxDB weight for BMI calculation when available
       final userForBmi = influxWeightKg != null
@@ -97,6 +98,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     // Refresh Diary Page
     locator<DiaryBloc>().add(const LoadDiaryYearEvent());
     locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
+    // Refresh Trends Page — preserve whatever range chip is currently
+    // selected there rather than resetting it back to the 7-day default.
+    final trendsBloc = locator<TrendsBloc>();
+    final rangeDays = trendsBloc.state is TrendsLoaded
+        ? (trendsBloc.state as TrendsLoaded).rangeDays
+        : 7;
+    trendsBloc.add(LoadTrendsEvent(rangeDays: rangeDays));
   }
 
   Future<void> _updateTrackedDayCalorieGoal(

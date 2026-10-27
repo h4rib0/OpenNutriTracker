@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:introduction_screen/introduction_screen.dart';
+import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
 import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart';
 import 'package:opennutritracker/core/domain/entity/profile_entity.dart';
@@ -8,19 +9,36 @@ import 'package:opennutritracker/core/domain/usecase/delete_profile_usecase.dart
 import 'package:opennutritracker/core/domain/usecase/get_profiles_usecase.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/core/utils/notification_service.dart';
 import 'package:opennutritracker/features/profile/presentation/utils/profile_switch_coordinator.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_activity_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_gender_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_goal_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:opennutritracker/features/onboarding/presentation/onboarding_intro_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_fourth_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_goal_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_other_options_page_body.dart';
 import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_overview_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_third_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_activity_page_body.dart';
 import 'package:opennutritracker/features/onboarding/presentation/widgets/highlight_button.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_first_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_second_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_about_you_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_body_measurements_page_body.dart';
 import 'package:opennutritracker/generated/l10n.dart';
+
+/// The onboarding pages, in the order they are shown.
+///
+/// The pager addresses pages by index, so inserting one used to silently
+/// retarget every jump after it. Declaring the order once means a new page
+/// is added here and the jumps keep pointing at the page they name.
+enum _OnboardingPage {
+  intro,
+  aboutYou,
+  bodyMeasurements,
+  activity,
+  goal,
+  otherOptions,
+  overview,
+}
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -42,16 +60,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _defaultImageWidget = null;
 
   bool _introPageButtonActive = false;
-  bool _firstPageButtonActive = false;
-  bool _secondPageButtonActive = false;
-  bool _thirdPageButtonActive = false;
-  bool _fourthPageButtonActive = false;
+  bool _aboutYouPageButtonActive = false;
+  bool _bodyMeasurementsPageButtonActive = false;
+  bool _activityPageButtonActive = false;
+  bool _goalPageButtonActive = false;
   bool _overviewPageButtonActive = false;
+
+  /// Ticked when the height/weight page's Next is tapped while blocked, so
+  /// that page reveals the errors for fields the user never left.
+  final _bodyMeasurementsShowErrors = ValueNotifier<int>(0);
 
   @override
   void initState() {
     _onboardingBloc = locator<OnboardingBloc>();
+    // The bloc is a singleton and its state persists, so a second trip
+    // through onboarding (adding a profile) used to skip loading entirely:
+    // the event only fired from the initial state, which meant the unit and
+    // food-source seeding never ran and the previous run's answers were
+    // still in the selection. Reset and reload on every entry instead.
+    _onboardingBloc.resetSelection();
+    _onboardingBloc.add(LoadOnboardingEvent());
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _bodyMeasurementsShowErrors.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,12 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: BlocBuilder<OnboardingBloc, OnboardingState>(
           bloc: _onboardingBloc,
           builder: (context, state) {
-            if (state is OnboardingInitialState) {
-              _onboardingBloc.add(LoadOnboardingEvent());
-              return _getLoadingContent();
-            } else if (state is OnboardingLoadingState) {
-              return _getLoadingContent();
-            } else if (state is OnboardingLoadedState) {
+            if (state is OnboardingLoadedState) {
               return _getLoadedContent(context);
             }
             return _getLoadingContent();
@@ -148,9 +178,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  /// Builds the pages in [_OnboardingPage] order. The two have to stay in
+  /// step, since every jump resolves through that enum's indices.
   List<PageViewModel> _getPageViewModels() {
     final selection = _onboardingBloc.userSelection;
-    return <PageViewModel>[
+    final pages = <PageViewModel>[
         PageViewModel(
           title: S.of(context).onboardingWelcomeLabel,
           decoration: _pageDecoration,
@@ -162,8 +194,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           footer: HighlightButton(
             buttonLabel: S.of(context).buttonStartLabel,
-            onButtonPressed: () => _scrollToPage(1),
+            onButtonPressed: () => _scrollToPage(_OnboardingPage.aboutYou),
             buttonActive: _introPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedPolicySnack,
           ),
         ),
         PageViewModel(
@@ -171,16 +204,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // empty
           decoration: _pageDecoration,
           image: _defaultImageWidget,
-          bodyWidget: OnboardingFirstPageBody(
-            setPageContent: _setFirstPageData,
+          bodyWidget: OnboardingAboutYouPageBody(
+            setPageContent: _setAboutYouPageData,
             initialGender: selection.gender,
             initialCaloriesProfile: selection.caloriesProfile,
             initialBirthday: selection.birthday,
           ),
           footer: HighlightButton(
             buttonLabel: S.of(context).buttonNextLabel,
-            onButtonPressed: () => _scrollToPage(2),
-            buttonActive: _firstPageButtonActive,
+            onButtonPressed: () =>
+                _scrollToPage(_OnboardingPage.bodyMeasurements),
+            buttonActive: _aboutYouPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedProfileSnack,
           ),
         ),
         PageViewModel(
@@ -188,19 +223,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // empty
           decoration: _pageDecoration,
           image: _defaultImageWidget,
-          bodyWidget: OnboardingSecondPageBody(
-            setButtonContent: _setSecondPageData,
+          bodyWidget: OnboardingBodyMeasurementsPageBody(
+            setButtonContent: _setBodyMeasurementsPageData,
             initialHeightCm: selection.height,
             initialWeightKg: selection.weight,
             initialTargetWeightKg: selection.targetWeight,
             initialHeightImperial: selection.heightUsesImperial,
             initialBodyWeightUnit: selection.bodyWeightUnit,
             initialFoodImperial: selection.foodUsesImperial,
+            showErrorsSignal: _bodyMeasurementsShowErrors,
           ),
           footer: HighlightButton(
             buttonLabel: S.of(context).buttonNextLabel,
-            onButtonPressed: () => _scrollToPage(3),
-            buttonActive: _secondPageButtonActive,
+            onButtonPressed: () => _scrollToPage(_OnboardingPage.activity),
+            buttonActive: _bodyMeasurementsPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedBodySnack,
+            onBlockedPressed: () => _bodyMeasurementsShowErrors.value++,
           ),
         ),
         PageViewModel(
@@ -208,14 +246,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // empty
           decoration: _pageDecoration,
           image: _defaultImageWidget,
-          bodyWidget: OnboardingThirdPageBody(
-            setButtonContent: _setThirdPageButton,
+          bodyWidget: OnboardingActivityPageBody(
+            setButtonContent: _setActivityPageData,
             initialActivity: selection.activity,
           ),
           footer: HighlightButton(
             buttonLabel: S.of(context).buttonNextLabel,
-            onButtonPressed: () => _scrollToPage(4),
-            buttonActive: _thirdPageButtonActive,
+            onButtonPressed: () => _scrollToPage(_OnboardingPage.goal),
+            buttonActive: _activityPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedActivitySnack,
           ),
         ),
         PageViewModel(
@@ -223,14 +262,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // empty
           decoration: _pageDecoration,
           image: _defaultImageWidget,
-          bodyWidget: OnboardingFourthPageBody(
-            setButtonContent: _setFourthPageButton,
+          bodyWidget: OnboardingGoalPageBody(
+            setButtonContent: _setGoalPageData,
             initialGoal: selection.goal,
+            heightCm: selection.height,
+            weightKg: selection.weight,
+            targetWeightKg: selection.targetWeight,
           ),
           footer: HighlightButton(
             buttonLabel: S.of(context).buttonNextLabel,
-            onButtonPressed: () => _scrollToPage(5),
-            buttonActive: _fourthPageButtonActive,
+            onButtonPressed: () => _scrollToPage(_OnboardingPage.otherOptions),
+            buttonActive: _goalPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedGoalSnack,
+          ),
+        ),
+        PageViewModel(
+          titleWidget: const SizedBox(),
+          // empty
+          decoration: _pageDecoration,
+          image: _defaultImageWidget,
+          bodyWidget: OnboardingOtherOptionsPageBody(
+            setPageContent: _setOtherOptionsPageData,
+            initialTheme: selection.appTheme,
+            initialFoodSourceToggles: selection.foodSourceToggles,
+            initialDailyReminderEnabled: selection.dailyReminderEnabled,
+            initialUseMaterialYou: selection.useMaterialYou,
+            initialAccentColor: selection.accentColor,
+          ),
+          // Everything on this page is optional and pre-filled with
+          // defaults, so the button is always active.
+          footer: HighlightButton(
+            buttonLabel: S.of(context).buttonNextLabel,
+            onButtonPressed: () => _scrollToPage(_OnboardingPage.overview),
+            buttonActive: true,
           ),
         ),
         PageViewModel(
@@ -251,6 +315,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _onboardingBloc.getOverviewProteinGoal()?.toInt().toString() ??
                     "?",
             setButtonActive: _setOverviewPageContent,
+            breakdown: _onboardingBloc.getOverviewBreakdown(),
             showLowKcalWarning:
                 _onboardingBloc.isOverviewBelowRecommendedKcalFloor(),
             lowKcalWarningThreshold:
@@ -262,14 +327,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               _onOverviewStartButtonPressed(context);
             },
             buttonActive: _overviewPageButtonActive,
+            inactiveMessage: S.of(context).onboardingBlockedOverviewSnack,
           ),
         ),
       ];
+    assert(
+      pages.length == _OnboardingPage.values.length,
+      'a page was added or removed without updating _OnboardingPage',
+    );
+    return pages;
   }
 
-  void _scrollToPage(int page) {
+  void _scrollToPage(_OnboardingPage page) {
     FocusScope.of(context).requestFocus(FocusNode()); // Dismiss Keyboard
-    _introKey.currentState?.animateScroll(page);
+    _introKey.currentState?.animateScroll(page.index);
   }
 
   void _setIntroPageData(bool active, bool acceptedDataCollection) {
@@ -281,7 +352,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  void _setFirstPageData(
+  void _setAboutYouPageData(
     bool active,
     UserGenderSelectionEntity? selectedGender,
     CaloriesProfileEntity? selectedCaloriesProfile,
@@ -292,11 +363,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _onboardingBloc.userSelection.caloriesProfile = selectedCaloriesProfile;
       _onboardingBloc.userSelection.birthday = selectedBirthday;
 
-      _firstPageButtonActive = active;
+      _aboutYouPageButtonActive = active;
     });
   }
 
-  void _setSecondPageData(
+  void _setBodyMeasurementsPageData(
     bool active,
     double? selectedHeight,
     double? selectedWeight,
@@ -313,30 +384,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _onboardingBloc.userSelection.bodyWeightUnit = bodyWeightUnit;
       _onboardingBloc.userSelection.foodUsesImperial = foodImperial;
 
-      _secondPageButtonActive = active;
+      _bodyMeasurementsPageButtonActive = active;
     });
   }
 
-  void _setThirdPageButton(
+  void _setActivityPageData(
     bool active,
     UserActivitySelectionEntity? selectedActivity,
   ) {
     setState(() {
       _onboardingBloc.userSelection.activity = selectedActivity;
 
-      _thirdPageButtonActive = active;
+      _activityPageButtonActive = active;
     });
   }
 
-  void _setFourthPageButton(
+  void _setGoalPageData(
     bool active,
     UserGoalSelectionEntity? selectedGoal,
   ) {
     setState(() {
       _onboardingBloc.userSelection.goal = selectedGoal;
 
-      _fourthPageButtonActive = active;
+      _goalPageButtonActive = active;
     });
+  }
+
+  void _setOtherOptionsPageData(
+    AppThemeEntity selectedTheme,
+    Map<String, bool> foodSourceToggles,
+    bool dailyReminderEnabled,
+    bool useMaterialYou,
+    int? accentColor,
+  ) {
+    // No setState: nothing on this screen depends on these values and the
+    // page's button is always active. The selection is read back when the
+    // user finishes onboarding.
+    _onboardingBloc.userSelection.appTheme = selectedTheme;
+    _onboardingBloc.userSelection.foodSourceToggles = foodSourceToggles;
+    _onboardingBloc.userSelection.dailyReminderEnabled = dailyReminderEnabled;
+    _onboardingBloc.userSelection.useMaterialYou = useMaterialYou;
+    _onboardingBloc.userSelection.accentColor = accentColor;
   }
 
   void onPageChanged(int page) {
@@ -355,6 +443,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
+  /// Requests the notification permission and schedules the daily reminder
+  /// when the user opted in on the "Other options" page. Returns the flag
+  /// to persist: false when the user declined the system permission, so
+  /// the stored config never claims a reminder that cannot fire.
+  Future<bool> _setUpDailyReminder(BuildContext context) async {
+    if (!_onboardingBloc.userSelection.dailyReminderEnabled) return false;
+
+    final l10n = S.of(context);
+    final notificationService = locator<NotificationService>();
+    await notificationService.initialize();
+    final granted = await notificationService.requestPermission();
+    if (!granted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.notificationsPermissionDeniedSnack)),
+        );
+      }
+      return false;
+    }
+    // 8:00 matches the default reminder time in ConfigEntity; the user can
+    // change it later in Settings → Daily Reminder.
+    await notificationService.scheduleDailyReminder(
+      hour: 8,
+      minute: 0,
+      title: l10n.notificationsDailyReminderTitle,
+      body: l10n.notificationsDailyReminderBody,
+      channelName: l10n.notificationsDailyReminderChannelName,
+      channelDescription: l10n.notificationsDailyReminderChannelDescription,
+    );
+    return true;
+  }
+
   Future<void> _onOverviewStartButtonPressed(BuildContext context) async {
     final userEntity = _onboardingBloc.userSelection.toUserEntity();
     final hasAcceptedDataCollection =
@@ -363,12 +483,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final bodyWeightUnit = _onboardingBloc.userSelection.bodyWeightUnit;
     final foodImperial = _onboardingBloc.userSelection.foodUsesImperial;
     if (userEntity != null) {
+      final dailyReminderEnabled = await _setUpDailyReminder(context);
       await _onboardingBloc.saveOnboardingData(
         userEntity,
         hasAcceptedDataCollection,
         heightImperial,
         bodyWeightUnit,
         foodImperial,
+        appTheme: _onboardingBloc.userSelection.appTheme,
+        foodSourceToggles: _onboardingBloc.userSelection.foodSourceToggles,
+        dailyReminderEnabled: dailyReminderEnabled,
+        useMaterialYou: _onboardingBloc.userSelection.useMaterialYou,
+        accentColor: _onboardingBloc.userSelection.accentColor,
       );
       if (!context.mounted) return;
       // Onboarding can run for a profile added after the app has been in
@@ -382,7 +508,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).onboardingSaveUserError)),
       );
-      _scrollToPage(1);
+      _scrollToPage(_OnboardingPage.aboutYou);
     }
   }
 }

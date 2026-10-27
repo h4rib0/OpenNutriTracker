@@ -27,6 +27,7 @@ import 'package:opennutritracker/features/trends/presentation/bloc/trends_bloc.d
 import 'package:opennutritracker/features/settings/presentation/widgets/export_import_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/import_custom_food_data_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/food_sources_screen.dart';
+import 'package:opennutritracker/features/settings/presentation/widgets/health_sync_screen.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/nutrient_visibility_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -35,6 +36,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/diary_day_boundary_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/kcal_adjustment_dialog.dart';
+import 'package:opennutritracker/features/settings/presentation/widgets/kcal_goal_info_screen.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/macro_split_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/nutrient_goals_screen.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/per_meal_kcal_share_dialog.dart';
@@ -164,6 +166,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // ten nutrient goals, and the diary day boundary. Each
                     // is now its own focused entry so people can find the
                     // setting they want and only see the controls for it.
+                    _SettingsTile(
+                      identifier: 'settings-kcal-goal-info',
+                      palette: palette,
+                      icon: Icons.functions_rounded,
+                      title: S.of(context).settingsKcalGoalInfoLabel,
+                      showChevron: true,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const KcalGoalInfoScreen(),
+                        ),
+                      ),
+                    ),
                     _SettingsTile(
                       identifier: 'settings-kcal-adjustment',
                       palette: palette,
@@ -387,6 +401,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onTap: () => _openFoodSourcesScreen(context),
                     ),
                     _SettingsTile(
+                      identifier: 'settings-health-sync',
+                      palette: palette,
+                      icon: Icons.favorite_rounded,
+                      // The platform's own product name, so the row reads as
+                      // the thing users already know ("Health Connect"), not
+                      // as a generic feature label.
+                      title: healthPlatformName,
+                      subtitle: S.of(context).settingsHealthSyncSubtitle,
+                      showChevron: true,
+                      onTap: () => _openHealthSyncScreen(context),
+                    ),
+                    _SettingsTile(
                       identifier: 'settings-import-custom-food',
                       palette: palette,
                       icon: Icons.restaurant_menu_rounded,
@@ -432,8 +458,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       palette: palette,
                       icon: Icons.policy_rounded,
                       title: S.of(context).settingsPrivacySettings,
-                      onTap: () =>
-                          _showPrivacyDialog(context, state.sendAnonymousData),
+                      onTap: () => _showPrivacyDialog(
+                        context,
+                        state.sendAnonymousData,
+                        isDemoData: state.isDemoData,
+                      ),
                     ),
                     _SettingsTile(
                       palette: palette,
@@ -915,6 +944,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _openHealthSyncScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const HealthSyncScreen()),
+    );
+  }
+
   Future<void> _confirmClearOffCache(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1183,9 +1218,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showPrivacyDialog(
     BuildContext context,
-    bool hasAcceptedAnonymousData,
-  ) async {
-    bool switchActive = hasAcceptedAnonymousData;
+    bool hasAcceptedAnonymousData, {
+    required bool isDemoData,
+  }) async {
+    // Crash reporting is not meaningful on synthetic demo data and would
+    // still attach release diagnostics to a session that holds no real
+    // user profile — keep the control off and locked while isDemoData.
+    bool switchActive = isDemoData ? false : hasAcceptedAnonymousData;
     showDialog(
       context: context,
       builder: (context) {
@@ -1197,14 +1236,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   BuildContext context,
                   void Function(void Function()) setState,
                 ) {
-                  return SwitchListTile(
-                    title: Text(S.of(context).sendAnonymousUserData),
-                    value: switchActive,
-                    onChanged: (bool value) {
-                      setState(() {
-                        switchActive = value;
-                      });
-                    },
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(S.of(context).sendAnonymousUserData),
+                        value: switchActive,
+                        onChanged: isDemoData
+                            ? null
+                            : (bool value) {
+                                setState(() {
+                                  switchActive = value;
+                                });
+                              },
+                      ),
+                      if (isDemoData) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          S.of(context).settingsDemoPrivacyNote,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
                   );
                 },
           ),
@@ -1217,9 +1272,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             TextButton(
               onPressed: () async {
-                _settingsBloc.setHasAcceptedAnonymousData(switchActive);
-                if (!switchActive) Sentry.close();
+                final accepted = isDemoData ? false : switchActive;
+                await _settingsBloc.setHasAcceptedAnonymousData(accepted);
+                if (!accepted) Sentry.close();
                 _settingsBloc.add(LoadSettingsEvent());
+                if (!context.mounted) return;
                 Navigator.of(context).pop();
               },
               child: Text(S.of(context).dialogOKLabel),
@@ -1282,8 +1339,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _launchPrivacyPolicyUrl(BuildContext context) async {
-    final sourceCodeUri = Uri.parse(URLConst.privacyPolicyURLEn);
-    _launchUrl(context, sourceCodeUri);
+    final privacyPolicyUri = Uri.parse(
+      URLConst.privacyPolicyFor(Localizations.localeOf(context).languageCode),
+    );
+    _launchUrl(context, privacyPolicyUri);
   }
 
   void _launchUrl(BuildContext context, Uri url) async {

@@ -10,19 +10,63 @@ import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
+/// Rounds three macro percentage shares to integers that sum to exactly 100.
+///
+/// Uses the largest-remainder method so the result stays as close as possible
+/// to the unconstrained ratio. Independent `.round()` is unsafe here: two
+/// half-up `.5` remainders produce 101, and `SettingsBloc.setMacroGoals`
+/// truncates via `toInt()/100`.
+@visibleForTesting
+(int carbs, int protein, int fat) roundMacroPercentsToHundred(
+  double carbsPct,
+  double proteinPct,
+  double fatPct,
+) {
+  const defaultCarbs = 60.0;
+  const defaultProtein = 15.0;
+  const defaultFat = 25.0;
+
+  final values = [carbsPct, proteinPct, fatPct];
+  final total = values.fold<double>(0, (sum, v) => sum + v);
+  final scaled = total <= 0
+      ? const [defaultCarbs, defaultProtein, defaultFat]
+      : [for (final v in values) v * 100.0 / total];
+
+  final floors = [for (final v in scaled) v.floor()];
+  final remaining = 100 - floors.reduce((a, b) => a + b);
+  final order = List<int>.generate(3, (i) => i)
+    ..sort((a, b) {
+      final fracCmp = (scaled[b] - floors[b]).compareTo(scaled[a] - floors[a]);
+      if (fracCmp != 0) return fracCmp;
+      // Prefer the originally larger share; fall back to lower index for a
+      // deterministic triple when both remainder and magnitude match.
+      final sizeCmp = scaled[b].compareTo(scaled[a]);
+      if (sizeCmp != 0) return sizeCmp;
+      return a.compareTo(b);
+    });
+  final result = List<int>.from(floors);
+  for (var i = 0; i < remaining; i++) {
+    result[order[i]]++;
+  }
+  return (result[0], result[1], result[2]);
+}
+
 /// Three sliders that distribute the daily kcal goal across
 /// carbohydrate, protein, and fat. Moving any one slider rebalances
 /// the other two against 100% so the trio always adds up, with each
 /// macro pinned to a 5% floor so the diary still has something to
 /// track against if a user pulls one slider all the way down.
 ///
-/// In body-weight mode (always while Polar is configured, otherwise opt-in)
-/// protein and fat are set in g/kg and carbs fill the remaining kcal.
+/// Fork: in body-weight mode (always while Polar is configured, otherwise
+/// opt-in) protein and fat are set in g/kg and carbs fill the remaining kcal.
 class MacroSplitDialog extends StatefulWidget {
   final SettingsBloc settingsBloc;
   final HomeBloc homeBloc;
   final DiaryBloc diaryBloc;
   final CalendarDayBloc calendarDayBloc;
+  // Default to the locator; injectable for widget tests.
+  final PolarInfluxdbDataSource? polarDataSource;
+  final ProfileBloc? profileBloc;
 
   const MacroSplitDialog({
     super.key,
@@ -30,6 +74,8 @@ class MacroSplitDialog extends StatefulWidget {
     required this.homeBloc,
     required this.diaryBloc,
     required this.calendarDayBloc,
+    this.polarDataSource,
+    this.profileBloc,
   });
 
   @override
@@ -37,18 +83,31 @@ class MacroSplitDialog extends StatefulWidget {
 }
 
 class _MacroSplitDialogState extends State<MacroSplitDialog> {
-  // ── Standard (% ) mode ───────────────────────────────────────────────────
   static const double _defaultCarbsPct = 60;
   static const double _defaultProteinPct = 15;
   static const double _defaultFatPct = 25;
+  static const double _minMacroPct = 5;
+  static const double _maxMacroPct = 90;
 
   double _carbsPct = _defaultCarbsPct;
   double _proteinPct = _defaultProteinPct;
   double _fatPct = _defaultFatPct;
+  bool _loaded = false;
+  bool _syncingControllers = false;
 
-  // ── Body-weight (g/kg) mode ──────────────────────────────────────────────
-  static const double _defaultProteinGPerKg =
-      GetMacroGoalUsecase.defaultProteinGPerKg;
+  /// The field the user typed in most recently. On save we apply only this
+  /// field's pending (unsubmitted) text — last write wins. Reconciling
+  /// conflicting edits across multiple fields at once isn't worth the
+  /// complexity, and every submit/reset re-syncs the controllers anyway, so
+  /// an already-applied field re-applies as a no-op.
+  _MacroField? _lastEditedMacro;
+
+  late final TextEditingController _carbsController;
+  late final TextEditingController _proteinController;
+  late final TextEditingController _fatController;
+
+  // ── Body-weight (g/kg) mode (fork) ───────────────────────────────────────
+  static const double _defaultProteinGPerKg = GetMacroGoalUsecase.defaultProteinGPerKg;
   static const double _defaultFatGPerKg = GetMacroGoalUsecase.defaultFatGPerKg;
 
   bool _isPolarActive = false;
@@ -58,13 +117,10 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   double _fatGPerKg = _defaultFatGPerKg;
   double _weightKg = 70.0;
 
-  bool _loaded = false;
-
-  late final TextEditingController _carbsController;
-  late final TextEditingController _proteinController;
-  late final TextEditingController _fatController;
   late final TextEditingController _proteinGPerKgController;
   late final TextEditingController _fatGPerKgController;
+
+  PolarInfluxdbDataSource get _polarDataSource => widget.polarDataSource ?? locator<PolarInfluxdbDataSource>();
 
   @override
   void initState() {
@@ -91,19 +147,14 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     final carbs = await widget.settingsBloc.getUserCarbGoalPct();
     final protein = await widget.settingsBloc.getUserProteinGoalPct();
     final fat = await widget.settingsBloc.getUserFatGoalPct();
-
-    final useBodyWeightMacros = await widget.settingsBloc
-        .getUseBodyWeightMacros();
-    final polarDataSource = locator<PolarInfluxdbDataSource>();
+    final useBodyWeightMacros = await widget.settingsBloc.getUseBodyWeightMacros();
+    final polarDataSource = _polarDataSource;
     final isPolar = await polarDataSource.isPolarConfigured();
     final proteinGPerKg = await polarDataSource.getProteinGPerKg();
     final fatGPerKg = await polarDataSource.getFatGPerKg();
-    final user = await locator<ProfileBloc>().getUser();
-    final influxWeightKg = isPolar
-        ? await polarDataSource.fetchLatestWeightKg()
-        : null;
+    final user = await (widget.profileBloc ?? locator<ProfileBloc>()).getUser();
+    final influxWeightKg = isPolar ? await polarDataSource.fetchLatestWeightKg() : null;
     final weightKg = influxWeightKg ?? user.weightKG;
-
     if (!mounted) return;
     setState(() {
       _carbsPct = (carbs ?? _defaultCarbsPct / 100) * 100;
@@ -120,11 +171,32 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   }
 
   void _syncControllers() {
-    _carbsController.text = _carbsPct.round().toString();
-    _proteinController.text = _proteinPct.round().toString();
-    _fatController.text = _fatPct.round().toString();
-    _proteinGPerKgController.text = _proteinGPerKg.toStringAsFixed(1);
-    _fatGPerKgController.text = _fatGPerKg.toStringAsFixed(1);
+    _syncingControllers = true;
+    try {
+      _carbsController.text = _carbsPct.round().toString();
+      _proteinController.text = _proteinPct.round().toString();
+      _fatController.text = _fatPct.round().toString();
+      _proteinGPerKgController.text = _proteinGPerKg.toStringAsFixed(1);
+      _fatGPerKgController.text = _fatGPerKg.toStringAsFixed(1);
+    } finally {
+      _syncingControllers = false;
+    }
+  }
+
+  void _markLastEdited(_MacroField field) {
+    // Guard against programmatic controller updates from _syncControllers.
+    // (Assigning controller.text doesn't currently fire TextField.onChanged,
+    // but the flag keeps this correct if that ever changes.)
+    if (_syncingControllers) return;
+    _lastEditedMacro = field;
+  }
+
+  bool _isValidMacroPercentage(int? value) =>
+      value != null && value >= _minMacroPct && value <= _maxMacroPct;
+
+  int? _parseMacroPercentage(TextEditingController controller) {
+    final parsed = int.tryParse(controller.text);
+    return _isValidMacroPercentage(parsed) ? parsed : null;
   }
 
   /// Rebalance the two unmoved macros proportionally to their current
@@ -148,29 +220,92 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     final ratioB = otherB / totalOthers;
     var newA = otherA - delta * ratioA;
     var newB = otherB - delta * ratioB;
-    if (newA < 5) {
-      newB -= 5 - newA;
-      newA = 5;
+    if (newA < _minMacroPct) {
+      newB -= _minMacroPct - newA;
+      newA = _minMacroPct;
     }
-    if (newB < 5) {
-      newA -= 5 - newB;
-      newB = 5;
+    if (newB < _minMacroPct) {
+      newA -= _minMacroPct - newB;
+      newB = _minMacroPct;
     }
     setOtherA(newA);
     setOtherB(newB);
   }
 
-  void _applyTextInput(
-    TextEditingController controller,
-    double currentValue,
-    void Function(double) setter,
-  ) {
-    final parsed = int.tryParse(controller.text);
-    if (parsed == null || parsed < 5 || parsed > 90) {
+  void _applyCarbsInput() {
+    final parsed = _parseMacroPercentage(_carbsController);
+    if (parsed == null) {
       _syncControllers();
       return;
     }
-    setState(() => setter(parsed.toDouble()));
+    setState(
+      () => _redistribute(
+        moved: parsed.toDouble(),
+        oldMoved: _carbsPct,
+        setMoved: (x) => _carbsPct = x,
+        otherA: _proteinPct,
+        setOtherA: (x) => _proteinPct = x,
+        otherB: _fatPct,
+        setOtherB: (x) => _fatPct = x,
+      ),
+    );
+    _syncControllers();
+  }
+
+  void _applyProteinInput() {
+    final parsed = _parseMacroPercentage(_proteinController);
+    if (parsed == null) {
+      _syncControllers();
+      return;
+    }
+    setState(
+      () => _redistribute(
+        moved: parsed.toDouble(),
+        oldMoved: _proteinPct,
+        setMoved: (x) => _proteinPct = x,
+        otherA: _carbsPct,
+        setOtherA: (x) => _carbsPct = x,
+        otherB: _fatPct,
+        setOtherB: (x) => _fatPct = x,
+      ),
+    );
+    _syncControllers();
+  }
+
+  void _applyFatInput() {
+    final parsed = _parseMacroPercentage(_fatController);
+    if (parsed == null) {
+      _syncControllers();
+      return;
+    }
+    setState(
+      () => _redistribute(
+        moved: parsed.toDouble(),
+        oldMoved: _fatPct,
+        setMoved: (x) => _fatPct = x,
+        otherA: _carbsPct,
+        setOtherA: (x) => _carbsPct = x,
+        otherB: _proteinPct,
+        setOtherB: (x) => _proteinPct = x,
+      ),
+    );
+    _syncControllers();
+  }
+
+  void _applyPendingTextInputs() {
+    switch (_lastEditedMacro) {
+      case _MacroField.carbs:
+        _applyCarbsInput();
+        break;
+      case _MacroField.protein:
+        _applyProteinInput();
+        break;
+      case _MacroField.fat:
+        _applyFatInput();
+        break;
+      case null:
+        break;
+    }
   }
 
   Future<void> _save() async {
@@ -178,26 +313,37 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
       await widget.settingsBloc.setUseBodyWeightMacros(_useBodyWeightMacros);
     }
     if (_bodyWeightMode) {
-      final protein =
-          double.tryParse(_proteinGPerKgController.text.trim()) ??
-          _defaultProteinGPerKg;
-      final fat =
-          double.tryParse(_fatGPerKgController.text.trim()) ??
-          _defaultFatGPerKg;
-      final polarDataSource = locator<PolarInfluxdbDataSource>();
+      final protein = double.tryParse(_proteinGPerKgController.text.trim()) ?? _defaultProteinGPerKg;
+      final fat = double.tryParse(_fatGPerKgController.text.trim()) ?? _defaultFatGPerKg;
+      final polarDataSource = _polarDataSource;
       await polarDataSource.saveProteinGPerKg(protein.clamp(0.5, 4.0));
       await polarDataSource.saveFatGPerKg(fat.clamp(0.3, 2.0));
+      widget.settingsBloc.add(LoadSettingsEvent());
+      widget.homeBloc.add(const LoadItemsEvent());
       await widget.settingsBloc.updateTrackedDay(DateTime.now());
-    } else {
-      // Flush any uncommitted text-field edits into state first.
-      _applyTextInput(_carbsController, _carbsPct, (v) => _carbsPct = v);
-      _applyTextInput(_proteinController, _proteinPct, (v) => _proteinPct = v);
-      _applyTextInput(_fatController, _fatPct, (v) => _fatPct = v);
-      await widget.settingsBloc.setMacroGoals(_carbsPct, _proteinPct, _fatPct);
-      await widget.settingsBloc.updateTrackedDay(DateTime.now());
+      widget.calendarDayBloc.add(const RefreshCalendarDayEvent());
+      widget.diaryBloc.add(const LoadDiaryYearEvent());
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      return;
     }
+    _applyPendingTextInputs();
+    // [_redistribute] leaves fractional percentages. Independent `.round()`
+    // can sum to 99 or 101 (two half-up .5s → 101), and setMacroGoals stores
+    // via toInt()/100 — so balance to an exact 100% integer triple first.
+    final rounded = roundMacroPercentsToHundred(
+      _carbsPct,
+      _proteinPct,
+      _fatPct,
+    );
+    await widget.settingsBloc.setMacroGoals(
+      rounded.$1.toDouble(),
+      rounded.$2.toDouble(),
+      rounded.$3.toDouble(),
+    );
     widget.settingsBloc.add(LoadSettingsEvent());
     widget.homeBloc.add(const LoadItemsEvent());
+    await widget.settingsBloc.updateTrackedDay(DateTime.now());
     widget.calendarDayBloc.add(const RefreshCalendarDayEvent());
     widget.diaryBloc.add(const LoadDiaryYearEvent());
     if (!mounted) return;
@@ -315,84 +461,75 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                       ),
                     ),
                   ] else ...[
-                    Text(
-                      '$totalPct% total',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    _MacroRow(
-                      label: s.carbsLabel,
-                      value: _carbsPct,
-                      color: Colors.orange,
-                      controller: _carbsController,
-                      semanticIdentifier: 'macro-split-carbs',
-                      onSliderChanged: (v) => setState(
-                        () => _redistribute(
-                          moved: v,
-                          oldMoved: _carbsPct,
-                          setMoved: (x) => _carbsPct = x,
-                          otherA: _proteinPct,
-                          setOtherA: (x) => _proteinPct = x,
-                          otherB: _fatPct,
-                          setOtherB: (x) => _fatPct = x,
-                        ),
-                      ),
-                      onSliderEnd: _syncControllers,
-                      onTextSubmitted: () => _applyTextInput(
-                        _carbsController,
-                        _carbsPct,
-                        (v) => _carbsPct = v,
+                  Text(
+                    '$totalPct% total',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  _MacroRow(
+                    label: s.carbsLabel,
+                    value: _carbsPct,
+                    color: Colors.orange,
+                    controller: _carbsController,
+                    semanticIdentifier: 'macro-split-carbs',
+                    onSliderChanged: (v) => setState(
+                      () => _redistribute(
+                        moved: v,
+                        oldMoved: _carbsPct,
+                        setMoved: (x) => _carbsPct = x,
+                        otherA: _proteinPct,
+                        setOtherA: (x) => _proteinPct = x,
+                        otherB: _fatPct,
+                        setOtherB: (x) => _fatPct = x,
                       ),
                     ),
-                    _MacroRow(
-                      label: s.proteinLabel,
-                      value: _proteinPct,
-                      color: Colors.blue,
-                      controller: _proteinController,
-                      semanticIdentifier: 'macro-split-protein',
-                      onSliderChanged: (v) => setState(
-                        () => _redistribute(
-                          moved: v,
-                          oldMoved: _proteinPct,
-                          setMoved: (x) => _proteinPct = x,
-                          otherA: _carbsPct,
-                          setOtherA: (x) => _carbsPct = x,
-                          otherB: _fatPct,
-                          setOtherB: (x) => _fatPct = x,
-                        ),
-                      ),
-                      onSliderEnd: _syncControllers,
-                      onTextSubmitted: () => _applyTextInput(
-                        _proteinController,
-                        _proteinPct,
-                        (v) => _proteinPct = v,
+                    onSliderEnd: _syncControllers,
+                    onTextChanged: (_) => _markLastEdited(_MacroField.carbs),
+                    onTextSubmitted: _applyCarbsInput,
+                  ),
+                  _MacroRow(
+                    label: s.proteinLabel,
+                    value: _proteinPct,
+                    color: Colors.blue,
+                    controller: _proteinController,
+                    semanticIdentifier: 'macro-split-protein',
+                    onSliderChanged: (v) => setState(
+                      () => _redistribute(
+                        moved: v,
+                        oldMoved: _proteinPct,
+                        setMoved: (x) => _proteinPct = x,
+                        otherA: _carbsPct,
+                        setOtherA: (x) => _carbsPct = x,
+                        otherB: _fatPct,
+                        setOtherB: (x) => _fatPct = x,
                       ),
                     ),
-                    _MacroRow(
-                      label: s.fatLabel,
-                      value: _fatPct,
-                      color: Colors.green,
-                      controller: _fatController,
-                      semanticIdentifier: 'macro-split-fat',
-                      onSliderChanged: (v) => setState(
-                        () => _redistribute(
-                          moved: v,
-                          oldMoved: _fatPct,
-                          setMoved: (x) => _fatPct = x,
-                          otherA: _carbsPct,
-                          setOtherA: (x) => _carbsPct = x,
-                          otherB: _proteinPct,
-                          setOtherB: (x) => _proteinPct = x,
-                        ),
-                      ),
-                      onSliderEnd: _syncControllers,
-                      onTextSubmitted: () => _applyTextInput(
-                        _fatController,
-                        _fatPct,
-                        (v) => _fatPct = v,
+                    onSliderEnd: _syncControllers,
+                    onTextChanged: (_) => _markLastEdited(_MacroField.protein),
+                    onTextSubmitted: _applyProteinInput,
+                  ),
+                  _MacroRow(
+                    label: s.fatLabel,
+                    value: _fatPct,
+                    color: Colors.green,
+                    controller: _fatController,
+                    semanticIdentifier: 'macro-split-fat',
+                    onSliderChanged: (v) => setState(
+                      () => _redistribute(
+                        moved: v,
+                        oldMoved: _fatPct,
+                        setMoved: (x) => _fatPct = x,
+                        otherA: _carbsPct,
+                        setOtherA: (x) => _carbsPct = x,
+                        otherB: _proteinPct,
+                        setOtherB: (x) => _proteinPct = x,
                       ),
                     ),
-                  ], // end else branch
+                    onSliderEnd: _syncControllers,
+                    onTextChanged: (_) => _markLastEdited(_MacroField.fat),
+                    onTextSubmitted: _applyFatInput,
+                  ),
+                  ],
                 ],
               ),
             ),
@@ -421,6 +558,7 @@ class _MacroRow extends StatelessWidget {
   final String semanticIdentifier;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onSliderEnd;
+  final ValueChanged<String> onTextChanged;
   final VoidCallback onTextSubmitted;
 
   const _MacroRow({
@@ -431,11 +569,16 @@ class _MacroRow extends StatelessWidget {
     required this.semanticIdentifier,
     required this.onSliderChanged,
     required this.onSliderEnd,
+    required this.onTextChanged,
     required this.onTextSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
+    final macroRange =
+        _MacroSplitDialogState._maxMacroPct -
+        _MacroSplitDialogState._minMacroPct;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -459,6 +602,7 @@ class _MacroRow extends StatelessWidget {
                     vertical: 12,
                   ),
                 ),
+                onChanged: onTextChanged,
                 onSubmitted: (_) => onTextSubmitted(),
                 onEditingComplete: onTextSubmitted,
               ),
@@ -474,10 +618,13 @@ class _MacroRow extends StatelessWidget {
           child: Semantics(
             identifier: semanticIdentifier,
             child: Slider(
-              min: 5,
-              max: 90,
-              value: value.clamp(5, 90),
-              divisions: 85,
+              min: _MacroSplitDialogState._minMacroPct,
+              max: _MacroSplitDialogState._maxMacroPct,
+              value: value.clamp(
+                _MacroSplitDialogState._minMacroPct,
+                _MacroSplitDialogState._maxMacroPct,
+              ),
+              divisions: macroRange.toInt(),
               onChanged: (v) {
                 final rounded = v.round().toDouble();
                 if (100 - rounded >= 10) {
@@ -492,6 +639,8 @@ class _MacroRow extends StatelessWidget {
     );
   }
 }
+
+enum _MacroField { carbs, protein, fat }
 
 class _GPerKgRow extends StatelessWidget {
   final String label;

@@ -9,6 +9,7 @@ import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.da
 import 'package:opennutritracker/features/add_meal/presentation/bloc/add_meal_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/food_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/recent_meal_bloc.dart';
+import 'package:opennutritracker/features/add_meal/presentation/bloc/search_debounce.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/default_results_widget.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/meal_search_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:opennutritracker/features/add_meal/presentation/widgets/no_resul
 import 'package:opennutritracker/features/add_meal/presentation/widgets/meal_item_card.dart';
 import 'package:opennutritracker/features/add_meal/presentation/widgets/quick_add_bottom_sheet.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/products_bloc.dart';
+import 'package:opennutritracker/features/add_meal/util/meal_relevance_ranker.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/edit_meal_screen.dart';
 import 'package:opennutritracker/features/scanner/scanner_screen.dart';
 import 'package:opennutritracker/features/scanner/util/barcode_check_digit.dart';
@@ -116,7 +118,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
               const SizedBox(height: Dimens.spacing12),
               _buildSourceChips(context, palette),
               const SizedBox(height: Dimens.spacing12),
-              Expanded(child: _buildResults(context, palette)),
+              // Rebuild on every keystroke so the empty-state logic can tell
+              // "no results for this query" apart from "a newer query is
+              // still debouncing/searching" — the latter shows a spinner.
+              Expanded(
+                child: ValueListenableBuilder<String>(
+                  valueListenable: _searchStringListener,
+                  builder: (context, query, _) =>
+                      _buildResults(context, palette, query),
+                ),
+              ),
             ],
           ),
         ),
@@ -248,7 +259,43 @@ class _AddMealScreenState extends State<AddMealScreen> {
         ),
       );
 
-  Widget _buildResults(BuildContext context, AppPalette palette) {
+  /// True while the results carried by [state] lag behind [query]: the
+  /// search for the current input is still debouncing or in flight. Empty
+  /// views show a spinner in that window instead of a premature "no
+  /// results". Sub-threshold input never searches, so it is never pending;
+  /// failed states return false so the error stays visible.
+  static bool _productsPending(ProductsState state, String query) {
+    if (state is ProductsLoadingState) return true;
+    if (query.trim().length < minQueryLength) return false;
+    if (state is ProductsInitial) return true;
+    if (state is ProductsLoadedState) return state.query != query;
+    return false;
+  }
+
+  static bool _foodPending(FoodState state, String query) {
+    if (state is FoodLoadingState) return true;
+    if (query.trim().length < minQueryLength) return false;
+    if (state is FoodInitial) return true;
+    if (state is FoodLoadedState) return state.query != query;
+    return false;
+  }
+
+  // Fixed-size and top-aligned: the "All" view returns this inside an
+  // Expanded, whose tight constraints would otherwise stretch the
+  // indicator across the whole results area.
+  static const _pendingSpinner = Align(
+    alignment: Alignment.topCenter,
+    child: Padding(
+      padding: EdgeInsets.only(top: 32),
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: CircularProgressIndicator(),
+      ),
+    ),
+  );
+
+  Widget _buildResults(BuildContext context, AppPalette palette, String query) {
     switch (_source) {
       case _SearchSource.all:
         // One merged list across product sources; each card already shows its
@@ -263,18 +310,22 @@ class _AddMealScreenState extends State<AddMealScreen> {
                   return BlocBuilder<FoodBloc, FoodState>(
                     bloc: _foodBloc,
                     builder: (context, fs) {
+                      // Wait for BOTH sources (OFF and the Supabase backend)
+                      // before rendering the merged list — showing whichever
+                      // lands first would make results pop in and shift when
+                      // the second source arrives. A failed source counts as
+                      // answered, so one outage doesn't block the other's
+                      // results.
+                      if (_productsPending(ps, query) ||
+                          _foodPending(fs, query)) {
+                        return _pendingSpinner;
+                      }
                       final products =
                           ps is ProductsLoadedState ? ps.products : const <MealEntity>[];
                       final foods =
                           fs is FoodLoadedState ? fs.food : const <MealEntity>[];
-                      final merged = [...products, ...foods];
+                      final merged = mergeAndRankMeals(products, foods, query);
                       if (merged.isEmpty) {
-                        if (ps is ProductsLoadingState || fs is FoodLoadingState) {
-                          return const Padding(
-                            padding: EdgeInsets.only(top: 32),
-                            child: CircularProgressIndicator(),
-                          );
-                        }
                         if (ps is ProductsInitial && fs is FoodInitial) {
                           return const DefaultsResultsWidget();
                         }
@@ -307,14 +358,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
               bloc: _productsBloc,
               builder: (context, state) {
                 if (state is ProductsInitial) {
-                  return const DefaultsResultsWidget();
+                  return _productsPending(state, query)
+                      ? _pendingSpinner
+                      : const DefaultsResultsWidget();
                 } else if (state is ProductsLoadingState) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 32),
-                    child: CircularProgressIndicator(),
-                  );
+                  return _pendingSpinner;
                 } else if (state is ProductsLoadedState) {
-                  if (state.products.isEmpty) return const NoResultsWidget();
+                  if (state.products.isEmpty) {
+                    return _productsPending(state, query)
+                        ? _pendingSpinner
+                        : const NoResultsWidget();
+                  }
                   return Flexible(
                     child: ListView.builder(
                       itemCount:
@@ -351,14 +405,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
               bloc: _foodBloc,
               builder: (context, state) {
                 if (state is FoodInitial) {
-                  return const DefaultsResultsWidget();
+                  return _foodPending(state, query)
+                      ? _pendingSpinner
+                      : const DefaultsResultsWidget();
                 } else if (state is FoodLoadingState) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 32),
-                    child: CircularProgressIndicator(),
-                  );
+                  return _pendingSpinner;
                 } else if (state is FoodLoadedState) {
-                  if (state.food.isEmpty) return const NoResultsWidget();
+                  if (state.food.isEmpty) {
+                    return _foodPending(state, query)
+                        ? _pendingSpinner
+                        : const NoResultsWidget();
+                  }
                   return Flexible(
                     child: ListView.builder(
                       itemCount: state.food.length + (state.remoteSourceEmpty ? 1 : 0),
