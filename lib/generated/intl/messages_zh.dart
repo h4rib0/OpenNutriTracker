@@ -105,6 +105,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "quickAddActivityNameLabel": MessageLookupByLibrary.simpleMessage("名称（可选）"),
+        "quickAddActivityTitleLabel": MessageLookupByLibrary.simpleMessage("快速添加活动"),
+        "quickAddActivityDurationLabel": MessageLookupByLibrary.simpleMessage("时长（分钟，可选）"),
+        "quickAddActivityEnergyLabelKcal": MessageLookupByLibrary.simpleMessage("消耗能量（kcal）"),
+        "quickAddActivityEnergyLabelKj": MessageLookupByLibrary.simpleMessage("消耗能量（kJ）"),
+        "quickAddActivityAddedSnack": MessageLookupByLibrary.simpleMessage("已添加活动"),
+        "copyActionLabel": MessageLookupByLibrary.simpleMessage("复制"),
+        "copyToProfileLabel": MessageLookupByLibrary.simpleMessage("复制到档案"),
+        "copiedToProfileSnackbar": MessageLookupByLibrary.simpleMessage("餐食已复制到档案"),
+        "profileImageLabel": MessageLookupByLibrary.simpleMessage("添加照片"),
+        "profileImageReplace": MessageLookupByLibrary.simpleMessage("更换照片"),
+        "profileImageRemove": MessageLookupByLibrary.simpleMessage("移除照片"),
+        "switchProfileLabel": MessageLookupByLibrary.simpleMessage("切换档案"),
+        "addProfileLabel": MessageLookupByLibrary.simpleMessage("添加档案"),
+        "manageProfilesLabel": MessageLookupByLibrary.simpleMessage("管理档案"),
+        "editProfileTitle": MessageLookupByLibrary.simpleMessage("编辑档案"),
+        "profileNameLabel": MessageLookupByLibrary.simpleMessage("名称"),
+        "profileNameHint": MessageLookupByLibrary.simpleMessage("档案名称"),
+        "defaultProfileName": MessageLookupByLibrary.simpleMessage("档案 1"),
+        "profileActiveLabel": MessageLookupByLibrary.simpleMessage("当前"),
+        "deleteProfileConfirmTitle": MessageLookupByLibrary.simpleMessage("删除档案？"),
+        "deleteProfileConfirmContent": MessageLookupByLibrary.simpleMessage("这将永久删除该档案及其所有数据，此操作无法撤销。"),
         "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("上限"),
         "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("每日提醒"),
         "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("每日记录餐食的提醒"),
@@ -920,6 +942,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "retryLabel": MessageLookupByLibrary.simpleMessage("重试"),
         "saturatedFatLabel": MessageLookupByLibrary.simpleMessage("饱和脂肪"),
         "scanProductLabel": MessageLookupByLibrary.simpleMessage("扫描产品"),
+        "scannerLockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("锁定为竖屏"),
         "scannerManualEntryButton":
             MessageLookupByLibrary.simpleMessage("手动输入条码"),
         "scannerManualEntryCancel": MessageLookupByLibrary.simpleMessage("取消"),
@@ -930,6 +954,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "scannerManualEntryInvalid":
             MessageLookupByLibrary.simpleMessage("此条码似乎无效。请检查数字后重试。"),
         "scannerManualEntrySubmit": MessageLookupByLibrary.simpleMessage("查找"),
+        "scannerUnlockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("允许旋转"),
         "searchDefaultLabel": MessageLookupByLibrary.simpleMessage("请输入搜索词"),
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("食物"),
         "searchLabel": MessageLookupByLibrary.simpleMessage("搜索"),

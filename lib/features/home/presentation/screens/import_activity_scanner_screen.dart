@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:opennutritracker/core/domain/usecase/get_physical_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
+import 'package:opennutritracker/core/presentation/scanner_orientation_mixin.dart';
 import 'package:opennutritracker/core/utils/calc/met_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/activity_detail/presentation/bloc/activity_detail_bloc.dart';
@@ -32,7 +33,8 @@ class ImportActivityScannerScreen extends StatefulWidget {
 }
 
 class _ImportActivityScannerScreenState
-    extends State<ImportActivityScannerScreen> with WidgetsBindingObserver {
+    extends State<ImportActivityScannerScreen>
+    with WidgetsBindingObserver, ScannerOrientationMixin {
   late ActivityDetailBloc _activityDetailBloc;
   late GetPhysicalActivityUsecase _getPhysicalActivityUsecase;
   late GetUserUsecase _getUserUsecase;
@@ -100,6 +102,7 @@ class _ImportActivityScannerScreenState
             tooltip: S.of(context).pasteCodeLabel,
             onPressed: _showPasteCodeDialog,
           ),
+          buildPortraitLockAction(context),
         ],
       ),
       body: MobileScanner(

@@ -108,6 +108,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "quickAddActivityNameLabel": MessageLookupByLibrary.simpleMessage("Nome (facoltativo)"),
+        "quickAddActivityTitleLabel": MessageLookupByLibrary.simpleMessage("Aggiunta rapida attività"),
+        "quickAddActivityDurationLabel": MessageLookupByLibrary.simpleMessage("Durata (min, facoltativo)"),
+        "quickAddActivityEnergyLabelKcal": MessageLookupByLibrary.simpleMessage("Energia bruciata (kcal)"),
+        "quickAddActivityEnergyLabelKj": MessageLookupByLibrary.simpleMessage("Energia bruciata (kJ)"),
+        "quickAddActivityAddedSnack": MessageLookupByLibrary.simpleMessage("Attività aggiunta"),
+        "copyActionLabel": MessageLookupByLibrary.simpleMessage("Copia"),
+        "copyToProfileLabel": MessageLookupByLibrary.simpleMessage("Copia nel profilo"),
+        "copiedToProfileSnackbar": MessageLookupByLibrary.simpleMessage("Pasto copiato nel profilo"),
+        "profileImageLabel": MessageLookupByLibrary.simpleMessage("Aggiungi una foto"),
+        "profileImageReplace": MessageLookupByLibrary.simpleMessage("Cambia foto"),
+        "profileImageRemove": MessageLookupByLibrary.simpleMessage("Rimuovi foto"),
+        "switchProfileLabel": MessageLookupByLibrary.simpleMessage("Cambia profilo"),
+        "addProfileLabel": MessageLookupByLibrary.simpleMessage("Aggiungi profilo"),
+        "manageProfilesLabel": MessageLookupByLibrary.simpleMessage("Gestisci profili"),
+        "editProfileTitle": MessageLookupByLibrary.simpleMessage("Modifica profilo"),
+        "profileNameLabel": MessageLookupByLibrary.simpleMessage("Nome"),
+        "profileNameHint": MessageLookupByLibrary.simpleMessage("Nome profilo"),
+        "defaultProfileName": MessageLookupByLibrary.simpleMessage("Profilo 1"),
+        "profileActiveLabel": MessageLookupByLibrary.simpleMessage("Attivo"),
+        "deleteProfileConfirmTitle": MessageLookupByLibrary.simpleMessage("Eliminare il profilo?"),
+        "deleteProfileConfirmContent": MessageLookupByLibrary.simpleMessage("Questa operazione elimina definitivamente il profilo e tutti i suoi dati e non può essere annullata."),
         "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("limite"),
         "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Promemoria giornalieri"),
         "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Promemoria giornaliero per registrare i pasti"),
@@ -1059,6 +1081,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("grassi saturi"),
         "scanProductLabel":
             MessageLookupByLibrary.simpleMessage("Scansiona prodotto"),
+        "scannerLockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Blocca in verticale"),
         "scannerManualEntryButton": MessageLookupByLibrary.simpleMessage(
             "Inserisci il codice manualmente"),
         "scannerManualEntryCancel":
@@ -1071,6 +1095,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Questo codice a barre non sembra valido. Controlla le cifre e riprova."),
         "scannerManualEntrySubmit":
             MessageLookupByLibrary.simpleMessage("Cerca"),
+        "scannerUnlockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Consenti rotazione"),
         "searchDefaultLabel": MessageLookupByLibrary.simpleMessage(
             "Inserisci una parola da cercare"),
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("Cibo"),

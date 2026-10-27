@@ -108,6 +108,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "quickAddActivityNameLabel": MessageLookupByLibrary.simpleMessage("Název (volitelné)"),
+        "quickAddActivityTitleLabel": MessageLookupByLibrary.simpleMessage("Rychlé přidání aktivity"),
+        "quickAddActivityDurationLabel": MessageLookupByLibrary.simpleMessage("Doba trvání (min, volitelné)"),
+        "quickAddActivityEnergyLabelKcal": MessageLookupByLibrary.simpleMessage("Spálená energie (kcal)"),
+        "quickAddActivityEnergyLabelKj": MessageLookupByLibrary.simpleMessage("Spálená energie (kJ)"),
+        "quickAddActivityAddedSnack": MessageLookupByLibrary.simpleMessage("Aktivita přidána"),
+        "copyActionLabel": MessageLookupByLibrary.simpleMessage("Kopírovat"),
+        "copyToProfileLabel": MessageLookupByLibrary.simpleMessage("Kopírovat do profilu"),
+        "copiedToProfileSnackbar": MessageLookupByLibrary.simpleMessage("Jídlo zkopírováno do profilu"),
+        "profileImageLabel": MessageLookupByLibrary.simpleMessage("Přidat fotku"),
+        "profileImageReplace": MessageLookupByLibrary.simpleMessage("Změnit fotku"),
+        "profileImageRemove": MessageLookupByLibrary.simpleMessage("Odebrat fotku"),
+        "switchProfileLabel": MessageLookupByLibrary.simpleMessage("Přepnout profil"),
+        "addProfileLabel": MessageLookupByLibrary.simpleMessage("Přidat profil"),
+        "manageProfilesLabel": MessageLookupByLibrary.simpleMessage("Spravovat profily"),
+        "editProfileTitle": MessageLookupByLibrary.simpleMessage("Upravit profil"),
+        "profileNameLabel": MessageLookupByLibrary.simpleMessage("Jméno"),
+        "profileNameHint": MessageLookupByLibrary.simpleMessage("Název profilu"),
+        "defaultProfileName": MessageLookupByLibrary.simpleMessage("Profil 1"),
+        "profileActiveLabel": MessageLookupByLibrary.simpleMessage("Aktivní"),
+        "deleteProfileConfirmTitle": MessageLookupByLibrary.simpleMessage("Smazat profil?"),
+        "deleteProfileConfirmContent": MessageLookupByLibrary.simpleMessage("Tímto se trvale smaže profil i všechna jeho data. Tuto akci nelze vrátit zpět."),
         "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("limit"),
         "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Denní připomenutí"),
         "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Denní připomenutí k zaznamenání jídel"),
@@ -1050,6 +1072,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("nasycené mastné kyseliny"),
         "scanProductLabel":
             MessageLookupByLibrary.simpleMessage("Skenovat produkt"),
+        "scannerLockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Uzamknout na výšku"),
         "scannerManualEntryButton":
             MessageLookupByLibrary.simpleMessage("Zadat kód ručně"),
         "scannerManualEntryCancel":
@@ -1062,6 +1086,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Tento čárový kód nevypadá platně. Zkontrolujte prosím číslice a zkuste to znovu."),
         "scannerManualEntrySubmit":
             MessageLookupByLibrary.simpleMessage("Vyhledat"),
+        "scannerUnlockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Povolit otáčení"),
         "searchDefaultLabel": MessageLookupByLibrary.simpleMessage(
             "Zadejte prosím slovo k vyhledání"),
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("Potraviny"),

@@ -151,6 +151,10 @@ class ConfigRepository {
     await _configDataSource.setConfigAccentColor(value);
   }
 
+  Future<void> setConfigScannerPortraitLock(bool value) async {
+    await _configDataSource.setConfigScannerPortraitLock(value);
+  }
+
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     await _configDataSource.setConfigSyncNutrientsToSupabase(sync);
   }

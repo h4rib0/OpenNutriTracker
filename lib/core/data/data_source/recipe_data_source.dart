@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:opennutritracker/core/data/data_source/recipe_supabase_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/recipe_dbo.dart';
+import 'package:opennutritracker/core/utils/hive_db_provider.dart';
 
 class RecipeDataSource {
-  final Box<RecipeDBO> _recipeBox;
+  final HiveDBProvider _db;
   final RecipeSupabaseDataSource? _supabase;
 
-  RecipeDataSource(this._recipeBox, [this._supabase]);
+  RecipeDataSource(this._db, [this._supabase]);
+
+  Box<RecipeDBO> get _recipeBox => _db.recipeBox;
 
   // Upsert by stable id. Recipe ids are uuids assigned at first save and
   // never change, so we can safely overwrite the matching record.

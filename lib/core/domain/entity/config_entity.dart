@@ -68,6 +68,11 @@ class ConfigEntity extends Equatable {
   // Material You when set. Null means "use the platform default" — Material
   // You on Android 12+, the static palette elsewhere.
   final int? accentColor;
+  // #165: explicit user override for the scanner's portrait lock. Null means
+  // "follow the device" — the scanner falls back to locking portrait on
+  // phone-sized screens and leaving rotation free on tablets. Once the user
+  // taps the in-scanner toggle, their choice is stored here and sticks.
+  final bool? scannerPortraitLock;
   final bool syncNutrientsToSupabase;
 
   /// Default daily water goal in millilitres for the home chip when the
@@ -136,6 +141,7 @@ class ConfigEntity extends Equatable {
     this.fastingWarningAcknowledged = false,
     this.useMaterialYou = true,
     this.accentColor,
+    this.scannerPortraitLock,
     this.syncNutrientsToSupabase = false,
   });
 
@@ -219,6 +225,7 @@ class ConfigEntity extends Equatable {
     fastingWarningAcknowledged: dbo.fastingWarningAcknowledged ?? false,
     useMaterialYou: dbo.useMaterialYou ?? true,
     accentColor: _normaliseAccentColor(dbo.accentColor),
+    scannerPortraitLock: dbo.scannerPortraitLock,
     syncNutrientsToSupabase: dbo.syncNutrientsToSupabase ?? false,
   );
 
@@ -298,6 +305,7 @@ class ConfigEntity extends Equatable {
     fastingWarningAcknowledged,
     useMaterialYou,
     accentColor,
+    scannerPortraitLock,
     syncNutrientsToSupabase,
   ];
 }

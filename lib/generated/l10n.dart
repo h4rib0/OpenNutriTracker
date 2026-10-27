@@ -621,6 +621,204 @@ class S {
   }
 
   /// `Add a photo`
+  String get profileImageLabel {
+    return Intl.message(
+      'Add a photo',
+      name: 'profileImageLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get profileImageReplace {
+    return Intl.message(
+      'Change photo',
+      name: 'profileImageReplace',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get profileImageRemove {
+    return Intl.message(
+      'Remove photo',
+      name: 'profileImageRemove',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get switchProfileLabel {
+    return Intl.message(
+      'Switch profile',
+      name: 'switchProfileLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get addProfileLabel {
+    return Intl.message(
+      'Add profile',
+      name: 'addProfileLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get manageProfilesLabel {
+    return Intl.message(
+      'Manage profiles',
+      name: 'manageProfilesLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get editProfileTitle {
+    return Intl.message(
+      'Edit profile',
+      name: 'editProfileTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get profileNameLabel {
+    return Intl.message(
+      'Name',
+      name: 'profileNameLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get profileNameHint {
+    return Intl.message(
+      'Profile name',
+      name: 'profileNameHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get defaultProfileName {
+    return Intl.message(
+      'Profile 1',
+      name: 'defaultProfileName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get profileActiveLabel {
+    return Intl.message(
+      'Active',
+      name: 'profileActiveLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get deleteProfileConfirmTitle {
+    return Intl.message(
+      'Delete profile?',
+      name: 'deleteProfileConfirmTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get deleteProfileConfirmContent {
+    return Intl.message(
+      'This permanently deletes the profile and all of its data and cannot be undone.',
+      name: 'deleteProfileConfirmContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get copyToProfileLabel {
+    return Intl.message(
+      'Copy to profile',
+      name: 'copyToProfileLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get copiedToProfileSnackbar {
+    return Intl.message(
+      'Meal copied to profile',
+      name: 'copiedToProfileSnackbar',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get copyActionLabel {
+    return Intl.message(
+      'Copy',
+      name: 'copyActionLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityTitleLabel {
+    return Intl.message(
+      'Quick add activity',
+      name: 'quickAddActivityTitleLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityDurationLabel {
+    return Intl.message(
+      'Duration (min, optional)',
+      name: 'quickAddActivityDurationLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityEnergyLabelKcal {
+    return Intl.message(
+      'Energy burned (kcal)',
+      name: 'quickAddActivityEnergyLabelKcal',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityEnergyLabelKj {
+    return Intl.message(
+      'Energy burned (kJ)',
+      name: 'quickAddActivityEnergyLabelKj',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityAddedSnack {
+    return Intl.message(
+      'Activity added',
+      name: 'quickAddActivityAddedSnack',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get quickAddActivityNameLabel {
+    return Intl.message(
+      'Name (optional)',
+      name: 'quickAddActivityNameLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
   String get mealImageLabel {
     return Intl.message(
       'Add a photo',
@@ -4026,6 +4224,26 @@ class S {
     return Intl.message(
       'Type code manually',
       name: 'scannerManualEntryButton',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lock to portrait`
+  String get scannerLockOrientationTooltip {
+    return Intl.message(
+      'Lock to portrait',
+      name: 'scannerLockOrientationTooltip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow rotation`
+  String get scannerUnlockOrientationTooltip {
+    return Intl.message(
+      'Allow rotation',
+      name: 'scannerUnlockOrientationTooltip',
       desc: '',
       args: [],
     );

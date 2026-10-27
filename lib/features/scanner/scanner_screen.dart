@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
+import 'package:opennutritracker/core/presentation/scanner_orientation_mixin.dart';
 import 'package:opennutritracker/core/presentation/widgets/error_dialog.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -27,7 +28,7 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, ScannerOrientationMixin {
   final log = Logger('ScannerScreen');
 
   String? _scannedBarcode;
@@ -177,6 +178,7 @@ class _ScannerScreenState extends State<ScannerScreen>
             icon: const Icon(Icons.flip_camera_android_outlined),
             onPressed: () => _cameraController.switchCamera(),
           ),
+          buildPortraitLockAction(context),
         ],
       ),
       body: Column(

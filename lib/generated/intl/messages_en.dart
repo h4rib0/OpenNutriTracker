@@ -107,6 +107,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "quickAddActivityNameLabel": MessageLookupByLibrary.simpleMessage("Name (optional)"),
+        "quickAddActivityTitleLabel": MessageLookupByLibrary.simpleMessage("Quick add activity"),
+        "quickAddActivityDurationLabel": MessageLookupByLibrary.simpleMessage("Duration (min, optional)"),
+        "quickAddActivityEnergyLabelKcal": MessageLookupByLibrary.simpleMessage("Energy burned (kcal)"),
+        "quickAddActivityEnergyLabelKj": MessageLookupByLibrary.simpleMessage("Energy burned (kJ)"),
+        "quickAddActivityAddedSnack": MessageLookupByLibrary.simpleMessage("Activity added"),
+        "copyActionLabel": MessageLookupByLibrary.simpleMessage("Copy"),
+        "copyToProfileLabel": MessageLookupByLibrary.simpleMessage("Copy to profile"),
+        "copiedToProfileSnackbar": MessageLookupByLibrary.simpleMessage("Meal copied to profile"),
+        "profileImageLabel": MessageLookupByLibrary.simpleMessage("Add a photo"),
+        "profileImageReplace": MessageLookupByLibrary.simpleMessage("Change photo"),
+        "profileImageRemove": MessageLookupByLibrary.simpleMessage("Remove photo"),
+        "switchProfileLabel": MessageLookupByLibrary.simpleMessage("Switch profile"),
+        "addProfileLabel": MessageLookupByLibrary.simpleMessage("Add profile"),
+        "manageProfilesLabel": MessageLookupByLibrary.simpleMessage("Manage profiles"),
+        "editProfileTitle": MessageLookupByLibrary.simpleMessage("Edit profile"),
+        "profileNameLabel": MessageLookupByLibrary.simpleMessage("Name"),
+        "profileNameHint": MessageLookupByLibrary.simpleMessage("Profile name"),
+        "defaultProfileName": MessageLookupByLibrary.simpleMessage("Profile 1"),
+        "profileActiveLabel": MessageLookupByLibrary.simpleMessage("Active"),
+        "deleteProfileConfirmTitle": MessageLookupByLibrary.simpleMessage("Delete profile?"),
+        "deleteProfileConfirmContent": MessageLookupByLibrary.simpleMessage("This permanently deletes the profile and all of its data and cannot be undone."),
         "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("limit"),
         "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Daily Reminders"),
         "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Daily meal logging reminder"),
@@ -1043,6 +1065,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("saturated fat"),
         "scanProductLabel":
             MessageLookupByLibrary.simpleMessage("Scan Product"),
+        "scannerLockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Lock to portrait"),
         "scannerManualEntryButton":
             MessageLookupByLibrary.simpleMessage("Type code manually"),
         "scannerManualEntryCancel":
@@ -1055,6 +1079,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "That barcode doesn\'t look valid. Please check the digits and try again."),
         "scannerManualEntrySubmit":
             MessageLookupByLibrary.simpleMessage("Look up"),
+        "scannerUnlockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Allow rotation"),
         "searchDefaultLabel":
             MessageLookupByLibrary.simpleMessage("Please enter a search word"),
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("Food"),

@@ -10,9 +10,12 @@ class GetKcalGoalUsecase {
   final UserRepository _userRepository;
   final ConfigRepository _configRepository;
   final UserActivityRepository _userActivityRepository;
-  final PolarInfluxdbDataSource _polarDataSource;
+  // Null for goal calculations that must not use the device's Polar data,
+  // e.g. seeding a tracked day for another profile (Polar belongs to the
+  // device owner, not to every profile).
+  final PolarInfluxdbDataSource? _polarDataSource;
 
-  GetKcalGoalUsecase(this._userRepository, this._configRepository, this._userActivityRepository, this._polarDataSource);
+  GetKcalGoalUsecase(this._userRepository, this._configRepository, this._userActivityRepository, [this._polarDataSource]);
 
   Future<double> getKcalGoal({UserEntity? userEntity, double? totalKcalActivitiesParam, double? kcalUserAdjustment}) async {
     final user = userEntity ?? await _userRepository.getUserData();
@@ -23,8 +26,9 @@ class GetKcalGoalUsecase {
     // Remaining = goal − consumed, so: goal = polarTotal − slider.
     // No BMR/PAL/weight-goal factor — Polar's "calories" field is the actual
     // total daily energy expenditure measured by the device.
-    if (await _polarDataSource.isPolarConfigured()) {
-      final polarTotal = await _polarDataSource.fetchTotalKcalForDate(DateTime.now()) ?? 0;
+    final polar = _polarDataSource;
+    if (polar != null && await polar.isPolarConfigured()) {
+      final polarTotal = await polar.fetchTotalKcalForDate(DateTime.now()) ?? 0;
       return polarTotal - (config.userKcalAdjustment ?? 0);
     }
 

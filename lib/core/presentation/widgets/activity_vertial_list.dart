@@ -129,6 +129,7 @@ class _ActivityVerticalListState extends State<ActivityVerticalList> {
                   day: widget.day,
                   onTap: () => _onPlaceholderCardTapped(context),
                   firstListElement: firstListElement,
+                  semanticIdentifier: 'add-activity-placeholder',
                 );
               } else {
                 final userActivity = widget.userActivityList[adjustedIndex];

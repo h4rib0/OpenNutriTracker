@@ -110,6 +110,28 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "quickAddActivityNameLabel": MessageLookupByLibrary.simpleMessage("Ad (isteğe bağlı)"),
+        "quickAddActivityTitleLabel": MessageLookupByLibrary.simpleMessage("Hızlı aktivite ekle"),
+        "quickAddActivityDurationLabel": MessageLookupByLibrary.simpleMessage("Süre (dk, isteğe bağlı)"),
+        "quickAddActivityEnergyLabelKcal": MessageLookupByLibrary.simpleMessage("Yakılan enerji (kcal)"),
+        "quickAddActivityEnergyLabelKj": MessageLookupByLibrary.simpleMessage("Yakılan enerji (kJ)"),
+        "quickAddActivityAddedSnack": MessageLookupByLibrary.simpleMessage("Aktivite eklendi"),
+        "copyActionLabel": MessageLookupByLibrary.simpleMessage("Kopyala"),
+        "copyToProfileLabel": MessageLookupByLibrary.simpleMessage("Profile kopyala"),
+        "copiedToProfileSnackbar": MessageLookupByLibrary.simpleMessage("Öğün profile kopyalandı"),
+        "profileImageLabel": MessageLookupByLibrary.simpleMessage("Fotoğraf ekle"),
+        "profileImageReplace": MessageLookupByLibrary.simpleMessage("Fotoğrafı değiştir"),
+        "profileImageRemove": MessageLookupByLibrary.simpleMessage("Fotoğrafı kaldır"),
+        "switchProfileLabel": MessageLookupByLibrary.simpleMessage("Profil değiştir"),
+        "addProfileLabel": MessageLookupByLibrary.simpleMessage("Profil ekle"),
+        "manageProfilesLabel": MessageLookupByLibrary.simpleMessage("Profilleri yönet"),
+        "editProfileTitle": MessageLookupByLibrary.simpleMessage("Profili düzenle"),
+        "profileNameLabel": MessageLookupByLibrary.simpleMessage("Ad"),
+        "profileNameHint": MessageLookupByLibrary.simpleMessage("Profil adı"),
+        "defaultProfileName": MessageLookupByLibrary.simpleMessage("Profil 1"),
+        "profileActiveLabel": MessageLookupByLibrary.simpleMessage("Etkin"),
+        "deleteProfileConfirmTitle": MessageLookupByLibrary.simpleMessage("Profil silinsin mi?"),
+        "deleteProfileConfirmContent": MessageLookupByLibrary.simpleMessage("Bu işlem profili ve tüm verilerini kalıcı olarak siler. Bu geri alınamaz."),
         "nutrientPanelLimitLabel": MessageLookupByLibrary.simpleMessage("sınır"),
         "notificationsDailyReminderChannelName": MessageLookupByLibrary.simpleMessage("Günlük hatırlatıcılar"),
         "notificationsDailyReminderChannelDescription": MessageLookupByLibrary.simpleMessage("Öğünlerinizi kaydetmeniz için günlük hatırlatma"),
@@ -1039,6 +1061,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "retryLabel": MessageLookupByLibrary.simpleMessage("Tekrar Dene"),
         "saturatedFatLabel": MessageLookupByLibrary.simpleMessage("doymuş yağ"),
         "scanProductLabel": MessageLookupByLibrary.simpleMessage("Ürünü Tara"),
+        "scannerLockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Dikey kilitle"),
         "scannerManualEntryButton":
             MessageLookupByLibrary.simpleMessage("Kodu elle gir"),
         "scannerManualEntryCancel":
@@ -1050,6 +1074,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "scannerManualEntryInvalid": MessageLookupByLibrary.simpleMessage(
             "Bu barkod geçerli görünmüyor. Lütfen rakamları kontrol edip tekrar deneyin."),
         "scannerManualEntrySubmit": MessageLookupByLibrary.simpleMessage("Ara"),
+        "scannerUnlockOrientationTooltip":
+            MessageLookupByLibrary.simpleMessage("Döndürmeye izin ver"),
         "searchDefaultLabel": MessageLookupByLibrary.simpleMessage(
             "Lütfen bir arama kelimesi girin"),
         "searchFoodPage": MessageLookupByLibrary.simpleMessage("Yiyecek"),

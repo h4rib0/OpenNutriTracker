@@ -73,6 +73,10 @@ class _AddMealScreenState extends State<AddMealScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Let the keyboard overlay the results rather than compress the body.
+      // In landscape the space above the keyboard is shorter than the pinned
+      // search bar + tab bar, which otherwise overflows (issue #165 testing).
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(_mealType.getTypeName(context)),
         actions: [
