@@ -43,6 +43,9 @@ class MealInfoButton extends StatelessWidget {
       case MealSourceEntity.recipe:
         siteUrl = "";
         break;
+      case MealSourceEntity.sfcd:
+        siteUrl = url ?? "";
+        break;
     }
     return siteUrl;
   }
@@ -64,6 +67,9 @@ class MealInfoButton extends StatelessWidget {
         break;
       case MealSourceEntity.recipe:
         infoLabel = S.of(context).additionalInfoLabelRecipe;
+        break;
+      case MealSourceEntity.sfcd:
+        infoLabel = "Swiss Food Composition Database";
         break;
     }
     return infoLabel;

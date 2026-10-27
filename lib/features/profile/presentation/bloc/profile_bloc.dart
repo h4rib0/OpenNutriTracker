@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/user_bmi_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -25,6 +26,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final AddTrackedDayUsecase _addTrackedDayUsecase;
   final GetConfigUsecase _getConfigUsecase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
+  final PolarInfluxdbDataSource _polarDataSource;
 
   ProfileBloc(
     this._getUserUsecase,
@@ -32,29 +34,54 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     this._addTrackedDayUsecase,
     this._getConfigUsecase,
     this._getKcalGoalUsecase,
+    this._polarDataSource,
   ) : super(ProfileInitial()) {
     on<LoadProfileEvent>((event, emit) async {
       emit(ProfileLoadingState());
 
       final user = await _getUserUsecase.getUserData();
-      final userBMIValue = BMICalc.getBMI(user);
+      final userConfig = await _getConfigUsecase.getConfig();
+      final isPolarActive = await _polarDataSource.isPolarConfigured();
+      final influxWeightKg = isPolarActive
+          ? await _polarDataSource.fetchLatestWeightKg()
+          : null;
+
+      // Use InfluxDB weight for BMI calculation when available
+      final userForBmi = influxWeightKg != null
+          ? user.copyWith(weightKG: influxWeightKg)
+          : user;
+      final userBMIValue = BMICalc.getBMI(userForBmi);
       final userBMIEntity = UserBMIEntity(
         bmiValue: userBMIValue,
         nutritionalStatus: BMICalc.getNutritionalStatus(userBMIValue),
       );
-      final userConfig = await _getConfigUsecase.getConfig();
 
       emit(
         ProfileLoadedState(
           userBMI: userBMIEntity,
           userEntity: user,
           usesImperialUnits: userConfig.usesImperialUnits,
+          isPolarActive: isPolarActive,
+          influxWeightKg: influxWeightKg,
+          effectiveWaterGoalMl: userConfig.effectiveDailyWaterGoalMl(
+            user.gender,
+            caloriesProfile: user.caloriesProfile,
+          ),
         ),
       );
     });
   }
 
   Future<UserEntity> getUser() => _getUserUsecase.getUserData();
+
+  /// Persist the opt-in calorie-deficit taper. Toggling re-runs the
+  /// kcal-goal calc on today's tracked day so the saved goal reflects
+  /// the new value immediately rather than waiting for the next day.
+  Future<void> setCaloriesTaperEnabled(bool enabled) async {
+    final user = await _getUserUsecase.getUserData();
+    user.caloriesTaperEnabled = enabled;
+    await updateUser(user);
+  }
 
   Future<void> updateUser(UserEntity userEntity) async {
     // Update user in DB
@@ -98,8 +125,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   /// Returns the user's weight in kg or lbs based on the user's config
   String getDisplayWeight(UserEntity user, bool usesImperialUnits) {
-    final displayWeight =
-        usesImperialUnits ? UnitCalc.kgToLbs(user.weightKG) : user.weightKG;
+    final displayWeight = usesImperialUnits
+        ? UnitCalc.kgToLbs(user.weightKG)
+        : user.weightKG;
 
     return formatProfileWeight(displayWeight);
   }

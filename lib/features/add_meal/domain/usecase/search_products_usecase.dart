@@ -54,7 +54,8 @@ class SearchProductsUseCase {
     // get their timestamp refreshed and stay until 90 days after the
     // last selection.
     await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.off});
   }
 
   Future<SearchProductsResult> searchFDCFoodByString(String searchString) async {
@@ -63,7 +64,20 @@ class SearchProductsUseCase {
       () => _productsRepository.getSupabaseFDCFoodsByString(searchString),
     );
     await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.fdc});
+  }
+
+  Future<SearchProductsResult> searchSfcdFoodByString(
+    String searchString,
+  ) async {
+    final remote = await _safeRemoteCall(
+      'SFCD',
+      () => _productsRepository.getSfcdFoodsByString(searchString),
+    );
+    await _cacheRemoteResults(remote);
+    return _buildResult(searchString, remote,
+        cacheSourceFilter: {MealSourceEntity.sfcd});
   }
 
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
@@ -99,8 +113,12 @@ class SearchProductsUseCase {
 
   Future<SearchProductsResult> _buildResult(
     String searchString,
-    List<MealEntity> remoteResults,
-  ) async {
+    List<MealEntity> remoteResults, {
+    Set<MealSourceEntity> cacheSourceFilter = const {
+      MealSourceEntity.off,
+      MealSourceEntity.fdc,
+    },
+  }) async {
     final remoteSourceEmpty = remoteResults.isEmpty;
 
     final normalizedSearchString = searchString.trim().toLowerCase();
@@ -149,9 +167,12 @@ class SearchProductsUseCase {
     // Sorted with the most recently touched entries first so an item the
     // user just selected (logged) appears at the top of the next search
     // result list, ahead of other cached items they haven't touched.
+    // Filtered by cacheSource so OFF results don't bleed into the FDC/SFCD
+    // tabs and vice versa.
     final fromOffCache = _cachedOffMealDataSource
         .getAllByMostRecentlyTouched()
         .map(MealEntity.fromMealDBO)
+        .where((meal) => cacheSourceFilter.contains(meal.source))
         .where((meal) => _mealMatchesSearch(meal, normalizedSearchString))
         .toList();
 

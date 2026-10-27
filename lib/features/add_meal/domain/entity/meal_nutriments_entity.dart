@@ -5,6 +5,8 @@ import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_nutriment_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_nutriments_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_const.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
 
 class MealNutrimentsEntity extends Equatable {
   final double? energyKcal100;
@@ -225,6 +227,44 @@ class MealNutrimentsEntity extends Equatable {
     );
   }
 
+  factory MealNutrimentsEntity.fromSfcdNutrients(
+    List<SfcdNutrientDto> nutrients,
+  ) {
+    double? val(String code) {
+      for (final n in nutrients) {
+        if (n.componentCode == code) return n.value;
+      }
+      return null;
+    }
+
+    return MealNutrimentsEntity(
+      energyKcal100: val(SfcdConst.codeEnergyKcal),
+      proteins100: val(SfcdConst.codeProtein),
+      fat100: val(SfcdConst.codeFat),
+      carbohydrates100: val(SfcdConst.codeCarbs),
+      sugars100: val(SfcdConst.codeSugar),
+      saturatedFat100: val(SfcdConst.codeSaturatedFat),
+      monounsaturatedFat100: val(SfcdConst.codeMonounsaturatedFat),
+      polyunsaturatedFat100: val(SfcdConst.codePolyunsaturatedFat),
+      transFat100: val(SfcdConst.codeTransFat),
+      cholesterol100: val(SfcdConst.codeCholesterol),
+      fiber100: val(SfcdConst.codeFiber),
+      sodium100: val(SfcdConst.codeSodium),
+      potassium100: val(SfcdConst.codePotassium),
+      magnesium100: val(SfcdConst.codeMagnesium),
+      calcium100: val(SfcdConst.codeCalcium),
+      iron100: val(SfcdConst.codeIron),
+      zinc100: val(SfcdConst.codeZinc),
+      phosphorus100: val(SfcdConst.codePhosphorus),
+      vitaminA100: val(SfcdConst.codeVitaminA),
+      vitaminC100: val(SfcdConst.codeVitaminC),
+      vitaminD100: val(SfcdConst.codeVitaminD),
+      vitaminB6100: val(SfcdConst.codeVitaminB6),
+      vitaminB12100: val(SfcdConst.codeVitaminB12),
+      niacin100: val(SfcdConst.codeNiacin),
+    );
+  }
+
   static double? _getValuePerUnit(double? valuePer100) {
     if (valuePer100 != null) {
       return valuePer100 / 100;
@@ -240,4 +280,77 @@ class MealNutrimentsEntity extends Equatable {
         fat100,
         proteins100,
       ];
+}
+
+/// Outcome of running the three physical-plausibility checks against a
+/// [MealNutrimentsEntity] parsed from a remote source (FDC via Supabase, OFF,
+/// or the direct FDC API). When [isConsistent] is false, [failureReason]
+/// names the first rule that tripped — that is the value to attach to a
+/// Sentry breadcrumb so we can spot systematic upstream problems.
+///
+/// The rules come from issue #222 and are deliberately conservative: they
+/// only fire on data that is physically impossible on a 100g basis, so a
+/// borderline-noisy-but-plausible item is left alone.
+class NutrimentsValidationResult {
+  final bool isConsistent;
+  final String? failureReason;
+
+  const NutrimentsValidationResult.ok()
+      : isConsistent = true,
+        failureReason = null;
+
+  const NutrimentsValidationResult.failed(this.failureReason)
+      : isConsistent = false;
+}
+
+/// Tolerance applied to weight-summation and subset-of comparisons. Source
+/// data is typically rounded to 0.1g or 1g, and the per-nutrient values do
+/// not always sum exactly; a small slack keeps us from dropping items that
+/// are merely noisy rather than corrupt.
+const double _nutrimentsValidationToleranceG = 1.0;
+
+/// Returns true when [nutriments] passes the three physical-plausibility
+/// rules from issue #222:
+///
+///   1. `sugars100 <= carbohydrates100` (sugars are a subset of carbs)
+///   2. `saturatedFat100 <= fat100` (sat fat is a subset of total fat)
+///   3. `carbohydrates100 + fat100 + proteins100 <= 100g` (per-100g basis)
+///
+/// A null on either side of a comparison skips the rule (we cannot prove a
+/// violation without both values). A small tolerance absorbs rounding from
+/// the source.
+///
+/// Convenience wrapper around [validateNutriments] for callers that only
+/// need the pass/fail bit.
+bool isNutrimentsConsistent(MealNutrimentsEntity nutriments) =>
+    validateNutriments(nutriments).isConsistent;
+
+/// Full validation result. Use this when you need the failing rule name —
+/// for example, to log a Sentry breadcrumb at the call site that dropped the
+/// item from search results.
+NutrimentsValidationResult validateNutriments(MealNutrimentsEntity nutriments) {
+  final sugars = nutriments.sugars100;
+  final carbs = nutriments.carbohydrates100;
+  if (sugars != null && carbs != null && sugars > carbs + _nutrimentsValidationToleranceG) {
+    return const NutrimentsValidationResult.failed('sugars_exceed_carbs');
+  }
+
+  final satFat = nutriments.saturatedFat100;
+  final fat = nutriments.fat100;
+  if (satFat != null && fat != null && satFat > fat + _nutrimentsValidationToleranceG) {
+    return const NutrimentsValidationResult.failed('saturated_fat_exceeds_total_fat');
+  }
+
+  // Per-100g basis: the weight-bearing macros (carbs + fat + protein) cannot
+  // sum to more than 100g. Fibre is intentionally excluded because it is
+  // typically already inside the carbohydrate total in both FDC and OFF
+  // accounting, so adding it would double-count. Micronutrients are in
+  // mg/µg so they do not enter the sum.
+  final protein = nutriments.proteins100;
+  final macroSum = (carbs ?? 0) + (fat ?? 0) + (protein ?? 0);
+  if (macroSum > 100 + _nutrimentsValidationToleranceG) {
+    return const NutrimentsValidationResult.failed('macros_exceed_100g');
+  }
+
+  return const NutrimentsValidationResult.ok();
 }

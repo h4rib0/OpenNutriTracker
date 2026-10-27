@@ -8,6 +8,7 @@ import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc_sp/sp_fdc_food_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 
 class MealEntity extends Equatable {
@@ -30,9 +31,22 @@ class MealEntity extends Equatable {
   final String? servingUnit;
   final String? servingSize;
 
-  bool get hasServingValues => servingQuantity != null && servingUnit != null;
+  // Issue #158: many OFF products carry serving data (servingQuantity or
+  // servingSize) but no overall package `quantity`, which left `servingUnit`
+  // null and made the meal-detail dropdown default to 100 g/ml on every
+  // scan. Treat a product as having serving values when either side of the
+  // OFF data is present — the dropdown text in `_getServingDropdownItem`
+  // already falls back to `servingSize` when `servingUnit` is missing.
+  bool get hasServingValues => servingQuantity != null || servingSize != null;
 
   final MealSourceEntity source;
+
+  /// Relative path (`meal_images/<code>.webp`) to a user-attached photo
+  /// for a custom meal, or null if none is set. Resolved to an absolute
+  /// path at render time via `MealImageStorage.absolutePath`. Always
+  /// null for OFF / FDC / recipe-derived meals — those carry remote URLs
+  /// in `thumbnailImageUrl` / `mainImageUrl` instead.
+  final String? localImagePath;
 
   final MealNutrimentsEntity nutriments;
 
@@ -54,6 +68,7 @@ class MealEntity extends Equatable {
     required this.servingSize,
     required this.nutriments,
     required this.source,
+    this.localImagePath,
   });
 
   factory MealEntity.empty() => MealEntity(
@@ -84,6 +99,7 @@ class MealEntity extends Equatable {
         nutriments:
             MealNutrimentsEntity.fromMealNutrimentsDBO(mealDBO.nutriments),
         source: MealSourceEntity.fromMealSourceDBO(mealDBO.source),
+        localImagePath: mealDBO.localImagePath,
       );
 
   factory MealEntity.fromOFFProduct(OFFProductDTO offProduct) {
@@ -145,6 +161,24 @@ class MealEntity extends Equatable {
     );
   }
 
+  factory MealEntity.fromSfcdFood(SfcdFoodDetailDto food) {
+    return MealEntity(
+      code: food.id.toString(),
+      name: food.name,
+      brands: null,
+      thumbnailImageUrl: null,
+      mainImageUrl: null,
+      url: null,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: 'g',
+      servingSize: null,
+      nutriments: MealNutrimentsEntity.fromSfcdNutrients(food.values),
+      source: MealSourceEntity.sfcd,
+    );
+  }
+
   /// Value returned from OFF can either be String, int or double.
   /// Try casting it to a double value for calculation
   static double? _tryQuantityCast(dynamic value) {
@@ -188,7 +222,8 @@ enum MealSourceEntity {
   custom,
   off,
   fdc,
-  recipe;
+  recipe,
+  sfcd;
 
   factory MealSourceEntity.fromMealSourceDBO(MealSourceDBO mealSourceDBO) {
     MealSourceEntity mealSourceEntity;
@@ -207,6 +242,9 @@ enum MealSourceEntity {
         break;
       case MealSourceDBO.recipe:
         mealSourceEntity = MealSourceEntity.recipe;
+        break;
+      case MealSourceDBO.sfcd:
+        mealSourceEntity = MealSourceEntity.sfcd;
         break;
     }
     return mealSourceEntity;

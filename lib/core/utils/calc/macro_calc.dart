@@ -39,4 +39,33 @@ class MacroCalc {
       (totalCalorieGoal *
           (userProteinsGoal ?? _defaultProteinsPercentageGoal)) /
       _proteinKcalPerGram;
+
+  // ── Body-weight-based macro calculation (used when Polar is active) ────────
+  // Protein g  = proteinGPerKg × weightKg
+  // Fat g      = fatGPerKg × weightKg  (minimum fat floor)
+  // Carbs g    = (totalKcal − protein_kcal − fat_kcal) / 4  (fills remainder)
+
+  static double getProteinGoalFromBodyWeight(
+    double weightKg,
+    double proteinGPerKg,
+  ) =>
+      weightKg * proteinGPerKg;
+
+  static double getFatGoalFromBodyWeight(
+    double weightKg,
+    double fatGPerKg,
+  ) =>
+      weightKg * fatGPerKg;
+
+  static double getCarbsGoalBodyWeightBased(
+    double totalKcal,
+    double proteinG,
+    double fatG,
+  ) {
+    final remaining = (totalKcal -
+            proteinG * _proteinKcalPerGram -
+            fatG * _fatKcalPerGram)
+        .clamp(0.0, double.infinity);
+    return remaining / _carbsKcalPerGram;
+  }
 }

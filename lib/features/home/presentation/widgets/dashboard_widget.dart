@@ -1,9 +1,12 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
-import 'package:opennutritracker/features/home/presentation/widgets/macro_nutriments_widget.dart';
+import 'package:opennutritracker/core/presentation/widgets/macro_nutriments_widget.dart';
+import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
+import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/core/presentation/sources_screen.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:opennutritracker/generated/l10n.dart';
+import 'package:provider/provider.dart';
 
 class DashboardWidget extends StatefulWidget {
   final double totalKcalDaily;
@@ -16,6 +19,7 @@ class DashboardWidget extends StatefulWidget {
   final double totalCarbsGoal;
   final double totalFatsGoal;
   final double totalProteinsGoal;
+  final double? polarActiveKcal;
 
   const DashboardWidget({
     super.key,
@@ -29,6 +33,7 @@ class DashboardWidget extends StatefulWidget {
     required this.totalCarbsGoal,
     required this.totalFatsGoal,
     required this.totalProteinsGoal,
+    this.polarActiveKcal,
   });
 
   @override
@@ -40,7 +45,13 @@ class _DashboardWidgetState extends State<DashboardWidget> {
   Widget build(BuildContext context) {
     double kcalValue = 0;
     double gaugeValue = 0;
-    String kcalLabelText = S.of(context).kcalLeftLabel;
+    // #177: Energy unit is a runtime preference; the values themselves
+    // are stored in kcal and converted at display time.
+    final usesKilojoules =
+        context.watch<EnergyUnitProvider>().usesKilojoules;
+    String kcalLabelText = usesKilojoules
+        ? '${S.of(context).kjLabel} ${S.of(context).energyLeftLabel}'
+        : S.of(context).kcalLeftLabel;
 
     if (widget.totalKcalLeft > widget.totalKcalDaily) {
       kcalValue = widget.totalKcalDaily;
@@ -48,12 +59,21 @@ class _DashboardWidgetState extends State<DashboardWidget> {
     } else if (widget.totalKcalLeft < 0) {
       kcalValue = widget.totalKcalLeft.abs();
       gaugeValue = 1;
-      kcalLabelText = S.of(context).kcalTooMuchLabel;
+      kcalLabelText = usesKilojoules
+          ? '${S.of(context).kjLabel} ${S.of(context).energyTooMuchLabel}'
+          : S.of(context).kcalTooMuchLabel;
     } else {
       kcalValue = widget.totalKcalLeft;
       gaugeValue = (widget.totalKcalDaily - widget.totalKcalLeft) /
           widget.totalKcalDaily;
     }
+    final displayValue = usesKilojoules ? UnitCalc.kcalToKj(kcalValue) : kcalValue;
+    final displaySupplied = usesKilojoules
+        ? UnitCalc.kcalToKj(widget.totalKcalSupplied)
+        : widget.totalKcalSupplied;
+    final displayBurned = usesKilojoules
+        ? UnitCalc.kcalToKj(widget.totalKcalBurned)
+        : widget.totalKcalBurned;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -95,7 +115,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                       Text(
-                        '${widget.totalKcalSupplied.toInt()}',
+                        '${displaySupplied.toInt()}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -123,7 +143,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                       children: [
                         AnimatedFlipCounter(
                           duration: const Duration(milliseconds: 1000),
-                          value: kcalValue.toInt(),
+                          value: displayValue.toInt(),
                           textStyle: Theme.of(
                             context,
                           ).textTheme.headlineMedium?.copyWith(
@@ -150,7 +170,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                       Text(
-                        '${widget.totalKcalBurned.toInt()}',
+                        '${displayBurned.toInt()}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -165,6 +185,33 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                   ),
                 ],
               ),
+              if (widget.polarActiveKcal != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.monitor_heart_outlined,
+                        size: 14,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Polar: ${widget.polarActiveKcal!.toInt()} kcal',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               MacroNutrientsView(
                 totalCarbsIntake: widget.totalCarbsIntake,
                 totalFatsIntake: widget.totalFatsIntake,
