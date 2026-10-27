@@ -7,6 +7,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
+import 'package:opennutritracker/features/add_meal/util/food_emoji_resolver.dart';
 import 'package:opennutritracker/features/meal_detail/meal_detail_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -27,6 +28,14 @@ class MealItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isRecipe = mealEntity.source == MealSourceEntity.recipe;
+    // Colored emoji is reserved for FDC base-food items where the head
+    // noun reliably identifies the food ("Milk, fluid, nonfat..." → milk).
+    // OFF products are branded, so a head-noun match would often be
+    // misleading; they keep the outline icon as a placeholder.
+    final emoji = (mealEntity.thumbnailImageUrl == null &&
+            mealEntity.source == MealSourceEntity.fdc)
+        ? resolveFoodEmoji(mealEntity.name)
+        : null;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -59,19 +68,27 @@ class MealItemCard extends StatelessWidget {
                       child: Container(
                         width: 60,
                         height: 60,
+                        alignment: Alignment.center,
                         color: isRecipe
                             ? Theme.of(context).colorScheme.primaryContainer
                             : Theme.of(context).colorScheme.secondaryContainer,
-                        child: Icon(
-                          isRecipe
-                              ? Icons.menu_book
-                              : Icons.restaurant_outlined,
-                          color: isRecipe
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer
-                              : null,
-                        ),
+                        child: emoji != null
+                            ? ExcludeSemantics(
+                                child: Text(
+                                  emoji,
+                                  style: const TextStyle(fontSize: 32),
+                                ),
+                              )
+                            : Icon(
+                                isRecipe
+                                    ? Icons.menu_book
+                                    : Icons.restaurant_outlined,
+                                color: isRecipe
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                    : null,
+                              ),
                       ),
                     ),
               title: AutoSizeText.rich(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/domain/entity/weight_log_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/add_weight_log_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
@@ -70,13 +72,20 @@ class QuickWeightWidget extends StatelessWidget {
 
     final newWeightKg = usesImperialUnits ? newWeight / 2.20462 : newWeight;
 
-    final user = await locator<GetUserUsecase>().getUserData();
-    user.weightKG = newWeightKg;
+    final now = DateTime.now();
+    await locator<AddWeightLogUsecase>().addEntry(
+      WeightLogEntity(
+        date: DateTime(now.year, now.month, now.day),
+        weightKg: newWeightKg,
+      ),
+    );
 
-    // Route through ProfileBloc.updateUser so the profile screen, diary,
-    // and home all refresh in one go. Going through AddUserUsecase
-    // directly would update Hive but leave the profile screen showing the
-    // pre-edit weight until the next manual reload.
+    // addEntry already persisted today's weight onto the user record, so
+    // re-load it and route through ProfileBloc.updateUser purely so the
+    // profile screen, diary, and home all refresh in one go. Going through
+    // AddUserUsecase directly would update Hive but leave the profile
+    // screen showing the pre-edit weight until the next manual reload.
+    final user = await locator<GetUserUsecase>().getUserData();
     await locator<ProfileBloc>().updateUser(user);
   }
 }

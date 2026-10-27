@@ -41,9 +41,17 @@ class SearchProductsUseCase {
     this._recipeDataSource,
   );
 
+  /// [skipRemote] limits the search to local matches (custom meals, recipes,
+  /// recent intake, cached results) and does not touch the network — used for
+  /// short as-you-type queries.
   Future<SearchProductsResult> searchOFFProductsByString(
-    String searchString,
-  ) async {
+    String searchString, {
+    bool skipRemote = false,
+  }) async {
+    if (skipRemote) {
+      return _buildResult(searchString, const [],
+          remoteSkipped: true, cacheSource: MealSourceEntity.off);
+    }
     final remote = await _safeRemoteCall(
       'OFF',
       () => _productsRepository.getOFFProductsByString(searchString),
@@ -55,17 +63,24 @@ class SearchProductsUseCase {
     // last selection.
     await _cacheRemoteResults(remote);
     return _buildResult(searchString, remote,
-        cacheSourceFilter: {MealSourceEntity.off});
+        cacheSource: MealSourceEntity.off);
   }
 
-  Future<SearchProductsResult> searchFDCFoodByString(String searchString) async {
+  Future<SearchProductsResult> searchFDCFoodByString(
+    String searchString, {
+    bool skipRemote = false,
+  }) async {
+    if (skipRemote) {
+      return _buildResult(searchString, const [],
+          remoteSkipped: true, cacheSource: MealSourceEntity.fdc);
+    }
     final remote = await _safeRemoteCall(
       'FDC',
       () => _productsRepository.getSupabaseFDCFoodsByString(searchString),
     );
     await _cacheRemoteResults(remote);
     return _buildResult(searchString, remote,
-        cacheSourceFilter: {MealSourceEntity.fdc});
+        cacheSource: MealSourceEntity.fdc);
   }
 
   Future<SearchProductsResult> searchSfcdFoodByString(
@@ -77,7 +92,7 @@ class SearchProductsUseCase {
     );
     await _cacheRemoteResults(remote);
     return _buildResult(searchString, remote,
-        cacheSourceFilter: {MealSourceEntity.sfcd});
+        cacheSource: MealSourceEntity.sfcd);
   }
 
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
@@ -114,12 +129,13 @@ class SearchProductsUseCase {
   Future<SearchProductsResult> _buildResult(
     String searchString,
     List<MealEntity> remoteResults, {
-    Set<MealSourceEntity> cacheSourceFilter = const {
-      MealSourceEntity.off,
-      MealSourceEntity.fdc,
-    },
+    bool remoteSkipped = false,
+    required MealSourceEntity cacheSource,
   }) async {
-    final remoteSourceEmpty = remoteResults.isEmpty;
+    // When the remote source was deliberately skipped (short query), don't
+    // claim it returned nothing — that would show a misleading "no results"
+    // hint while the user is still typing.
+    final remoteSourceEmpty = !remoteSkipped && remoteResults.isEmpty;
 
     final normalizedSearchString = searchString.trim().toLowerCase();
     if (normalizedSearchString.isEmpty) {
@@ -167,12 +183,17 @@ class SearchProductsUseCase {
     // Sorted with the most recently touched entries first so an item the
     // user just selected (logged) appears at the top of the next search
     // result list, ahead of other cached items they haven't touched.
-    // Filtered by cacheSource so OFF results don't bleed into the FDC/SFCD
-    // tabs and vice versa.
-    final fromOffCache = _cachedOffMealDataSource
+    //
+    // The cache box holds both OFF and FDC entries (cacheFromSearch writes
+    // whatever either remote returned), so filter to the source of the tab
+    // being built. Without this, a prior OFF search leaks branded products
+    // into the FDC "Food" tab and vice versa, since both tabs share this
+    // helper. Custom meals, recipes and intake history above are the user's
+    // own and are intentionally surfaced in both tabs.
+    final fromCache = _cachedOffMealDataSource
         .getAllByMostRecentlyTouched()
         .map(MealEntity.fromMealDBO)
-        .where((meal) => cacheSourceFilter.contains(meal.source))
+        .where((meal) => meal.source == cacheSource)
         .where((meal) => _mealMatchesSearch(meal, normalizedSearchString))
         .toList();
 
@@ -187,7 +208,7 @@ class SearchProductsUseCase {
         ...fromCustomMealBox,
         ...fromRecipes,
         ...fromIntakeHistory,
-        ...fromOffCache,
+        ...fromCache,
         ...remoteResults,
       ]),
       remoteSourceEmpty: remoteSourceEmpty,

@@ -107,6 +107,7 @@ class _AddMealScreenState extends State<AddMealScreen>
               MealSearchBar(
                 searchStringListener: _searchStringListener,
                 onSearchSubmit: _onSearchSubmit,
+                onSearchChanged: _onSearchChanged,
                 onBarcodePressed: _onBarcodeIconPressed,
               ),
               const SizedBox(height: 16.0),
@@ -398,6 +399,17 @@ class _AddMealScreenState extends State<AddMealScreen>
         _sfcdBloc.add(LoadSfcdEvent(searchString: inputText));
       case 3:
         _recentMealBloc.add(LoadRecentMealEvent(searchString: inputText));
+    }
+  }
+
+  /// Debounced search-as-you-type. Recent-added (tab 2) stays submit-only; it
+  /// filters local intake history and has no remote source to debounce.
+  void _onSearchChanged(String inputText) {
+    switch (_tabController.index) {
+      case 0:
+        _productsBloc.add(SearchInputChangedEvent(searchString: inputText));
+      case 1:
+        _foodBloc.add(SearchFoodInputChangedEvent(searchString: inputText));
     }
   }
 

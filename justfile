@@ -28,3 +28,12 @@ test:
 # Run CI checks
 ci: install (format "--set-exit-if-changed") check_intl build && test
   flutter analyze
+
+create_emulator:
+  fvm flutter emulators --create --name flutter_emulator
+
+start_emulator:
+  fvm flutter emulators --launch flutter_emulator
+
+dev:
+  fvm flutter run --flavor develop

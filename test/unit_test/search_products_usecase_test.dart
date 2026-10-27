@@ -594,6 +594,57 @@ void main() {
             ['banana-b', 'banana-a', 'banana-c']);
       },
     );
+
+    // The cache box holds both OFF and FDC entries. Each tab must only
+    // surface cached entries from its own source, otherwise a prior search
+    // on one tab leaks results into the other (e.g. branded OFF products
+    // appearing in the FDC "Food" tab).
+    test(
+      'cached OFF product does not leak into the FDC search',
+      () async {
+        cachedOffMealDataSource.meals.add(
+          _offCacheDbo(code: 'off-cached', name: 'Branded Chicken Pie'),
+        );
+        // FDC remote returns its own match for the same query.
+        productsRepository.fdcResults['chicken'] = [
+          _meal(
+              code: 'fdc-1',
+              name: 'Chicken, raw',
+              source: MealSourceEntity.fdc),
+        ];
+
+        final result = await useCase.searchFDCFoodByString('chicken');
+
+        expect(result.meals.map((m) => m.code), ['fdc-1']);
+        expect(
+          result.meals.every((m) => m.source != MealSourceEntity.off),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'cached FDC food does not leak into the OFF products search',
+      () async {
+        cachedOffMealDataSource.meals.add(
+          _fdcCacheDbo(code: 'fdc-cached', name: 'Chicken, raw'),
+        );
+        productsRepository.offResults['chicken'] = [
+          _meal(
+              code: 'off-1',
+              name: 'Chicken Pie',
+              source: MealSourceEntity.off),
+        ];
+
+        final result = await useCase.searchOFFProductsByString('chicken');
+
+        expect(result.meals.map((m) => m.code), ['off-1']);
+        expect(
+          result.meals.every((m) => m.source != MealSourceEntity.fdc),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('SearchProductsUseCase recipes integration', () {
@@ -698,6 +749,9 @@ MealDBO _customMealDbo({required String code, required String name}) =>
 
 MealDBO _offCacheDbo({required String code, required String name}) =>
     _meaDboWithSource(code: code, name: name, source: MealSourceDBO.off);
+
+MealDBO _fdcCacheDbo({required String code, required String name}) =>
+    _meaDboWithSource(code: code, name: name, source: MealSourceDBO.fdc);
 
 MealDBO _meaDboWithSource({
   required String code,

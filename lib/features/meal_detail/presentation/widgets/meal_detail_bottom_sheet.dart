@@ -39,16 +39,38 @@ class MealDetailBottomSheet extends StatefulWidget {
 }
 
 class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
+  final _quantityFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
     widget.quantityTextController.addListener(_onQuantityChanged);
+    _quantityFocusNode.addListener(_onQuantityFocusChanged);
   }
 
   @override
   void dispose() {
+    _quantityFocusNode.removeListener(_onQuantityFocusChanged);
+    _quantityFocusNode.dispose();
     widget.quantityTextController.removeListener(_onQuantityChanged);
     super.dispose();
+  }
+
+  void _onQuantityFocusChanged() {
+    if (_quantityFocusNode.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_quantityFocusNode.hasFocus) return;
+        _selectAllQuantityText();
+      });
+    }
+  }
+
+  void _selectAllQuantityText() {
+    final text = widget.quantityTextController.text;
+    widget.quantityTextController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: text.length,
+    );
   }
 
   void _onQuantityChanged() {
@@ -68,14 +90,16 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline,
-              width: 0.5,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).colorScheme.outline,
+                width: 0.5,
+              ),
             ),
             color: Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
           ),
           child: SafeArea(
@@ -92,6 +116,8 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
                             child: TextFormField(
                               enabled: !productMissingRequiredInfo,
                               controller: widget.quantityTextController,
+                              focusNode: _quantityFocusNode,
+                              onTap: _selectAllQuantityText,
                               keyboardType: TextInputType.numberWithOptions(
                                 decimal: true,
                               ),

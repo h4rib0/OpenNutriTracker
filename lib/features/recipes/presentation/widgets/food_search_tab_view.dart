@@ -74,6 +74,7 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
           MealSearchBar(
             searchStringListener: _searchStringListener,
             onSearchSubmit: _onSearchSubmit,
+            onSearchChanged: _onSearchChanged,
             onBarcodePressed: widget.onBarcodePressed,
             autofocus: true,
           ),
@@ -287,6 +288,17 @@ class _FoodSearchTabViewState extends State<FoodSearchTabView>
         _sfcdBloc.add(LoadSfcdEvent(searchString: inputText));
       case 3:
         _recentMealBloc.add(LoadRecentMealEvent(searchString: inputText));
+    }
+  }
+
+  /// Debounced search-as-you-type for the ingredient picker. Recent-added
+  /// (tab 2) stays submit-only — local-history filter, nothing to debounce.
+  void _onSearchChanged(String inputText) {
+    switch (_tabController.index) {
+      case 0:
+        _productsBloc.add(SearchInputChangedEvent(searchString: inputText));
+      case 1:
+        _foodBloc.add(SearchFoodInputChangedEvent(searchString: inputText));
     }
   }
 }
