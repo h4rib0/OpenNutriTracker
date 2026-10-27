@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_gender_entity.dart';
+import 'package:opennutritracker/core/presentation/widgets/empty_hint.dart';
 import 'package:opennutritracker/core/presentation/widgets/low_kcal_warning_card.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
@@ -15,7 +18,6 @@ import 'package:opennutritracker/core/presentation/widgets/edit_activity_dialog.
 import 'package:opennutritracker/core/presentation/widgets/edit_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
-import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
@@ -56,7 +58,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _lowKcalWarningDismissed = prefs.getBool(_prefKeyLowKcalDismissed) ?? false;
+      _lowKcalWarningDismissed =
+          prefs.getBool(_prefKeyLowKcalDismissed) ?? false;
     });
   }
 
@@ -188,17 +191,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           child: ListView(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(
+                  Dimens.spacing16,
+                  Dimens.spacing16,
+                  Dimens.spacing16,
+                  Dimens.spacing4,
+                ),
+                // Wrap rather than Row so the two chips drop onto a second line
+                // at large text scale instead of overflowing off the edge.
+                child: Wrap(
+                  spacing: Dimens.spacing12,
+                  runSpacing: Dimens.spacing8,
                   children: [
-                    QuickWeightWidget(weightKg: userWeightKg, usesImperialUnits: usesImperialUnits, weightFromInflux: weightFromInflux),
-                    const Spacer(),
-                    QuickWaterWidget(waterMlToday: waterMlToday, waterGoalMl: waterGoalMl),
+                    QuickWeightWidget(
+                      weightKg: userWeightKg,
+                      usesImperialUnits: usesImperialUnits,
+                      weightFromInflux: weightFromInflux,
+                    ),
+                    QuickWaterWidget(
+                      waterMlToday: waterMlToday,
+                      waterGoalMl: waterGoalMl,
+                    ),
                   ],
                 ),
               ),
               const FastingHomeChip(),
-              const SizedBox(height: 8.0),
+              const SizedBox(height: Dimens.spacing8),
               DashboardWidget(
                 totalKcalDaily: totalKcalDaily,
                 totalKcalLeft: totalKcalLeft,
@@ -212,9 +230,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 totalProteinsGoal: totalProteinsGoal,
                 polarActiveKcal: polarActiveKcal,
               ),
-              if (!_lowKcalWarningDismissed && CalorieGoalCalc.isBelowRecommendedDailyKcalFloor(goalKcal: totalKcalDaily, gender: userGender, caloriesProfile: userCaloriesProfile))
+              // Day-one / empty-day guidance: when nothing is logged yet, point
+              // the way to the centre + rather than leaving a silent dashboard.
+              if (breakfastIntakeList.isEmpty &&
+                  lunchIntakeList.isEmpty &&
+                  dinnerIntakeList.isEmpty &&
+                  snackIntakeList.isEmpty &&
+                  userActivities.isEmpty)
+                EmptyHint(
+                  icon: Icons.add_circle_outline_rounded,
+                  title: S.of(context).homeFirstMealHint,
+                ),
+              if (!_lowKcalWarningDismissed &&
+                  CalorieGoalCalc.isBelowRecommendedDailyKcalFloor(
+                    goalKcal: totalKcalDaily,
+                    gender: userGender,
+                    caloriesProfile: userCaloriesProfile,
+                  ))
                 LowKcalWarningCard(
-                  thresholdKcal: CalorieGoalCalc.recommendedDailyKcalFloor(gender: userGender, caloriesProfile: userCaloriesProfile),
+                  thresholdKcal: CalorieGoalCalc.recommendedDailyKcalFloor(
+                    gender: userGender,
+                    caloriesProfile: userCaloriesProfile,
+                  ),
                   onDismiss: _dismissLowKcalWarning,
                 ),
               if (showActivityTracking)
@@ -310,8 +347,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     },
                     builder: (context, candidateData, rejectedData) {
                       return Container(
-                        color: Theme.of(context).colorScheme.error,
-                        child: const Center(child: Icon(Icons.delete_outline, size: 36, color: Colors.white)),
+                        margin: const EdgeInsets.fromLTRB(
+                          Dimens.spacing16,
+                          0,
+                          Dimens.spacing16,
+                          Dimens.spacing12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.error,
+                          borderRadius: Dimens.borderRadiusL,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.delete_rounded,
+                            size: 32,
+                            color: Theme.of(context).colorScheme.onError,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -344,26 +396,42 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     await _homeBloc.stream.firstWhere((s) => s is HomeLoadedState);
   }
 
-  void onActivityItemLongPressed(BuildContext context, UserActivityEntity activityEntity) async {
-    final deleteIntake = await showDialog<bool>(context: context, builder: (context) => const DeleteDialog());
+  void onActivityItemLongPressed(
+    BuildContext context,
+    UserActivityEntity activityEntity,
+  ) async {
+    final deleteIntake = await showDialog<bool>(
+      context: context,
+      builder: (context) => const DeleteDialog(),
+    );
 
     if (deleteIntake != null) {
       _homeBloc.deleteUserActivityItem(activityEntity);
       _homeBloc.add(const LoadItemsEvent());
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).itemDeletedSnackbar)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).itemDeletedSnackbar)),
+        );
       }
     }
   }
 
-  void onIntakeItemLongPressed(BuildContext context, IntakeEntity intakeEntity) async {
-    final deleteIntake = await showDialog<bool>(context: context, builder: (context) => const DeleteDialog());
+  void onIntakeItemLongPressed(
+    BuildContext context,
+    IntakeEntity intakeEntity,
+  ) async {
+    final deleteIntake = await showDialog<bool>(
+      context: context,
+      builder: (context) => const DeleteDialog(),
+    );
 
     if (deleteIntake != null) {
       _homeBloc.deleteIntakeItem(intakeEntity);
       _homeBloc.add(const LoadItemsEvent());
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).itemDeletedSnackbar)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).itemDeletedSnackbar)),
+        );
       }
     }
   }
@@ -384,7 +452,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  void onActivityItemTapped(BuildContext context, UserActivityEntity activityEntity) async {
+  void onActivityItemTapped(
+    BuildContext context,
+    UserActivityEntity activityEntity,
+  ) async {
     final newDuration = await showDialog<double>(
       context: context,
       builder: (context) => EditActivityDialog(activityEntity: activityEntity),
@@ -393,21 +464,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       await _homeBloc.updateUserActivityItem(activityEntity, newDuration);
       _homeBloc.add(const LoadItemsEvent());
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).itemUpdatedSnackbar)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).itemUpdatedSnackbar)),
+        );
       }
     }
   }
 
-  void onIntakeItemTapped(BuildContext context, IntakeEntity intakeEntity, bool usesImperialUnits) async {
+  void onIntakeItemTapped(
+    BuildContext context,
+    IntakeEntity intakeEntity,
+    bool usesImperialUnits,
+  ) async {
     final changeIntakeAmount = await showDialog<double>(
       context: context,
-      builder: (context) => EditDialog(intakeEntity: intakeEntity, usesImperialUnits: usesImperialUnits),
+      builder: (context) => EditDialog(
+        intakeEntity: intakeEntity,
+        usesImperialUnits: usesImperialUnits,
+      ),
     );
     if (changeIntakeAmount != null) {
-      _homeBloc.updateIntakeItem(intakeEntity.id, {'amount': changeIntakeAmount});
+      _homeBloc.updateIntakeItem(intakeEntity.id, {
+        'amount': changeIntakeAmount,
+      });
       _homeBloc.add(const LoadItemsEvent());
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).itemUpdatedSnackbar)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).itemUpdatedSnackbar)),
+        );
       }
     }
   }
@@ -418,7 +502,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _confirmDelete(BuildContext context, IntakeEntity intake) async {
-    bool? delete = await showDialog<bool>(context: context, builder: (context) => const DeleteDialog());
+    bool? delete = await showDialog<bool>(
+      context: context,
+      builder: (context) => const DeleteDialog(),
+    );
 
     if (delete == true) {
       onDeleteIntake(intake, null);
@@ -428,8 +515,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  void _confirmDeleteActivity(BuildContext context, UserActivityEntity activity) async {
-    final delete = await showDialog<bool>(context: context, builder: (context) => const DeleteDialog());
+  void _confirmDeleteActivity(
+    BuildContext context,
+    UserActivityEntity activity,
+  ) async {
+    final delete = await showDialog<bool>(
+      context: context,
+      builder: (context) => const DeleteDialog(),
+    );
     if (delete == true) {
       _homeBloc.deleteUserActivityItem(activity);
       _homeBloc.add(const LoadItemsEvent());

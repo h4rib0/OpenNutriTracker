@@ -11,7 +11,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/user_image_picker_tile.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/barcode_validator.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
@@ -204,16 +207,33 @@ class _EditMealScreenState extends State<EditMealScreen> {
     // flips between kcal and kJ in Settings while this screen is open.
     final usesKj = context.watch<EnergyUnitProvider>().usesKilojoules;
     _maybeReinterpretKcalField(usesKj);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
     return SafeArea(
       child: Scaffold(
+        backgroundColor: palette.canvas,
         appBar: AppBar(
-          title: Text(S.of(context).editMealLabel),
+          backgroundColor: palette.canvas,
+          surfaceTintColor: Colors.transparent,
+          toolbarHeight: MediaQuery.textScalerOf(context).scale(kToolbarHeight),
+          title: Text(
+            S.of(context).editMealLabel,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
           actions: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: FilledButton(
-                onPressed: () => _onSavePressed(_usesImperialUnits),
-                child: Text(S.of(context).buttonSaveLabel),
+              padding: const EdgeInsets.fromLTRB(Dimens.spacing16, 0, Dimens.spacing16, 0),
+              child: Semantics(
+                identifier: 'edit-meal-save',
+                child: FilledButton(
+                  onPressed: () => _onSavePressed(_usesImperialUnits),
+                  style: FilledButton.styleFrom(
+                    shape: const RoundedRectangleBorder(borderRadius: Dimens.borderRadiusM),
+                  ),
+                  child: Text(S.of(context).buttonSaveLabel),
+                ),
               ),
             ),
           ],
@@ -335,13 +355,19 @@ class _EditMealScreenState extends State<EditMealScreen> {
         ],
         TextFormField(
           controller: _nameTextController,
-          decoration: InputDecoration(labelText: S.of(context).mealNameLabel, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+            labelText: S.of(context).mealNameLabel,
+            border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+          ),
           keyboardType: TextInputType.text,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _brandsTextController,
-          decoration: InputDecoration(labelText: S.of(context).mealBrandsLabel, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+            labelText: S.of(context).mealBrandsLabel,
+            border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+          ),
           keyboardType: TextInputType.text,
         ),
         const SizedBox(height: 16),
@@ -355,7 +381,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
             decoration: InputDecoration(
               labelText: S.of(context).customMealBarcodeLabel,
               hintText: S.of(context).customMealBarcodeHint,
-              border: const OutlineInputBorder(),
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
               suffixIcon: Semantics(
                 identifier: 'edit-meal-barcode-scan',
                 child: IconButton(
@@ -376,8 +402,10 @@ class _EditMealScreenState extends State<EditMealScreen> {
           TextFormField(
             controller: _mealQuantityTextController,
             decoration: InputDecoration(
-              labelText: _usesImperialUnits ? S.of(context).mealSizeLabelImperial : S.of(context).mealSizeLabel,
-              border: const OutlineInputBorder(),
+              labelText: _usesImperialUnits
+                  ? S.of(context).mealSizeLabelImperial
+                  : S.of(context).mealSizeLabel,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
@@ -389,7 +417,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
               labelText: _usesImperialUnits
                   ? S.of(context).servingSizeLabelImperial
                   : S.of(context).servingSizeLabelMetric,
-              border: const OutlineInputBorder(),
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
@@ -410,7 +438,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
           TextFormField(
             controller: _baseQuantityTextController,
             inputFormatters: CustomTextInputFormatter.doubleOnly(),
-            decoration: InputDecoration(labelText: S.of(context).baseQuantityLabel, border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: S.of(context).baseQuantityLabel,
+                border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 48),
@@ -438,10 +468,10 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _kcalTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: '${S.of(context).mealEnergyLabel} ($energyUnitSuffix)',
-            helperText: energyHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText:
+                  '${S.of(context).mealEnergyLabel} ($energyUnitSuffix)',
+              helperText: energyHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -449,10 +479,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _carbsTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealCarbsLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealCarbsLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -460,10 +489,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _fatTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealFatLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealFatLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -471,15 +499,17 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _proteinTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealProteinLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealProteinLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         if (!isSimple) ...[
           const SizedBox(height: 32),
-          Text(S.of(context).micronutrientsLabel, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            S.of(context).micronutrientsLabel,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           _buildMicroField(_fiberTextController, S.of(context).fiberLabel, 'g', perQtyHelper),
           const SizedBox(height: 16),
@@ -524,7 +554,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
         labelText: label,
         suffixText: unit,
         helperText: helperText,
-        border: const OutlineInputBorder(),
+        border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
     );
@@ -939,39 +969,54 @@ class _SaveForLaterField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return InkWell(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    return AppCard(
+      color: palette.surfaceMuted,
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(
-              identifier: 'edit-meal-save-for-later',
-              child: Checkbox(value: value, onChanged: (newValue) => onChanged(newValue ?? false)),
+      padding: const EdgeInsets.fromLTRB(
+        Dimens.spacing8,
+        Dimens.spacing12,
+        Dimens.spacing16,
+        Dimens.spacing12,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            identifier: 'edit-meal-save-for-later',
+            child: Checkbox(
+              value: value,
+              onChanged: (newValue) => onChanged(newValue ?? false),
             ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(s.recipeSaveForLaterLabel, style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 4),
-                    Text(
-                      s.recipeSaveForLaterDescription,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.outline),
-                    ),
-                  ],
-                ),
+          ),
+          const SizedBox(width: Dimens.spacing4),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: Dimens.spacing12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    s.recipeSaveForLaterLabel,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: Dimens.spacing4),
+                  Text(
+                    s.recipeSaveForLaterDescription,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: palette.textMuted),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

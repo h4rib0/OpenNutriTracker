@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:opennutritracker/core/domain/entity/recipe_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/user_image_picker_tile.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
@@ -82,8 +84,18 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
     super.dispose();
   }
 
+  InputBorder _fieldBorder(AppPalette palette) {
+    return OutlineInputBorder(
+      borderRadius: Dimens.borderRadiusS,
+      borderSide: BorderSide(color: palette.border, width: Dimens.hairline),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    final fieldBorder = _fieldBorder(palette);
     return BlocConsumer<RecipeBuilderBloc, RecipeBuilderState>(
       bloc: _bloc,
       listener: (context, state) {
@@ -115,10 +127,13 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
           },
           child: Scaffold(
             appBar: AppBar(
+            toolbarHeight: MediaQuery.textScalerOf(context).scale(kToolbarHeight),
             title: Text(
               state.isExistingRecipe
                   ? S.of(context).editRecipeTitle
                   : S.of(context).createRecipeTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             actions: [
               if (state.isSaving)
@@ -144,7 +159,7 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Dimens.spacing16),
             children: [
               UserImagePickerTile(
                 kind: UserImageKind.recipe,
@@ -159,26 +174,28 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                 ),
                 onRemove: () => _onRemoveImage(context),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Dimens.spacing16),
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: S.of(context).recipeNameLabel,
-                  border: const OutlineInputBorder(),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
                 ),
                 onChanged: (v) => _bloc.add(UpdateNameEvent(v)),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Dimens.spacing12),
               TextField(
                 controller: _descriptionController,
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: S.of(context).recipeDescriptionLabel,
-                  border: const OutlineInputBorder(),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
                 ),
                 onChanged: (v) => _bloc.add(UpdateDescriptionEvent(v)),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Dimens.spacing12),
               TextField(
                 controller: _servingsController,
                 keyboardType: TextInputType.number,
@@ -189,21 +206,23 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                   labelText: S.of(context).recipeServingsCountLabel,
                   helperText: S.of(context).recipeServingsCountHelper,
                   helperMaxLines: 2,
-                  border: const OutlineInputBorder(),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
                 ),
                 onChanged: (v) {
                   final parsed = v.trim().isEmpty ? null : int.tryParse(v);
                   _bloc.add(UpdateServingsCountEvent(parsed));
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Dimens.spacing12),
               TextField(
                 controller: _tagsController,
                 decoration: InputDecoration(
                   labelText: S.of(context).recipeTagsLabel,
                   helperText: S.of(context).recipeTagsHelper,
                   helperMaxLines: 2,
-                  border: const OutlineInputBorder(),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
                 ),
                 onChanged: (v) {
                   final parsed = v
@@ -214,21 +233,19 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                   _bloc.add(UpdateTagsEvent(parsed));
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Dimens.spacing24),
               Text(
                 S.of(context).recipeIngredientsLabel,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Dimens.spacing8),
               if (state.ingredients.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: Dimens.spacing16),
                   child: Center(
                     child: Text(
                       S.of(context).recipeNoIngredientsLabel,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: palette.textMuted),
                     ),
                   ),
                 )
@@ -241,14 +258,19 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                     onRemove: () => _bloc.add(RemoveIngredientEvent(i)),
                   ),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Dimens.spacing8),
               OutlinedButton.icon(
                 focusNode: _addIngredientFocusNode,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: Dimens.spacing16),
+                  side: BorderSide(color: palette.border, width: Dimens.hairline),
+                  shape: Dimens.shapeM,
+                ),
                 onPressed: () => _onAddIngredient(context),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded),
                 label: Text(S.of(context).recipeAddIngredientLabel),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Dimens.spacing24),
               TextField(
                 controller: _totalWeightController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -263,7 +285,8 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                   labelText: S.of(context).recipeTotalWeightLabel,
                   helperText: S.of(context).recipeTotalWeightHelper,
                   helperMaxLines: 3,
-                  border: const OutlineInputBorder(),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
                 ),
                 onChanged: (v) {
                   final raw = v.replaceAll(',', '.');
@@ -273,12 +296,12 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Dimens.spacing16),
               RecipeNutritionSummary(
                 nutrimentsPer100: state.aggregatedNutrimentsPer100,
                 totalWeightG: state.totalWeightG,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: Dimens.spacing32),
             ],
           ),
           ),
