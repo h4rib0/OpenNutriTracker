@@ -5,8 +5,7 @@ import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_nutriment_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_nutriments_dto.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_const.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sp/sp_food_dto.dart';
 
 class MealNutrimentsEntity extends Equatable {
   final double? energyKcal100;
@@ -182,6 +181,38 @@ class MealNutrimentsEntity extends Equatable {
     );
   }
 
+  /// Nutrients from the Supabase `food_summary` view. The view already
+  /// pivots the canonical per-100g nutrient rows into flat columns in the
+  /// app's units, so this is a straight field-for-field copy.
+  factory MealNutrimentsEntity.fromSpFoodSummary(SpFoodDTO food) {
+    return MealNutrimentsEntity(
+      energyKcal100: food.energyKcal100,
+      carbohydrates100: food.carbohydrates100,
+      fat100: food.fat100,
+      proteins100: food.proteins100,
+      sugars100: food.sugars100,
+      saturatedFat100: food.saturatedFat100,
+      fiber100: food.fiber100,
+      monounsaturatedFat100: food.monounsaturatedFat100,
+      polyunsaturatedFat100: food.polyunsaturatedFat100,
+      transFat100: food.transFat100,
+      cholesterol100: food.cholesterol100,
+      sodium100: food.sodium100,
+      potassium100: food.potassium100,
+      magnesium100: food.magnesium100,
+      calcium100: food.calcium100,
+      iron100: food.iron100,
+      zinc100: food.zinc100,
+      phosphorus100: food.phosphorus100,
+      vitaminA100: food.vitaminA100,
+      vitaminC100: food.vitaminC100,
+      vitaminD100: food.vitaminD100,
+      vitaminB6100: food.vitaminB6100,
+      vitaminB12100: food.vitaminB12100,
+      niacin100: food.niacin100,
+    );
+  }
+
   factory MealNutrimentsEntity.fromFDCNutriments(
     List<FDCFoodNutrimentDTO> fdcNutriment,
   ) {
@@ -224,44 +255,6 @@ class MealNutrimentsEntity extends Equatable {
       vitaminB6100: fdcAmount(FDCConst.fdcVitaminB6Id),
       vitaminB12100: fdcAmount(FDCConst.fdcVitaminB12Id),
       niacin100: fdcAmount(FDCConst.fdcNiacinId),
-    );
-  }
-
-  factory MealNutrimentsEntity.fromSfcdNutrients(
-    List<SfcdNutrientDto> nutrients,
-  ) {
-    double? val(String code) {
-      for (final n in nutrients) {
-        if (n.componentCode == code) return n.value;
-      }
-      return null;
-    }
-
-    return MealNutrimentsEntity(
-      energyKcal100: val(SfcdConst.codeEnergyKcal),
-      proteins100: val(SfcdConst.codeProtein),
-      fat100: val(SfcdConst.codeFat),
-      carbohydrates100: val(SfcdConst.codeCarbs),
-      sugars100: val(SfcdConst.codeSugar),
-      saturatedFat100: val(SfcdConst.codeSaturatedFat),
-      monounsaturatedFat100: val(SfcdConst.codeMonounsaturatedFat),
-      polyunsaturatedFat100: val(SfcdConst.codePolyunsaturatedFat),
-      transFat100: val(SfcdConst.codeTransFat),
-      cholesterol100: val(SfcdConst.codeCholesterol),
-      fiber100: val(SfcdConst.codeFiber),
-      sodium100: val(SfcdConst.codeSodium),
-      potassium100: val(SfcdConst.codePotassium),
-      magnesium100: val(SfcdConst.codeMagnesium),
-      calcium100: val(SfcdConst.codeCalcium),
-      iron100: val(SfcdConst.codeIron),
-      zinc100: val(SfcdConst.codeZinc),
-      phosphorus100: val(SfcdConst.codePhosphorus),
-      vitaminA100: val(SfcdConst.codeVitaminA),
-      vitaminC100: val(SfcdConst.codeVitaminC),
-      vitaminD100: val(SfcdConst.codeVitaminD),
-      vitaminB6100: val(SfcdConst.codeVitaminB6),
-      vitaminB12100: val(SfcdConst.codeVitaminB12),
-      niacin100: val(SfcdConst.codeNiacin),
     );
   }
 

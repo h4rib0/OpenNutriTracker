@@ -45,6 +45,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         usesImperialFoodUnits: fields[28] as bool?,
         usesImperialHeightUnits: fields[29] as bool?,
         bodyWeightUnitIndex: (fields[30] as num?)?.toInt(),
+        foodSourceToggles: (fields[31] as Map?)?.cast<String, bool>(),
         syncNutrientsToSupabase: fields[200] as bool?,
         useBodyWeightMacros: fields[201] as bool?,
       )
@@ -56,7 +57,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
   @override
   void write(BinaryWriter writer, ConfigDBO obj) {
     writer
-      ..writeByte(33)
+      ..writeByte(34)
       ..writeByte(0)
       ..write(obj.hasAcceptedDisclaimer)
       ..writeByte(1)
@@ -119,6 +120,8 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..write(obj.usesImperialHeightUnits)
       ..writeByte(30)
       ..write(obj.bodyWeightUnitIndex)
+      ..writeByte(31)
+      ..write(obj.foodSourceToggles)
       ..writeByte(200)
       ..write(obj.syncNutrientsToSupabase)
       ..writeByte(201)
@@ -177,6 +180,8 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) =>
         usesImperialFoodUnits: json['usesImperialFoodUnits'] as bool?,
         usesImperialHeightUnits: json['usesImperialHeightUnits'] as bool?,
         bodyWeightUnitIndex: (json['bodyWeightUnitIndex'] as num?)?.toInt(),
+        foodSourceToggles: (json['foodSourceToggles'] as Map<String, dynamic>?)
+            ?.map((k, e) => MapEntry(k, e as bool)),
         syncNutrientsToSupabase: json['syncNutrientsToSupabase'] as bool?,
         useBodyWeightMacros: json['useBodyWeightMacros'] as bool?,
       )
@@ -216,6 +221,7 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
   'usesImperialFoodUnits': instance.usesImperialFoodUnits,
   'usesImperialHeightUnits': instance.usesImperialHeightUnits,
   'bodyWeightUnitIndex': instance.bodyWeightUnitIndex,
+  'foodSourceToggles': instance.foodSourceToggles,
   'syncNutrientsToSupabase': instance.syncNutrientsToSupabase,
   'useBodyWeightMacros': instance.useBodyWeightMacros,
 };

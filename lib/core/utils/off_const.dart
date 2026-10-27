@@ -1,4 +1,8 @@
 class OFFConst {
+  /// Proper name of the database, shown as the source chip on search
+  /// result cards in every app language.
+  static const offSourceName = "Open Food Facts";
+
   static const offWebsiteUrl = "https://world.openfoodfacts.org/";
   static const _offBaseUrl = "world.openfoodfacts.org";
   static const _offProductSearchTag = "/api/v2/product";

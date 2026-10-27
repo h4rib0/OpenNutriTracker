@@ -263,6 +263,22 @@ class ConfigDataSource {
     await _update((c) => c.scannerPortraitLock = value);
   }
 
+  /// Per-source enable flags for the food search, keyed by backend
+  /// food_source code. Null means the user never touched the setting —
+  /// every source is enabled. Returned as a defensive copy.
+  Future<Map<String, bool>?> getFoodSourceToggles() async {
+    final stored = _readMerged().foodSourceToggles;
+    if (stored == null) return null;
+    return Map<String, bool>.from(stored);
+  }
+
+  Future<void> setConfigFoodSourceToggles(Map<String, bool> toggles) async {
+    // Copy into a fresh map so Hive sees a distinct object reference on save.
+    await _update(
+      (c) => c.foodSourceToggles = Map<String, bool>.from(toggles),
+    );
+  }
+
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     _log.fine('Updating config syncNutrientsToSupabase to $sync');
     await _update((c) => c.syncNutrientsToSupabase = sync);

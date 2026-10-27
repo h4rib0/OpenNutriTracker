@@ -7,7 +7,9 @@ import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.
 import 'package:opennutritracker/core/styles/app_palette.dart';
 import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/off_const.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sp/sp_const.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/add_meal/util/food_emoji_resolver.dart';
@@ -140,29 +142,80 @@ class MealItemCard extends StatelessWidget {
 
   Widget _buildSubtitle(BuildContext context, AppPalette palette, Color accent, bool isRecipe) {
     if (isRecipe) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: Dimens.spacing8, vertical: Dimens.spacing4),
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.16),
-          borderRadius: Dimens.borderRadiusS,
-        ),
-        child: Text(
-          S.of(context).additionalInfoLabelRecipe,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
+      return _labelChip(
+        context,
+        S.of(context).additionalInfoLabelRecipe,
+        background: accent.withValues(alpha: 0.16),
+        foreground: accent,
       );
     }
-    if (mealEntity.mealQuantity != null) {
-      return MealValueUnitText(
-        value: double.parse(mealEntity.mealQuantity ?? "0"),
-        meal: mealEntity,
-        usesImperialUnits: usesImperialUnits,
+
+    // Remote foods carry their database of origin; show it as a muted chip
+    // (Open Food Facts, BLS, FDC SR Legacy...) so users can tell sources
+    // apart. OFF products may additionally have a package quantity — keep
+    // it visible next to the chip.
+    final sourceLabel = _sourceLabel();
+    final chip = sourceLabel != null
+        ? _labelChip(
+            context,
+            sourceLabel,
+            background: palette.textMuted.withValues(alpha: 0.12),
+            foreground: palette.textMuted,
+          )
+        : null;
+    final quantity = mealEntity.mealQuantity != null
+        ? MealValueUnitText(
+            value: double.parse(mealEntity.mealQuantity ?? "0"),
+            meal: mealEntity,
+            usesImperialUnits: usesImperialUnits,
+          )
+        : null;
+
+    if (chip != null && quantity != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          chip,
+          const SizedBox(width: Dimens.spacing8),
+          Flexible(child: quantity),
+        ],
       );
     }
-    return const SizedBox();
+    return chip ?? quantity ?? const SizedBox();
+  }
+
+  /// Database-of-origin label: the Supabase backend source (BLS, FDC SR
+  /// Legacy...) when known, Open Food Facts for OFF products, null for the
+  /// user's own custom meals.
+  String? _sourceLabel() {
+    final backendLabel = SPConst.foodSourceShortNames[mealEntity.backendSource];
+    if (backendLabel != null) return backendLabel;
+    if (mealEntity.source == MealSourceEntity.off) {
+      return OFFConst.offSourceName;
+    }
+    return null;
+  }
+
+  Widget _labelChip(
+    BuildContext context,
+    String label, {
+    required Color background,
+    required Color foreground,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Dimens.spacing8, vertical: Dimens.spacing4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: Dimens.borderRadiusS,
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+            ),
+      ),
+    );
   }
 
   void _onItemPressed(BuildContext context) {

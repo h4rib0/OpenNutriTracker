@@ -113,6 +113,13 @@ class ConfigDBO extends HiveObject {
   // BodyWeightUnit enum index. Null means "derive from usesImperialUnits".
   @HiveField(30)
   int? bodyWeightUnitIndex;
+  // Food-source selection for the search screens. Keys are backend
+  // food_source codes (see SPConst.foodSourceDisplayNames); a source absent
+  // from the map — or a null map altogether — is enabled, so newly added
+  // sources default to on and existing installs need no migration. Open
+  // Food Facts is always enabled and deliberately has no entry here.
+  @HiveField(31)
+  Map<String, bool>? foodSourceToggles;
   // Fork-only field: kept far above upstream's range so upstream can keep
   // adding fields without colliding (27 was taken by scannerPortraitLock).
   @HiveField(200)
@@ -152,6 +159,7 @@ class ConfigDBO extends HiveObject {
     this.usesImperialFoodUnits,
     this.usesImperialHeightUnits,
     this.bodyWeightUnitIndex,
+    this.foodSourceToggles,
     this.syncNutrientsToSupabase,
     this.useBodyWeightMacros,
   });

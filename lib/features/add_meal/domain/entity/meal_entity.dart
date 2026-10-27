@@ -6,9 +6,8 @@ import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/supported_language.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_dto.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/fdc_sp/sp_fdc_food_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sp/sp_food_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_dto.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 
 class MealEntity extends Equatable {
@@ -40,6 +39,13 @@ class MealEntity extends Equatable {
   bool get hasServingValues => servingQuantity != null || servingSize != null;
 
   final MealSourceEntity source;
+
+  /// Backend food_source.code ('fdc_sr_legacy', 'bls', 'indb'...) for
+  /// meals from the Supabase backend, null for OFF/custom/recipe meals
+  /// and legacy cached entries. Persisted so the UI can name the actual
+  /// database a food came from (see SPConst.foodSourceDisplayNames) even
+  /// though [source] groups them all under [MealSourceEntity.fdc].
+  final String? backendSource;
 
   /// Relative path (`meal_images/<code>.webp`) to a user-attached photo
   /// for a custom meal, or null if none is set. Resolved to an absolute
@@ -77,6 +83,7 @@ class MealEntity extends Equatable {
     required this.servingSize,
     required this.nutriments,
     required this.source,
+    this.backendSource,
     this.localImagePath,
     this.detailed = false,
   });
@@ -109,6 +116,7 @@ class MealEntity extends Equatable {
         nutriments:
             MealNutrimentsEntity.fromMealNutrimentsDBO(mealDBO.nutriments),
         source: MealSourceEntity.fromMealSourceDBO(mealDBO.source),
+        backendSource: mealDBO.backendSource,
         localImagePath: mealDBO.localImagePath,
         detailed: mealDBO.detailed ?? false,
       );
@@ -157,44 +165,49 @@ class MealEntity extends Equatable {
     );
   }
 
-  factory MealEntity.fromSpFDCFood(SpFdcFoodDTO foodItem) {
-    final fdcId = foodItem.fdcId?.toInt().toString();
-
+  factory MealEntity.fromSpFood(SpFoodDTO foodItem) {
     return MealEntity(
-      code: fdcId,
-      name: foodItem.getLocaleDescription(
-        SupportedLanguage.fromCode(Platform.localeName),
-      ),
-      brands: null,
-      url: FDCConst.getFoodDetailUrlString(fdcId),
+      code: foodItem.foodId?.toString(),
+      name: foodItem.displayName,
+      brands: foodItem.brands,
+      // Only USDA FDC foods have a public detail page to link to; foods
+      // from the other backend sources (BLS, INDB, TBCA...) link nowhere.
+      url: foodItem.isFdc
+          ? FDCConst.getFoodDetailUrlString(foodItem.sourceCode)
+          : null,
       mealQuantity: null,
       mealUnit: FDCConst.fdcDefaultUnit,
-      servingQuantity: foodItem.servingSize,
+      servingQuantity: foodItem.servingGramWeight,
       servingUnit: FDCConst.fdcDefaultUnit,
-      servingSize:
-          "${(foodItem.servingAmount ?? 1).toInt()} ${foodItem.servingSizeUnit}",
-      nutriments: MealNutrimentsEntity.fromFDCNutriments(foodItem.nutrients),
+      servingSize: _spServingLabel(foodItem),
+      nutriments: MealNutrimentsEntity.fromSpFoodSummary(foodItem),
+      // All Supabase backend foods keep the fdc source tag: MealSourceDBO
+      // is persisted in Hive, so a per-source enum value would need a data
+      // migration. `fdc` here means "reference food database" as opposed
+      // to OFF/custom; the true origin is carried in [backendSource].
       source: MealSourceEntity.fdc,
+      backendSource: foodItem.source,
     );
   }
 
-  factory MealEntity.fromSfcdFood(SfcdFoodDetailDto food) {
-    return MealEntity(
-      code: food.id.toString(),
-      name: food.name,
-      brands: null,
-      thumbnailImageUrl: null,
-      mainImageUrl: null,
-      url: null,
-      mealQuantity: null,
-      mealUnit: 'g',
-      servingQuantity: null,
-      servingUnit: 'g',
-      servingSize: null,
-      nutriments: MealNutrimentsEntity.fromSfcdNutrients(food.values),
-      source: MealSourceEntity.sfcd,
-    );
+  /// Human-readable default-serving label ("1 cup", "2 slices"), falling
+  /// back to the serving weight in grams when the portion has no
+  /// description.
+  static String? _spServingLabel(SpFoodDTO foodItem) {
+    if (foodItem.servingSize != null) return foodItem.servingSize;
+    final quantity = foodItem.servingQuantity;
+    final unit = foodItem.servingUnit;
+    if (quantity != null && unit != null) {
+      return '${_formatAmount(quantity)} $unit';
+    }
+    final gramWeight = foodItem.servingGramWeight;
+    if (gramWeight != null) return '${_formatAmount(gramWeight)} g';
+    return null;
   }
+
+  static String _formatAmount(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 
   /// Value returned from OFF can either be String, int or double.
   /// Try casting it to a double value for calculation
@@ -240,6 +253,7 @@ enum MealSourceEntity {
   off,
   fdc,
   recipe,
+  // Fork-only, read-only: see MealSourceDBO.sfcd.
   sfcd;
 
   factory MealSourceEntity.fromMealSourceDBO(MealSourceDBO mealSourceDBO) {

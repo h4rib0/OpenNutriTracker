@@ -59,6 +59,13 @@ class MealDBO extends HiveObject {
   @HiveField(14)
   final bool? detailed;
 
+  /// Backend food_source.code ('fdc_sr_legacy', 'bls'...) for foods from
+  /// the Supabase backend. Null for OFF/custom/recipe meals and for rows
+  /// cached before this field existed — the UI then falls back to the
+  /// generic FoodData Central label.
+  @HiveField(15)
+  final String? backendSource;
+
   MealDBO({
     required this.code,
     required this.name,
@@ -75,6 +82,7 @@ class MealDBO extends HiveObject {
     required this.source,
     this.localImagePath,
     this.detailed,
+    this.backendSource,
   });
 
   factory MealDBO.fromMealEntity(MealEntity mealEntity) => MealDBO(
@@ -95,6 +103,7 @@ class MealDBO extends HiveObject {
         source: MealSourceDBO.fromMealSourceEntity(mealEntity.source),
         localImagePath: mealEntity.localImagePath,
         detailed: mealEntity.detailed,
+        backendSource: mealEntity.backendSource,
       );
 
   factory MealDBO.fromJson(Map<String, dynamic> json) =>
@@ -115,6 +124,8 @@ enum MealSourceDBO {
   fdc,
   @HiveField(4)
   recipe,
+  // Fork-only: Swiss Food Composition DB, removed as a search source with the
+  // upstream search backend. Kept so meals already stored with it still load.
   @HiveField(5)
   sfcd;
 
