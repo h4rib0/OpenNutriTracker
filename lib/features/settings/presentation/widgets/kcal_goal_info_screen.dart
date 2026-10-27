@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart';
 import 'package:opennutritracker/core/domain/entity/kcal_goal_breakdown_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_gender_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/get_fork_goal_breakdown_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_breakdown_usecase.dart';
 import 'package:opennutritracker/core/presentation/sources_screen.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
@@ -32,7 +33,12 @@ class KcalGoalInfoScreen extends StatefulWidget {
   /// can't drift apart.
   final KcalGoalBreakdownEntity? breakdown;
 
-  const KcalGoalInfoScreen({super.key, this.usecase, this.breakdown});
+  /// Fork: Polar / body-weight-macro explanation. Only looked up from the
+  /// locator on the production path (no [usecase] / [breakdown] injected), so
+  /// upstream's tests and onboarding keep rendering upstream's screen.
+  final GetForkGoalBreakdownUsecase? forkUsecase;
+
+  const KcalGoalInfoScreen({super.key, this.usecase, this.breakdown, this.forkUsecase});
 
   @override
   State<KcalGoalInfoScreen> createState() => _KcalGoalInfoScreenState();
@@ -40,6 +46,7 @@ class KcalGoalInfoScreen extends StatefulWidget {
 
 class _KcalGoalInfoScreenState extends State<KcalGoalInfoScreen> {
   late final Future<KcalGoalBreakdownEntity> _breakdown;
+  late final Future<ForkGoalBreakdown> _forkBreakdown;
 
   @override
   void initState() {
@@ -49,6 +56,14 @@ class _KcalGoalInfoScreenState extends State<KcalGoalInfoScreen> {
         ? Future.value(provided)
         : (widget.usecase ?? locator<GetKcalGoalBreakdownUsecase>())
               .getBreakdown();
+    final forkUsecase = widget.forkUsecase ??
+        (widget.usecase == null && provided == null && locator.isRegistered<GetForkGoalBreakdownUsecase>()
+            ? locator<GetForkGoalBreakdownUsecase>()
+            : null);
+    _forkBreakdown = forkUsecase == null
+        ? Future.value(ForkGoalBreakdown.none)
+        // An unreachable InfluxDB must not leave the screen spinning.
+        : _breakdown.then(forkUsecase.getBreakdown).catchError((_) => ForkGoalBreakdown.none);
   }
 
   @override
@@ -56,13 +71,18 @@ class _KcalGoalInfoScreenState extends State<KcalGoalInfoScreen> {
     final l10n = S.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsKcalGoalInfoLabel)),
-      body: FutureBuilder<KcalGoalBreakdownEntity>(
-        future: _breakdown,
+      body: FutureBuilder<(KcalGoalBreakdownEntity, ForkGoalBreakdown)>(
+        future: Future.wait([_breakdown, _forkBreakdown]).then(
+          (r) => (r[0] as KcalGoalBreakdownEntity, r[1] as ForkGoalBreakdown),
+        ),
         builder: (context, snapshot) {
-          final breakdown = snapshot.data;
-          if (breakdown == null) {
+          final data = snapshot.data;
+          if (data == null) {
             return const Center(child: CircularProgressIndicator());
           }
+          final (breakdown, fork) = data;
+          final polar = fork.polar;
+          final bodyWeightMacros = fork.bodyWeightMacros;
           return ListView(
             padding: const EdgeInsets.symmetric(
               horizontal: Dimens.spacing16,
@@ -76,17 +96,30 @@ class _KcalGoalInfoScreenState extends State<KcalGoalInfoScreen> {
               const SizedBox(height: Dimens.spacing16),
               _InputsCard(breakdown: breakdown),
               const SizedBox(height: Dimens.spacing12),
-              _TdeeCard(breakdown: breakdown),
+              if (polar != null) ...[
+                _PolarKcalCard(polar: polar),
+                const SizedBox(height: Dimens.spacing12),
+                _ManualAdjustmentCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _ActivityCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _PolarResultCard(polar: polar),
+              ] else ...[
+                _TdeeCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _AdjustmentCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _ManualAdjustmentCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _ActivityCard(breakdown: breakdown),
+                const SizedBox(height: Dimens.spacing12),
+                _ResultCard(breakdown: breakdown),
+              ],
               const SizedBox(height: Dimens.spacing12),
-              _AdjustmentCard(breakdown: breakdown),
-              const SizedBox(height: Dimens.spacing12),
-              _ManualAdjustmentCard(breakdown: breakdown),
-              const SizedBox(height: Dimens.spacing12),
-              _ActivityCard(breakdown: breakdown),
-              const SizedBox(height: Dimens.spacing12),
-              _ResultCard(breakdown: breakdown),
-              const SizedBox(height: Dimens.spacing12),
-              _MacroCard(breakdown: breakdown),
+              if (bodyWeightMacros != null)
+                _BodyWeightMacroCard(macros: bodyWeightMacros, viaPolar: polar != null)
+              else
+                _MacroCard(breakdown: breakdown),
               const SizedBox(height: Dimens.spacing16),
               Text(
                 l10n.kcalGoalInfoEstimateNote,
@@ -600,4 +633,123 @@ String _signedEnergy(BuildContext context, double kcal) {
   final formatted = EnergyDisplay.formatWithUnit(context, kcal.abs());
   if (kcal < 0) return '−$formatted';
   return '+$formatted';
+}
+
+// ── Fork: Polar kcal goal and body-weight macros ─────────────────────────────
+
+/// Replaces the TDEE and weight-goal steps while Polar is configured.
+class _PolarKcalCard extends StatelessWidget {
+  final PolarKcalBreakdown polar;
+
+  const _PolarKcalCard({required this.polar});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'Polar: Grundumsatz + gemessene Aktivität',
+      children: [
+        Text(
+          'Die Polar-Integration ist aktiv. Statt den Bedarf über einen '
+          'Aktivitätsfaktor zu schätzen, nimmt die App den Grundumsatz '
+          '(Mifflin-St Jeor) und addiert die von Polar gemessene aktive '
+          'Energie. Ein Gewichtsziel-Zuschlag entfällt — dafür ist der '
+          'Slider da (negativ zum Abnehmen, positiv zum Zunehmen).',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: Dimens.spacing12),
+        const _FormulaText.raw(
+          text: 'Grundumsatz = 10 × Gewicht + 6,25 × Größe − 5 × Alter + s\n'
+              's = +5 (männlich) / −161 (weiblich)',
+        ),
+        const Divider(height: Dimens.spacing20),
+        _ValueRow(
+          label: polar.weightFromInflux ? 'Gewicht (InfluxDB)' : 'Gewicht (Profil)',
+          value: '${polar.weightKg.toStringAsFixed(1)} kg',
+        ),
+        _ValueRow(
+          label: 'Grundumsatz',
+          value: EnergyDisplay.formatWithUnit(context, polar.bmrKcal),
+          emphasized: true,
+        ),
+        _ValueRow(
+          label: 'Aktive Energie (Polar, heute)',
+          value: _signedEnergy(context, polar.polarActiveKcal),
+          emphasized: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _PolarResultCard extends StatelessWidget {
+  final PolarKcalBreakdown polar;
+
+  const _PolarResultCard({required this.polar});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = S.of(context);
+    final theme = Theme.of(context);
+    return _SectionCard(
+      title: l10n.kcalGoalInfoResultSection,
+      children: [
+        _ValueRow(label: 'Grundumsatz', value: EnergyDisplay.formatWithUnit(context, polar.bmrKcal)),
+        _ValueRow(label: 'Aktive Energie (Polar)', value: _signedEnergy(context, polar.polarActiveKcal)),
+        _ValueRow(label: l10n.activityLabel, value: _signedEnergy(context, polar.activityKcal)),
+        _ValueRow(label: l10n.settingsKcalAdjustmentLabel, value: _signedEnergy(context, polar.manualKcalAdjustment)),
+        const Divider(height: Dimens.spacing20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: Text(l10n.kcalGoalInfoResultSection, style: theme.textTheme.titleMedium)),
+            Text(
+              EnergyDisplay.formatWithUnit(context, polar.totalKcalGoal),
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Replaces the % split explanation while the body-weight macros apply.
+class _BodyWeightMacroCard extends StatelessWidget {
+  final BodyWeightMacroBreakdown macros;
+  final bool viaPolar;
+
+  const _BodyWeightMacroCard({required this.macros, required this.viaPolar});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = S.of(context);
+    final kg = macros.weightKg.toStringAsFixed(1);
+    final goal = macros.totalKcalGoal.toInt();
+    final proteinKcal = (macros.proteinsGrams * MacroCalc.proteinKcalPerGram).toInt();
+    final fatKcal = (macros.fatsGrams * MacroCalc.fatKcalPerGram).toInt();
+    return _SectionCard(
+      title: l10n.kcalGoalInfoMacroSection,
+      children: [
+        Text(
+          '${viaPolar ? 'Mit aktiver Polar-Integration' : 'Mit „Makros nach Körpergewicht“'} '
+          'richten sich Protein und Fett nach dem Körpergewicht; die '
+          'Kohlenhydrate füllen die restlichen Kalorien des Ziels.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: Dimens.spacing12),
+        _FormulaText.raw(
+          text: '${l10n.proteinLabel}: ${macros.proteinGPerKg.toStringAsFixed(1)} g × $kg kg = ${macros.proteinsGrams.toInt()} g\n'
+              '${l10n.fatLabel}: ${macros.fatGPerKg.toStringAsFixed(1)} g × $kg kg = ${macros.fatsGrams.toInt()} g\n'
+              '${l10n.carbsLabel}: ($goal − $proteinKcal − $fatKcal) ÷ ${MacroCalc.carbsKcalPerGram.toStringAsFixed(0)} = ${macros.carbsGrams.toInt()} g',
+        ),
+        const Divider(height: Dimens.spacing20),
+        _ValueRow(label: l10n.carbsLabel, value: '${macros.carbsGrams.toInt()} g', emphasized: true),
+        _ValueRow(label: l10n.fatLabel, value: '${macros.fatsGrams.toInt()} g', emphasized: true),
+        _ValueRow(label: l10n.proteinLabel, value: '${macros.proteinsGrams.toInt()} g', emphasized: true),
+      ],
+    );
+  }
 }

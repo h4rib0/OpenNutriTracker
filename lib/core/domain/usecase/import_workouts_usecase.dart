@@ -1,5 +1,6 @@
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/health/external_workout.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/health_import_repository.dart';
@@ -59,14 +60,19 @@ class ImportWorkoutsUsecase {
   final UserActivityRepository _userActivityRepository;
   final GetPhysicalActivityUsecase _getPhysicalActivityUsecase;
   final LogUserActivityUsecase _logUserActivityUsecase;
+  // Fork: Polar and the health import are mutually exclusive — Polar's
+  // active energy already covers workouts, importing them too would count
+  // them twice. Optional so upstream's tests can build the usecase without it.
+  final PolarInfluxdbDataSource? _polarDataSource;
 
   ImportWorkoutsUsecase(
     this._healthImportRepository,
     this._configRepository,
     this._userActivityRepository,
     this._getPhysicalActivityUsecase,
-    this._logUserActivityUsecase,
-  );
+    this._logUserActivityUsecase, [
+    this._polarDataSource,
+  ]);
 
   /// Runs an import if one is due, swallowing failures.
   ///
@@ -118,6 +124,7 @@ class ImportWorkoutsUsecase {
   Future<int> _import() async {
     final config = await _configRepository.getConfig();
     if (!config.healthImportEnabled) return 0;
+    if (await _polarDataSource?.isPolarConfigured() ?? false) return 0;
 
     final to = clock();
     final from =

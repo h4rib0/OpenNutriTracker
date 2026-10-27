@@ -54,6 +54,7 @@ import 'package:opennutritracker/core/domain/usecase/get_all_recipes_usecase.dar
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_custom_activity_templates_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/get_fork_goal_breakdown_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_breakdown_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
@@ -314,6 +315,7 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      locator(),
     ),
   );
   locator.registerLazySingleton<DeleteUserActivityUsecase>(
@@ -364,6 +366,9 @@ Future<void> initLocator() async {
   );
   locator.registerLazySingleton(
     () => GetKcalGoalBreakdownUsecase(locator(), locator(), locator()),
+  );
+  locator.registerLazySingleton(
+    () => GetForkGoalBreakdownUsecase(locator(), locator(), locator()),
   );
   locator.registerLazySingleton(
     () => GetMacroGoalUsecase(locator(), locator(), locator()),

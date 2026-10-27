@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/presentation/sources_screen.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_banner_version.dart';
@@ -840,6 +841,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showPolarInfluxdbDialog(BuildContext context) async {
+    // Polar and the health import are mutually exclusive (Polar already
+    // covers workouts; both would count them twice).
+    final config = await locator<GetConfigUsecase>().getConfig();
+    if (!context.mounted) return;
+    if (config.healthImportEnabled) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Polar Integration'),
+          content: const Text(
+            'Polar kann nicht aktiviert werden, solange der Trainings-Import '
+            'aus Health Connect / Apple Health aktiv ist. Bitte den Import '
+            'zuerst ausschalten.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(S.of(context).dialogOKLabel),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     final dataSource = locator<PolarInfluxdbDataSource>();
     final initialUrl = await dataSource.getUrl();
     final initialDb = await dataSource.getDatabase();

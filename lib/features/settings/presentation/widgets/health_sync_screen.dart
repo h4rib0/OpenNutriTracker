@@ -4,6 +4,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/repository/health_import_repository.dart';
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
@@ -61,6 +62,10 @@ class _HealthSyncScreenState extends State<HealthSyncScreen> {
 
   bool _importEnabled = false;
 
+  /// Fork: Polar and the health import are mutually exclusive. While Polar
+  /// is configured the import can only be switched off, not on.
+  bool _polarActive = false;
+
   /// The stored credit, null until the user opts in. Kept apart from
   /// [_multiplier] so the enable flow knows whether to seed a suggestion.
   double? _storedMultiplier;
@@ -81,9 +86,13 @@ class _HealthSyncScreenState extends State<HealthSyncScreen> {
   Future<void> _load() async {
     final isAvailable = await locator<HealthImportRepository>().isAvailable();
     final config = await locator<GetConfigUsecase>().getConfig();
+    // isRegistered: upstream's widget tests build this screen without Polar.
+    final polarActive = locator.isRegistered<PolarInfluxdbDataSource>() &&
+        await locator<PolarInfluxdbDataSource>().isPolarConfigured();
     if (!mounted) return;
     setState(() {
       _isAvailable = isAvailable;
+      _polarActive = polarActive;
       _importEnabled = config.healthImportEnabled;
       _storedMultiplier = config.healthWorkoutKcalMultiplier;
       _multiplier = config.effectiveHealthWorkoutKcalMultiplier;
@@ -271,6 +280,18 @@ class _HealthSyncScreenState extends State<HealthSyncScreen> {
                       style: textTheme.bodySmall,
                     ),
                   ),
+                if (_polarActive)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Dimens.spacing16,
+                      vertical: Dimens.spacing8,
+                    ),
+                    child: Text(
+                      'Nicht verfügbar, solange die Polar-Integration aktiv ist — '
+                      'Polar erfasst die Trainings bereits.',
+                      style: textTheme.bodySmall,
+                    ),
+                  ),
                 Semantics(
                   identifier: 'health-sync-auto-import',
                   child: SwitchListTile(
@@ -279,7 +300,9 @@ class _HealthSyncScreenState extends State<HealthSyncScreen> {
                       s.healthSyncAutoImportLabel(healthPlatformName),
                     ),
                     value: _importEnabled,
-                    onChanged: _isAvailable && !_busy
+                    onChanged: _isAvailable &&
+                            !_busy &&
+                            (!_polarActive || _importEnabled)
                         ? _onAutoImportChanged
                         : null,
                   ),
