@@ -122,6 +122,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _addConfigUsecase.setConfigSyncNutrientsToSupabase(sync);
   }
 
+  Future<bool> getUseBodyWeightMacros() async {
+    final config = await _getConfigUsecase.getConfig();
+    return config.useBodyWeightMacros;
+  }
+
+  Future<void> setUseBodyWeightMacros(bool value) async {
+    await _addConfigUsecase.setConfigUseBodyWeightMacros(value);
+  }
+
   void setUsesKilojoules(bool usesKilojoules) {
     _addConfigUsecase.setConfigUsesKilojoules(usesKilojoules);
   }

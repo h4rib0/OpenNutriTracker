@@ -112,4 +112,8 @@ class AddConfigUsecase {
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     _configRepository.setConfigSyncNutrientsToSupabase(sync);
   }
+
+  Future<void> setConfigUseBodyWeightMacros(bool value) async {
+    await _configRepository.setConfigUseBodyWeightMacros(value);
+  }
 }

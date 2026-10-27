@@ -285,7 +285,7 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<GetWaterIntakeUsecase>(() => GetWaterIntakeUsecase(locator()));
   locator.registerLazySingleton<DeleteWaterIntakeUsecase>(() => DeleteWaterIntakeUsecase(locator()));
   locator.registerLazySingleton(() => GetKcalGoalUsecase(locator(), locator(), locator(), locator()));
-  locator.registerLazySingleton(() => GetMacroGoalUsecase(locator()));
+  locator.registerLazySingleton(() => GetMacroGoalUsecase(locator(), locator(), locator()));
   locator.registerLazySingleton(() => ExportDataUsecase(locator(), locator(), locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() => ImportDataUsecase(locator(), locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() => ImportMealsCsvUsecase(locator()));

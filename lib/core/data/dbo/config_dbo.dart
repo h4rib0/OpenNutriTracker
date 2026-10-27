@@ -104,6 +104,11 @@ class ConfigDBO extends HiveObject {
   // adding fields without colliding (27 was taken by scannerPortraitLock).
   @HiveField(200)
   bool? syncNutrientsToSupabase; // null means default (false)
+  // Fork-only: compute protein/fat goals from body weight (g/kg) instead of
+  // the % split. Always on while Polar is configured; this flag opts in
+  // without Polar. Null means off.
+  @HiveField(201)
+  bool? useBodyWeightMacros;
 
   ConfigDBO(
     this.hasAcceptedDisclaimer,
@@ -132,6 +137,7 @@ class ConfigDBO extends HiveObject {
     this.accentColor,
     this.scannerPortraitLock,
     this.syncNutrientsToSupabase,
+    this.useBodyWeightMacros,
   });
 
   factory ConfigDBO.empty() =>

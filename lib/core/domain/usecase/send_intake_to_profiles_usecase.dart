@@ -86,7 +86,7 @@ class SendIntakeToProfilesUsecase {
       configRepository,
       UserActivityRepository(UserActivityDataSource(scoped)),
     );
-    final getMacroGoal = GetMacroGoalUsecase(configRepository);
+    final getMacroGoal = GetMacroGoalUsecase(configRepository, userRepository);
 
     for (final intake in intakes) {
       final copy = IntakeEntity(

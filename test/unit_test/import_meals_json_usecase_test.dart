@@ -55,10 +55,10 @@ class _NoopAddTrackedDayUsecase extends AddTrackedDayUsecase {
 }
 
 class _StubGetKcalGoalUsecase extends GetKcalGoalUsecase {
-  _StubGetKcalGoalUsecase(UserRepository userRepo, ConfigRepository configRepo, UserActivityRepository activityRepo) : super(userRepo, configRepo, activityRepo, PolarInfluxdbDataSource());
+  _StubGetKcalGoalUsecase(super.userRepo, super.configRepo, super.activityRepo);
 
   @override
-  Future<double> getKcalGoal({userEntity, double? totalKcalActivitiesParam, double? kcalUserAdjustment}) async => 2000;
+  Future<double> getKcalGoal({userEntity, double? totalKcalActivitiesParam, double? kcalUserAdjustment, DateTime? day}) async => 2000;
 }
 
 class _StubGetMacroGoalUsecase extends GetMacroGoalUsecase {

@@ -46,6 +46,7 @@ class ConfigDataSource {
       merged.userFatGoalPct = profile.userFatGoalPct;
       merged.mealKcalSharesPct = profile.mealKcalSharesPct;
       merged.dailyWaterGoalMl = profile.dailyWaterGoalMl;
+      merged.useBodyWeightMacros = profile.useBodyWeightMacros;
     }
     return merged;
   }
@@ -246,6 +247,10 @@ class ConfigDataSource {
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     _log.fine('Updating config syncNutrientsToSupabase to $sync');
     await _update((c) => c.syncNutrientsToSupabase = sync);
+  }
+
+  Future<void> setConfigUseBodyWeightMacros(bool value) async {
+    await _update((c) => c.useBodyWeightMacros = value);
   }
 
   Future<ConfigDBO> getConfig() async => _readMerged();

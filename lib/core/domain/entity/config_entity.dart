@@ -74,6 +74,7 @@ class ConfigEntity extends Equatable {
   // taps the in-scanner toggle, their choice is stored here and sticks.
   final bool? scannerPortraitLock;
   final bool syncNutrientsToSupabase;
+  final bool useBodyWeightMacros;
 
   /// Default daily water goal in millilitres for the home chip when the
   /// user has not picked one yet.
@@ -143,6 +144,7 @@ class ConfigEntity extends Equatable {
     this.accentColor,
     this.scannerPortraitLock,
     this.syncNutrientsToSupabase = false,
+    this.useBodyWeightMacros = false,
   });
 
   /// Resolves the daily water goal for the home chip. Returns the user's
@@ -227,6 +229,7 @@ class ConfigEntity extends Equatable {
     accentColor: _normaliseAccentColor(dbo.accentColor),
     scannerPortraitLock: dbo.scannerPortraitLock,
     syncNutrientsToSupabase: dbo.syncNutrientsToSupabase ?? false,
+    useBodyWeightMacros: dbo.useBodyWeightMacros ?? false,
   );
 
   /// Returns the recommended kcal target for [mealKey] given a daily goal.
@@ -307,5 +310,6 @@ class ConfigEntity extends Equatable {
     accentColor,
     scannerPortraitLock,
     syncNutrientsToSupabase,
+    useBodyWeightMacros,
   ];
 }

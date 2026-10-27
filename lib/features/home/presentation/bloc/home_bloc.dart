@@ -6,7 +6,6 @@ import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_gender_entity.dart';
-import 'package:opennutritracker/core/utils/calc/bmr_calc.dart';
 import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/domain/entity/water_intake_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
@@ -165,8 +164,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           .map((entry) => entry.amountMl)
           .fold<int>(0, (sum, ml) => sum + ml);
 
-      final polarActiveKcal =
-          await _polarDataSource.fetchActiveKcalForDate(currentDay);
+      final polarActiveKcal = await _polarDataSource.fetchActiveKcalForDate(
+        currentDay,
+      );
       final totalKcalActivitiesWithPolar =
           totalKcalActivities + (polarActiveKcal ?? 0);
 
@@ -174,46 +174,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final influxWeightKg = await _polarDataSource.fetchLatestWeightKg();
       final isPolarActive = await _polarDataSource.isPolarConfigured();
 
-      final userForCalc = influxWeightKg != null
-          ? user.copyWith(weightKG: influxWeightKg)
-          : user;
-
-      // When Polar is active: BMR (no PAL factor) + Polar-kcal + slider
-      // When Polar is inactive: TDEE (BMR × PAL) + goal adjustment + slider
-      final double totalKcalGoal;
-      if (isPolarActive) {
-        final bmr = BMRCalc.getBMRMifflinStJeor1990(userForCalc);
-        final kcalAdjustment = configData.userKcalAdjustment ?? 0;
-        totalKcalGoal = bmr + totalKcalActivitiesWithPolar + kcalAdjustment;
-      } else {
-        totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal(
-          userEntity: userForCalc,
-          totalKcalActivitiesParam: totalKcalActivitiesWithPolar,
-        );
-      }
-
-      double totalCarbsGoal, totalFatsGoal, totalProteinsGoal;
-      if (isPolarActive) {
-        final proteinGPerKg = await _polarDataSource.getProteinGPerKg();
-        final fatGPerKg = await _polarDataSource.getFatGPerKg();
-        final proteinG = MacroCalc.getProteinGoalFromBodyWeight(
-          userForCalc.weightKG,
-          proteinGPerKg,
-        );
-        final fatG = MacroCalc.getFatGoalFromBodyWeight(
-          userForCalc.weightKG,
-          fatGPerKg,
-        );
-        totalProteinsGoal = proteinG;
-        totalFatsGoal = fatG;
-        totalCarbsGoal =
-            MacroCalc.getCarbsGoalBodyWeightBased(totalKcalGoal, proteinG, fatG);
-      } else {
-        totalCarbsGoal = await _getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
-        totalFatsGoal = await _getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
-        totalProteinsGoal =
-            await _getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
-      }
+      // Goal and macros come from the shared usecases (Polar-aware), so the
+      // home screen, diary and every other screen show the same numbers.
+      final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal(
+        userEntity: user,
+        totalKcalActivitiesParam: totalKcalActivities,
+        day: currentDay,
+      );
+      final macroGoals = await _getMacroGoalUsecase.getMacroGoals(
+        totalKcalGoal,
+        userEntity: user,
+      );
+      final totalCarbsGoal = macroGoals.carbs;
+      final totalFatsGoal = macroGoals.fats;
+      final totalProteinsGoal = macroGoals.proteins;
 
       final totalKcalLeft = CalorieGoalCalc.getDailyKcalLeft(
         totalKcalGoal,
@@ -224,7 +198,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       // as the dashboard (especially important when Polar is active and the
       // goal is calculated live from BMR + Polar kcal instead of stored TDEE).
       if (await _addTrackedDayUseCase.hasTrackedDay(currentDay)) {
-        await _addTrackedDayUseCase.updateDayCalorieGoal(currentDay, totalKcalGoal);
+        await _addTrackedDayUseCase.updateDayCalorieGoal(
+          currentDay,
+          totalKcalGoal,
+        );
         locator<CalendarDayBloc>().add(const RefreshCalendarDayEvent());
       }
 

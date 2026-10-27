@@ -158,4 +158,8 @@ class ConfigRepository {
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     await _configDataSource.setConfigSyncNutrientsToSupabase(sync);
   }
+
+  Future<void> setConfigUseBodyWeightMacros(bool value) async {
+    await _configDataSource.setConfigUseBodyWeightMacros(value);
+  }
 }
