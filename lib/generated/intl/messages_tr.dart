@@ -164,7 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "appTitle": MessageLookupByLibrary.simpleMessage("OpenNutriTracker"),
         "appVersionName": m0,
         "baseQuantityLabel":
-            MessageLookupByLibrary.simpleMessage("Temel miktar (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Besin değeri başına"),
         "betaVersionName": MessageLookupByLibrary.simpleMessage("[Beta]"),
         "bmiInfo": MessageLookupByLibrary.simpleMessage(
             "Vücut Kitle İndeksi (BMI), yetişkinlerde aşırı kiloyu ve obeziteyi sınıflandırmak için kullanılan bir indekstir. Kilogram cinsinden ağırlığın, metre cinsinden boyun karesine bölünmesiyle tanımlanır (kg/m²).\n\nBMI, yağ ve kas kütlesi arasında ayrım yapmaz ve bazı bireyler için yanıltıcı olabilir."),
@@ -387,6 +387,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fiberLabel": MessageLookupByLibrary.simpleMessage("lif"),
         "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
         "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
+        "inLabel": MessageLookupByLibrary.simpleMessage("in"),
         "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("kadın"),
         "genderLabel": MessageLookupByLibrary.simpleMessage("Cinsiyet"),
         "genderMaleLabel": MessageLookupByLibrary.simpleMessage("erkek"),
@@ -468,6 +469,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("günlük kJ"),
         "kgLabel": MessageLookupByLibrary.simpleMessage("kg"),
         "lbsLabel": MessageLookupByLibrary.simpleMessage("lbs"),
+        "stLabel": MessageLookupByLibrary.simpleMessage("st"),
         "lunchExample": MessageLookupByLibrary.simpleMessage(
             "ör. pizza, salata, pirinç ..."),
         "lunchLabel": MessageLookupByLibrary.simpleMessage("Öğle Yemeği"),
@@ -491,9 +493,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "mealProteinLabel":
             MessageLookupByLibrary.simpleMessage("Protein"),
         "mealSizeLabel":
-            MessageLookupByLibrary.simpleMessage("Yemek boyutu (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Paket boyutu"),
         "mealSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Yemek boyutu (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Paket boyutu (oz/fl oz)"),
         "mealUnitLabel": MessageLookupByLibrary.simpleMessage("Yemek birimi"),
         "micronutrientsLabel": MessageLookupByLibrary.simpleMessage("Mikro besinler"),
         "milliliterUnit": MessageLookupByLibrary.simpleMessage("ml"),
@@ -583,6 +585,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("ör. 132"),
         "onboardingWeightQuestionSubtitle":
             MessageLookupByLibrary.simpleMessage("Mevcut kilonuz nedir?"),
+        "onboardingFoodUnitsSubtitle": MessageLookupByLibrary.simpleMessage("Yiyecek ve içecekleri nasıl kaydedersiniz"),
         "onboardingTargetWeightSubtitle":
             MessageLookupByLibrary.simpleMessage("Ulaşmak istediğin bir kilo var mı? Bu alanı boş bırakabilir veya daha sonra Profil\'den değiştirebilirsin."),
         "onboardingTargetWeightHintOptional":
@@ -1099,9 +1102,9 @@ class MessageLookup extends MessageLookupByLibrary {
             "Anonim kullanım verileri gönder"),
         "servingLabel": MessageLookupByLibrary.simpleMessage("Porsiyon"),
         "servingSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Porsiyon boyutu (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Bir porsiyon (oz/fl oz)"),
         "servingSizeLabelMetric":
-            MessageLookupByLibrary.simpleMessage("Porsiyon boyutu (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Bir porsiyon"),
         "settingAboutLabel": MessageLookupByLibrary.simpleMessage("Hakkında"),
         "settingFeedbackLabel":
             MessageLookupByLibrary.simpleMessage("Geri Bildirim"),
@@ -1261,6 +1264,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "settingsThemeSystemDefaultLabel":
             MessageLookupByLibrary.simpleMessage("Sistem varsayılanı"),
         "settingsUnitsLabel": MessageLookupByLibrary.simpleMessage("Birimler"),
+        "settingsFoodUnitsLabel": MessageLookupByLibrary.simpleMessage("Besin birimleri"),
+        "settingsHeightUnitsLabel": MessageLookupByLibrary.simpleMessage("Boy birimi"),
+        "settingsBodyWeightUnitLabel": MessageLookupByLibrary.simpleMessage("Vücut ağırlığı birimi"),
+        "settingsFoodUnitsMetric": MessageLookupByLibrary.simpleMessage("Metrik (g, kg, ml, l)"),
+        "settingsFoodUnitsImperial": MessageLookupByLibrary.simpleMessage("İmperial (lbs, oz, fl oz)"),
+        "settingsHeightUnitsMetric": MessageLookupByLibrary.simpleMessage("Metrik (mm, cm, m)"),
+        "settingsHeightUnitsImperial": MessageLookupByLibrary.simpleMessage("İmperial (ft, in)"),
         "settingsVolumeLabel": MessageLookupByLibrary.simpleMessage("Hacim"),
         "shareActivityLabel":
             MessageLookupByLibrary.simpleMessage("Antrenmanı paylaş"),
@@ -1362,7 +1372,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "customMealFormAdvanced":
             MessageLookupByLibrary.simpleMessage("Gelişmiş"),
         "customMealFormAdvancedHelp": MessageLookupByLibrary.simpleMessage(
-            "Hassas ölçek için temel miktarı ve 100 g/ml değerlerini belirleyin."),
+            "Hassas ölçek için boyutları ve 100 g/ml değerlerini belirleyin."),
         "customMealFormModeLabel":
             MessageLookupByLibrary.simpleMessage("Form görünümü"),
         "customMealFormSimple":

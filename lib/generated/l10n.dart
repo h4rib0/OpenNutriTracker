@@ -1478,6 +1478,16 @@ class S {
     );
   }
 
+  /// `How you log food and drinks`
+  String get onboardingFoodUnitsSubtitle {
+    return Intl.message(
+      'How you log food and drinks',
+      name: 'onboardingFoodUnitsSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Is there a weight you're working towards? You can leave this blank or change it later in Profile.`
   String get onboardingTargetWeightSubtitle {
     return Intl.message(
@@ -1593,6 +1603,76 @@ class S {
     return Intl.message(
       'Units',
       name: 'settingsUnitsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Food units`
+  String get settingsFoodUnitsLabel {
+    return Intl.message(
+      'Food units',
+      name: 'settingsFoodUnitsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Height units`
+  String get settingsHeightUnitsLabel {
+    return Intl.message(
+      'Height units',
+      name: 'settingsHeightUnitsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body weight unit`
+  String get settingsBodyWeightUnitLabel {
+    return Intl.message(
+      'Body weight unit',
+      name: 'settingsBodyWeightUnitLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Metric (g, kg, ml, l)`
+  String get settingsFoodUnitsMetric {
+    return Intl.message(
+      'Metric (g, kg, ml, l)',
+      name: 'settingsFoodUnitsMetric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Imperial (lbs, oz, fl oz)`
+  String get settingsFoodUnitsImperial {
+    return Intl.message(
+      'Imperial (lbs, oz, fl oz)',
+      name: 'settingsFoodUnitsImperial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Metric (mm, cm, m)`
+  String get settingsHeightUnitsMetric {
+    return Intl.message(
+      'Metric (mm, cm, m)',
+      name: 'settingsHeightUnitsMetric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Imperial (ft, in)`
+  String get settingsHeightUnitsImperial {
+    return Intl.message(
+      'Imperial (ft, in)',
+      name: 'settingsHeightUnitsImperial',
       desc: '',
       args: [],
     );
@@ -2876,10 +2956,10 @@ class S {
     );
   }
 
-  /// `Set base quantity and per-100 values for precise scaling.`
+  /// `Set the sizes and per-100 values for precise scaling.`
   String get customMealFormAdvancedHelp {
     return Intl.message(
-      'Set base quantity and per-100 values for precise scaling.',
+      'Set the sizes and per-100 values for precise scaling.',
       name: 'customMealFormAdvancedHelp',
       desc: '',
       args: [],
@@ -4359,10 +4439,10 @@ class S {
     );
   }
 
-  /// `Base quantity (g/ml)`
+  /// `Nutrition is per`
   String get baseQuantityLabel {
     return Intl.message(
-      'Base quantity (g/ml)',
+      'Nutrition is per',
       name: 'baseQuantityLabel',
       desc: '',
       args: [],
@@ -4639,20 +4719,20 @@ class S {
     );
   }
 
-  /// `Meal size (g/ml)`
+  /// `Pack size`
   String get mealSizeLabel {
     return Intl.message(
-      'Meal size (g/ml)',
+      'Pack size',
       name: 'mealSizeLabel',
       desc: '',
       args: [],
     );
   }
 
-  /// `Meal size (oz/fl oz)`
+  /// `Pack size (oz/fl oz)`
   String get mealSizeLabelImperial {
     return Intl.message(
-      'Meal size (oz/fl oz)',
+      'Pack size (oz/fl oz)',
       name: 'mealSizeLabelImperial',
       desc: '',
       args: [],
@@ -4679,20 +4759,20 @@ class S {
     );
   }
 
-  /// `Serving size (g/ml)`
+  /// `One serving`
   String get servingSizeLabelMetric {
     return Intl.message(
-      'Serving size (g/ml)',
+      'One serving',
       name: 'servingSizeLabelMetric',
       desc: '',
       args: [],
     );
   }
 
-  /// `Serving size (oz/fl oz)`
+  /// `One serving (oz/fl oz)`
   String get servingSizeLabelImperial {
     return Intl.message(
-      'Serving size (oz/fl oz)',
+      'One serving (oz/fl oz)',
       name: 'servingSizeLabelImperial',
       desc: '',
       args: [],
@@ -5089,6 +5169,16 @@ class S {
     );
   }
 
+  /// `in`
+  String get inLabel {
+    return Intl.message(
+      'in',
+      name: 'inLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Select Weight`
   String get selectWeightDialogLabel {
     return Intl.message(
@@ -5124,6 +5214,16 @@ class S {
     return Intl.message(
       'lbs',
       name: 'lbsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `st`
+  String get stLabel {
+    return Intl.message(
+      'st',
+      name: 'stLabel',
       desc: '',
       args: [],
     );

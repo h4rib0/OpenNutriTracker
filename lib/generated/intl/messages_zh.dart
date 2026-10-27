@@ -158,7 +158,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "appTitle": MessageLookupByLibrary.simpleMessage("OpenNutriTracker"),
         "appVersionName": m0,
         "baseQuantityLabel":
-            MessageLookupByLibrary.simpleMessage("基础数量 (克/毫升)"),
+            MessageLookupByLibrary.simpleMessage("营养基准"),
         "betaVersionName": MessageLookupByLibrary.simpleMessage("[Beta]"),
         "bmiInfo": MessageLookupByLibrary.simpleMessage(
             "体重指数（BMI）是用于分类成人超重和肥胖的指标。它定义为体重（千克）除以身高（米）的平方（kg/m²）。\n\nBMI不区分脂肪和肌肉质量，对某些人可能有误导性。"),
@@ -367,6 +367,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fiberLabel": MessageLookupByLibrary.simpleMessage("膳食纤维"),
         "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
         "ftLabel": MessageLookupByLibrary.simpleMessage("英尺"),
+        "inLabel": MessageLookupByLibrary.simpleMessage("英寸"),
         "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("女性"),
         "genderLabel": MessageLookupByLibrary.simpleMessage("性别"),
         "genderMaleLabel": MessageLookupByLibrary.simpleMessage("男性"),
@@ -433,6 +434,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "onboardingKjPerDayLabel": MessageLookupByLibrary.simpleMessage("每日千焦"),
         "kgLabel": MessageLookupByLibrary.simpleMessage("千克"),
         "lbsLabel": MessageLookupByLibrary.simpleMessage("磅"),
+        "stLabel": MessageLookupByLibrary.simpleMessage("英石"),
         "lunchExample": MessageLookupByLibrary.simpleMessage("例如：披萨、沙拉、米饭..."),
         "lunchLabel": MessageLookupByLibrary.simpleMessage("午餐"),
         "macroDistributionLabel":
@@ -453,9 +455,9 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("总量"),
         "mealProteinLabel":
             MessageLookupByLibrary.simpleMessage("蛋白质"),
-        "mealSizeLabel": MessageLookupByLibrary.simpleMessage("餐食大小 (克/毫升)"),
+        "mealSizeLabel": MessageLookupByLibrary.simpleMessage("包装大小"),
         "mealSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("餐食大小 (盎司/液量盎司)"),
+            MessageLookupByLibrary.simpleMessage("包装大小 (盎司/液量盎司)"),
         "mealUnitLabel": MessageLookupByLibrary.simpleMessage("餐食单位"),
         "micronutrientsLabel": MessageLookupByLibrary.simpleMessage("微量营养素"),
         "milliliterUnit": MessageLookupByLibrary.simpleMessage("ml"),
@@ -538,6 +540,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("例如：132"),
         "onboardingWeightQuestionSubtitle":
             MessageLookupByLibrary.simpleMessage("您当前的体重是多少？"),
+        "onboardingFoodUnitsSubtitle": MessageLookupByLibrary.simpleMessage("您如何记录食物和饮品"),
         "onboardingTargetWeightSubtitle":
             MessageLookupByLibrary.simpleMessage("你有想要达到的目标体重吗？可以留空，也可以稍后在“个人资料”中修改。"),
         "onboardingTargetWeightHintOptional":
@@ -973,9 +976,9 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("发送匿名使用数据"),
         "servingLabel": MessageLookupByLibrary.simpleMessage("份量"),
         "servingSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("份量大小 (盎司/液量盎司)"),
+            MessageLookupByLibrary.simpleMessage("单份分量 (盎司/液量盎司)"),
         "servingSizeLabelMetric":
-            MessageLookupByLibrary.simpleMessage("份量大小 (克/毫升)"),
+            MessageLookupByLibrary.simpleMessage("单份分量"),
         "settingAboutLabel": MessageLookupByLibrary.simpleMessage("关于"),
         "settingFeedbackLabel": MessageLookupByLibrary.simpleMessage("反馈"),
         "settingsCustomMealsLabel":
@@ -1129,6 +1132,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "settingsThemeSystemDefaultLabel":
             MessageLookupByLibrary.simpleMessage("系统默认"),
         "settingsUnitsLabel": MessageLookupByLibrary.simpleMessage("单位"),
+        "settingsFoodUnitsLabel": MessageLookupByLibrary.simpleMessage("食物单位"),
+        "settingsHeightUnitsLabel": MessageLookupByLibrary.simpleMessage("身高单位"),
+        "settingsBodyWeightUnitLabel": MessageLookupByLibrary.simpleMessage("体重单位"),
+        "settingsFoodUnitsMetric": MessageLookupByLibrary.simpleMessage("公制（克、千克、毫升、升）"),
+        "settingsFoodUnitsImperial": MessageLookupByLibrary.simpleMessage("英制（磅、盎司、液量盎司）"),
+        "settingsHeightUnitsMetric": MessageLookupByLibrary.simpleMessage("公制（毫米、厘米、米）"),
+        "settingsHeightUnitsImperial": MessageLookupByLibrary.simpleMessage("英制（英尺、英寸）"),
         "settingsVolumeLabel": MessageLookupByLibrary.simpleMessage("体积"),
         "shareActivityLabel": MessageLookupByLibrary.simpleMessage("分享运动"),
         "shareCodeLabel": MessageLookupByLibrary.simpleMessage("分享代码"),
@@ -1225,7 +1235,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "你还没有保存任何模板。勾选「保存为模板以便下次使用」以便日后记住自定义活动。"),
         "customMealFormAdvanced": MessageLookupByLibrary.simpleMessage("高级"),
         "customMealFormAdvancedHelp": MessageLookupByLibrary.simpleMessage(
-            "设置基准量和每 100 克/毫升的数值以进行精确换算。"),
+            "设置份量和每 100 克/毫升的数值以进行精确换算。"),
         "customMealFormModeLabel":
             MessageLookupByLibrary.simpleMessage("表单视图"),
         "customMealFormSimple": MessageLookupByLibrary.simpleMessage("简单"),

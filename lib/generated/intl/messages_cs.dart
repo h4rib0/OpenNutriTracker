@@ -163,7 +163,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "appTitle": MessageLookupByLibrary.simpleMessage("OpenNutriTracker"),
         "appVersionName": m0,
         "baseQuantityLabel":
-            MessageLookupByLibrary.simpleMessage("Základní množství (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Výživové hodnoty na"),
         "betaVersionName": MessageLookupByLibrary.simpleMessage("[Beta]"),
         "bmiInfo": MessageLookupByLibrary.simpleMessage(
             "Body Mass Index (BMI) je výpočet pro klasifikaci nadváhy a obezity u dospělých. Je definován jako hmotnost v kilogramech vydělená druhou mocninou výšky v metrech (kg/m²).\n\nBMI nerozlišuje mezi tukovou tkání a svalovou hmotou a může být chybně interpretován u některých jedinců."),
@@ -384,6 +384,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fiberLabel": MessageLookupByLibrary.simpleMessage("vláknina"),
         "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
         "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
+        "inLabel": MessageLookupByLibrary.simpleMessage("in"),
         "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("žena"),
         "genderLabel": MessageLookupByLibrary.simpleMessage("Pohlaví"),
         "genderMaleLabel": MessageLookupByLibrary.simpleMessage("muž"),
@@ -465,6 +466,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("kJ denně"),
         "kgLabel": MessageLookupByLibrary.simpleMessage("kg"),
         "lbsLabel": MessageLookupByLibrary.simpleMessage("lbs"),
+        "stLabel": MessageLookupByLibrary.simpleMessage("st"),
         "lunchExample":
             MessageLookupByLibrary.simpleMessage("např. pizza, salát, rýže..."),
         "lunchLabel": MessageLookupByLibrary.simpleMessage("Oběd"),
@@ -488,9 +490,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "mealProteinLabel":
             MessageLookupByLibrary.simpleMessage("Bílkoviny"),
         "mealSizeLabel":
-            MessageLookupByLibrary.simpleMessage("Velikost jídla (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Velikost balení"),
         "mealSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Velikost jídla (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Velikost balení (oz/fl oz)"),
         "mealUnitLabel": MessageLookupByLibrary.simpleMessage("Jednotka jídla"),
         "micronutrientsLabel": MessageLookupByLibrary.simpleMessage("Mikroživiny"),
         "milliliterUnit": MessageLookupByLibrary.simpleMessage("ml"),
@@ -577,6 +579,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("např. 132"),
         "onboardingWeightQuestionSubtitle":
             MessageLookupByLibrary.simpleMessage("Jaká je Vaše hmotnost?"),
+        "onboardingFoodUnitsSubtitle": MessageLookupByLibrary.simpleMessage("Jak zaznamenáváte jídlo a nápoje"),
         "onboardingTargetWeightSubtitle":
             MessageLookupByLibrary.simpleMessage("Máš hmotnost, ke které směřuješ? Pole můžeš nechat prázdné nebo ho později změnit v Profilu."),
         "onboardingTargetWeightHintOptional":
@@ -1111,9 +1114,9 @@ class MessageLookup extends MessageLookupByLibrary {
             "Odesílat anonymní data o používání aplikace"),
         "servingLabel": MessageLookupByLibrary.simpleMessage("Porce"),
         "servingSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Velikost porce (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Jedna porce (oz/fl oz)"),
         "servingSizeLabelMetric":
-            MessageLookupByLibrary.simpleMessage("Velikost porce (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Jedna porce"),
         "settingAboutLabel": MessageLookupByLibrary.simpleMessage("O aplikaci"),
         "settingFeedbackLabel":
             MessageLookupByLibrary.simpleMessage("Zpětná vazba"),
@@ -1275,6 +1278,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "settingsThemeSystemDefaultLabel":
             MessageLookupByLibrary.simpleMessage("Dle systémového nastavení"),
         "settingsUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednotky"),
+        "settingsFoodUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednotky potravin"),
+        "settingsHeightUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednotky výšky"),
+        "settingsBodyWeightUnitLabel": MessageLookupByLibrary.simpleMessage("Jednotka tělesné hmotnosti"),
+        "settingsFoodUnitsMetric": MessageLookupByLibrary.simpleMessage("Metrické (g, kg, ml, l)"),
+        "settingsFoodUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperiální (lbs, oz, fl oz)"),
+        "settingsHeightUnitsMetric": MessageLookupByLibrary.simpleMessage("Metrické (mm, cm, m)"),
+        "settingsHeightUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperiální (ft, in)"),
         "settingsVolumeLabel": MessageLookupByLibrary.simpleMessage("Objem"),
         "shareActivityLabel":
             MessageLookupByLibrary.simpleMessage("Sdílet trénink"),
@@ -1377,7 +1387,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "customMealFormAdvanced":
             MessageLookupByLibrary.simpleMessage("Pokročilý"),
         "customMealFormAdvancedHelp": MessageLookupByLibrary.simpleMessage(
-            "Zadejte základní množství a hodnoty na 100 g/ml pro přesné škálování."),
+            "Zadejte velikosti a hodnoty na 100 g/ml pro přesné škálování."),
         "customMealFormModeLabel":
             MessageLookupByLibrary.simpleMessage("Zobrazení formuláře"),
         "customMealFormSimple":

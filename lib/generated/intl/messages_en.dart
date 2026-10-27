@@ -161,7 +161,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "appTitle": MessageLookupByLibrary.simpleMessage("OpenNutriTracker"),
         "appVersionName": m0,
         "baseQuantityLabel":
-            MessageLookupByLibrary.simpleMessage("Base quantity (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Nutrition is per"),
         "betaVersionName": MessageLookupByLibrary.simpleMessage("[Beta]"),
         "bmiInfo": MessageLookupByLibrary.simpleMessage(
             "Body Mass Index (BMI) is a index to classify overweight and obesity in adults. It is defined as weight in kilograms divided by the square of height in meters (kg/m²).\n\nBMI does not differentiate between fat and muscle mass and can be misleading for some individuals."),
@@ -393,6 +393,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fiberLabel": MessageLookupByLibrary.simpleMessage("fiber"),
         "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
         "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
+        "inLabel": MessageLookupByLibrary.simpleMessage("in"),
         "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("female"),
         "genderLabel": MessageLookupByLibrary.simpleMessage("Gender"),
         "genderMaleLabel": MessageLookupByLibrary.simpleMessage("male"),
@@ -460,6 +461,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("kJ per day"),
         "kgLabel": MessageLookupByLibrary.simpleMessage("kg"),
         "lbsLabel": MessageLookupByLibrary.simpleMessage("lbs"),
+        "stLabel": MessageLookupByLibrary.simpleMessage("st"),
         "lunchExample":
             MessageLookupByLibrary.simpleMessage("e.g. pizza, salad, rice ..."),
         "lunchLabel": MessageLookupByLibrary.simpleMessage("Lunch"),
@@ -481,9 +483,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "mealProteinLabel":
             MessageLookupByLibrary.simpleMessage("Protein"),
         "mealSizeLabel":
-            MessageLookupByLibrary.simpleMessage("Meal size (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Pack size"),
         "mealSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Meal size (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Pack size (oz/fl oz)"),
         "mealUnitLabel": MessageLookupByLibrary.simpleMessage("Meal unit"),
         "milliliterUnit": MessageLookupByLibrary.simpleMessage("ml"),
         "missingProductInfo": MessageLookupByLibrary.simpleMessage(
@@ -567,6 +569,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("e.g. 132"),
         "onboardingWeightQuestionSubtitle":
             MessageLookupByLibrary.simpleMessage("What\'s your current weight?"),
+        "onboardingFoodUnitsSubtitle": MessageLookupByLibrary.simpleMessage("How you log food and drinks"),
         "onboardingTargetWeightSubtitle":
             MessageLookupByLibrary.simpleMessage("Is there a weight you\'re working towards? You can leave this blank or change it later in Profile."),
         "onboardingTargetWeightHintOptional":
@@ -1103,9 +1106,9 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Send anonymous usage data"),
         "servingLabel": MessageLookupByLibrary.simpleMessage("Serving"),
         "servingSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Serving size (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("One serving (oz/fl oz)"),
         "servingSizeLabelMetric":
-            MessageLookupByLibrary.simpleMessage("Serving size (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("One serving"),
         "settingAboutLabel": MessageLookupByLibrary.simpleMessage("About"),
         "settingFeedbackLabel":
             MessageLookupByLibrary.simpleMessage("Feedback"),
@@ -1267,6 +1270,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "settingsThemeSystemDefaultLabel":
             MessageLookupByLibrary.simpleMessage("System default"),
         "settingsUnitsLabel": MessageLookupByLibrary.simpleMessage("Units"),
+        "settingsFoodUnitsLabel": MessageLookupByLibrary.simpleMessage("Food units"),
+        "settingsHeightUnitsLabel": MessageLookupByLibrary.simpleMessage("Height units"),
+        "settingsBodyWeightUnitLabel": MessageLookupByLibrary.simpleMessage("Body weight unit"),
+        "settingsFoodUnitsMetric": MessageLookupByLibrary.simpleMessage("Metric (g, kg, ml, l)"),
+        "settingsFoodUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperial (lbs, oz, fl oz)"),
+        "settingsHeightUnitsMetric": MessageLookupByLibrary.simpleMessage("Metric (mm, cm, m)"),
+        "settingsHeightUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperial (ft, in)"),
         "settingsVolumeLabel": MessageLookupByLibrary.simpleMessage("Volume"),
         "shareCodeLabel": MessageLookupByLibrary.simpleMessage("Share code"),
         "shareMealLabel": MessageLookupByLibrary.simpleMessage("Share meal"),
@@ -1363,7 +1373,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "customMealFormAdvanced":
             MessageLookupByLibrary.simpleMessage("Advanced"),
         "customMealFormAdvancedHelp": MessageLookupByLibrary.simpleMessage(
-            "Set base quantity and per-100 values for precise scaling."),
+            "Set the sizes and per-100 values for precise scaling."),
         "customMealFormModeLabel":
             MessageLookupByLibrary.simpleMessage("Form view"),
         "customMealFormSimple":

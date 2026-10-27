@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/calories_profile_entity.dart';
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
@@ -85,7 +86,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       currentDay = DayBoundaryCalc.currentLogicalDayMinutes(
         configData.dayStartOffsetTotalMinutes,
       );
-      final usesImperialUnits = configData.usesImperialUnits;
+      final usesImperialUnits = configData.usesImperialFoodUnits;
+      final bodyWeightUnit = configData.bodyWeightUnit;
       final showDisclaimerDialog = !configData.hasAcceptedDisclaimer;
       final showMealMacros = configData.showMealMacros;
       final showActivityTracking = configData.showActivityTracking;
@@ -245,6 +247,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           snackIntakeList: snackIntakeList,
           userActivityList: userActivities,
           usesImperialUnits: usesImperialUnits,
+          bodyWeightUnit: bodyWeightUnit,
           showActivityTracking: showActivityTracking,
           showMealMacros: showMealMacros,
           userWeightKg: influxWeightKg ?? user.weightKG,

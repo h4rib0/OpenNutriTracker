@@ -42,6 +42,9 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         useMaterialYou: fields[20] as bool?,
         accentColor: (fields[26] as num?)?.toInt(),
         scannerPortraitLock: fields[27] as bool?,
+        usesImperialFoodUnits: fields[28] as bool?,
+        usesImperialHeightUnits: fields[29] as bool?,
+        bodyWeightUnitIndex: (fields[30] as num?)?.toInt(),
         syncNutrientsToSupabase: fields[200] as bool?,
         useBodyWeightMacros: fields[201] as bool?,
       )
@@ -53,7 +56,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
   @override
   void write(BinaryWriter writer, ConfigDBO obj) {
     writer
-      ..writeByte(30)
+      ..writeByte(33)
       ..writeByte(0)
       ..write(obj.hasAcceptedDisclaimer)
       ..writeByte(1)
@@ -110,6 +113,12 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..write(obj.accentColor)
       ..writeByte(27)
       ..write(obj.scannerPortraitLock)
+      ..writeByte(28)
+      ..write(obj.usesImperialFoodUnits)
+      ..writeByte(29)
+      ..write(obj.usesImperialHeightUnits)
+      ..writeByte(30)
+      ..write(obj.bodyWeightUnitIndex)
       ..writeByte(200)
       ..write(obj.syncNutrientsToSupabase)
       ..writeByte(201)
@@ -165,6 +174,9 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) =>
         useMaterialYou: json['useMaterialYou'] as bool?,
         accentColor: (json['accentColor'] as num?)?.toInt(),
         scannerPortraitLock: json['scannerPortraitLock'] as bool?,
+        usesImperialFoodUnits: json['usesImperialFoodUnits'] as bool?,
+        usesImperialHeightUnits: json['usesImperialHeightUnits'] as bool?,
+        bodyWeightUnitIndex: (json['bodyWeightUnitIndex'] as num?)?.toInt(),
         syncNutrientsToSupabase: json['syncNutrientsToSupabase'] as bool?,
         useBodyWeightMacros: json['useBodyWeightMacros'] as bool?,
       )
@@ -201,6 +213,9 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
   'useMaterialYou': instance.useMaterialYou,
   'accentColor': instance.accentColor,
   'scannerPortraitLock': instance.scannerPortraitLock,
+  'usesImperialFoodUnits': instance.usesImperialFoodUnits,
+  'usesImperialHeightUnits': instance.usesImperialHeightUnits,
+  'bodyWeightUnitIndex': instance.bodyWeightUnitIndex,
   'syncNutrientsToSupabase': instance.syncNutrientsToSupabase,
   'useBodyWeightMacros': instance.useBodyWeightMacros,
 };

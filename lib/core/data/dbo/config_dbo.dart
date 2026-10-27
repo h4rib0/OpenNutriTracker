@@ -100,6 +100,19 @@ class ConfigDBO extends HiveObject {
   // sideways) and free on tablets (so a landscape tablet isn't forced upright).
   @HiveField(27)
   bool? scannerPortraitLock;
+  // Three independent unit preferences that together replace the original
+  // single `usesImperialUnits` switch. Each is nullable so existing installs
+  // fall back to the legacy flag (see `ConfigEntity.fromConfigDBO`) and keep
+  // their current behaviour without a migration. `usesImperialUnits` is kept
+  // around as that fallback and as a coherent value for an older build.
+  @HiveField(28)
+  bool? usesImperialFoodUnits; // g/oz + ml/fl oz
+  @HiveField(29)
+  bool? usesImperialHeightUnits; // cm/ft
+  // Body weight is a three-way choice (kg / lb / st), persisted as the
+  // BodyWeightUnit enum index. Null means "derive from usesImperialUnits".
+  @HiveField(30)
+  int? bodyWeightUnitIndex;
   // Fork-only field: kept far above upstream's range so upstream can keep
   // adding fields without colliding (27 was taken by scannerPortraitLock).
   @HiveField(200)
@@ -136,6 +149,9 @@ class ConfigDBO extends HiveObject {
     this.useMaterialYou,
     this.accentColor,
     this.scannerPortraitLock,
+    this.usesImperialFoodUnits,
+    this.usesImperialHeightUnits,
+    this.bodyWeightUnitIndex,
     this.syncNutrientsToSupabase,
     this.useBodyWeightMacros,
   });
@@ -149,6 +165,9 @@ class ConfigDBO extends HiveObject {
     entity.hasAcceptedSendAnonymousData,
     AppThemeDBO.fromAppThemeEntity(entity.appTheme),
     usesImperialUnits: entity.usesImperialUnits,
+    usesImperialFoodUnits: entity.usesImperialFoodUnits,
+    usesImperialHeightUnits: entity.usesImperialHeightUnits,
+    bodyWeightUnitIndex: entity.bodyWeightUnit.index,
   );
 
   factory ConfigDBO.fromJson(Map<String, dynamic> json) =>

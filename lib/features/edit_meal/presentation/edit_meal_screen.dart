@@ -95,7 +95,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
   bool _initialised = false;
 
   String baseQuantity = "100";
-  String baseQuantityUnit = " g/ml";
 
   /// Tracks the unit the energy field was last rendered in, so that when
   /// the user flips between kcal and kJ in Settings mid-edit we can
@@ -290,10 +289,15 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
   Widget _getLoadedContent(bool usesImperialUnits, bool usesKj) {
     final isSimple = _formMode == CustomMealFormMode.simple;
-    final energyUnitSuffix = usesKj ? S.of(context).kjLabel : S.of(context).kcalLabel;
+    final energyUnitSuffix =
+        usesKj ? S.of(context).kjLabel : S.of(context).kcalLabel;
+    // The mass unit every Advanced field is read in, following the unit
+    // selector (now the first Advanced field) so the labels and the per-100
+    // helper all track the user's choice (#495).
+    final unitSuffix = _massUnitSuffix(context);
     final String advancedHelper = _isTotal
         ? S.of(context).mealNutrientsTotalLabel
-        : S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), baseQuantityUnit.trim());
+        : S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), unitSuffix);
     final String energyHelper = isSimple
         ? S.of(context).customMealFormSimpleFieldHelper(energyUnitSuffix)
         : advancedHelper;
@@ -399,29 +403,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
         // and the scaffolding is hidden to reduce cognitive load (#232).
         if (!isSimple) ...[
           const SizedBox(height: 32),
-          TextFormField(
-            controller: _mealQuantityTextController,
-            decoration: InputDecoration(
-              labelText: _usesImperialUnits
-                  ? S.of(context).mealSizeLabelImperial
-                  : S.of(context).mealSizeLabel,
-              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _servingQuantityTextController,
-            inputFormatters: CustomTextInputFormatter.doubleOnly(),
-            decoration: InputDecoration(
-              labelText: _usesImperialUnits
-                  ? S.of(context).servingSizeLabelImperial
-                  : S.of(context).servingSizeLabelMetric,
-              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 16),
+          // Unit first: every quantity and nutrition value below is entered
+          // in this unit, so choosing it up front keeps the form consistent
+          // and lets the labels and per-100 helper reflect it (#495).
           Semantics(
             identifier: 'edit-meal-unit-selector',
             child: SegmentedButton<String>(
@@ -434,12 +418,32 @@ class _EditMealScreenState extends State<EditMealScreen> {
               },
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _mealQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+              labelText: '${S.of(context).mealSizeLabel} ($unitSuffix)',
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _servingQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+              labelText: '${S.of(context).servingSizeLabelMetric} ($unitSuffix)',
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _baseQuantityTextController,
             inputFormatters: CustomTextInputFormatter.doubleOnly(),
             decoration: InputDecoration(
-                labelText: S.of(context).baseQuantityLabel,
+                labelText: '${S.of(context).baseQuantityLabel} ($unitSuffix)',
                 border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
@@ -450,7 +454,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
               segments: [
                 ButtonSegment(
                   value: false,
-                  label: Text(S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), baseQuantityUnit.trim())),
+                  label: Text(S.of(context).mealNutrientsPerQtyLabel(
+                      _getDisplayQuantity(), unitSuffix)),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text(S.of(context).mealNutrientsTotalLabel),
                 ),
                 ButtonSegment(value: true, label: Text(S.of(context).mealNutrientsTotalLabel)),
               ],
@@ -571,6 +580,33 @@ class _EditMealScreenState extends State<EditMealScreen> {
   String _getDisplayQuantity() {
     final text = _baseQuantityTextController.text;
     return text.isEmpty ? baseQuantity : text;
+  }
+
+  /// The unit shown in the Advanced-mode field labels and the per-100
+  /// helper. It follows the unit selector (the first Advanced field) and the
+  /// user's metric/imperial setting, built from the existing localized unit
+  /// tokens so locales like uk/zh keep their own notation (#495).
+  String _massUnitSuffix(BuildContext context) {
+    final s = S.of(context);
+    final unit = selectedUnit ?? _units[2];
+    if (_usesImperialUnits) {
+      switch (unit) {
+        case 'g':
+          return s.ozUnit;
+        case 'ml':
+          return s.flOzUnit;
+        default:
+          return '${s.ozUnit}/${s.flOzUnit}';
+      }
+    }
+    switch (unit) {
+      case 'g':
+        return s.gramUnit;
+      case 'ml':
+        return s.milliliterUnit;
+      default:
+        return s.gramMilliliterUnit;
+    }
   }
 
   Future<void> _onSavePressed(bool usesImperialUnits) async {
@@ -703,6 +739,15 @@ class _EditMealScreenState extends State<EditMealScreen> {
         final mealQuantity = usesImperialUnits
             ? _convertToMetric(_mealQuantityTextController.text, mealUnitForConversion)
             : _mealQuantityTextController.text;
+        // The serving quantity is loaded and edited in imperial too (see the
+        // initial _convertToImperial above), so it has to fold back to metric
+        // on save the same way the meal size does — otherwise an imperial
+        // serving value is stored raw into a metric field and drifts further
+        // on every reopen (#495).
+        final servingQuantity = usesImperialUnits
+            ? _convertToMetric(
+                _servingQuantityTextController.text, mealUnitForConversion)
+            : _servingQuantityTextController.text;
 
         // Convert total → per-base-qty if in total input mode. kcalText
         // uses the already-kcal-folded value so kJ entries are persisted
@@ -753,7 +798,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
           _nameTextController.text,
           _brandsTextController.text,
           mealQuantity,
-          _servingQuantityTextController.text,
+          servingQuantity,
           _baseQuantityTextController.text,
           selectedUnit,
           kcalText,

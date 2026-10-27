@@ -61,8 +61,13 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
       emit(EditMealLoadingState());
 
       final config = await _getConfigUsecase.getConfig();
-      final mode = CustomMealFormMode.fromString(await _configRepository.getCustomMealFormMode());
-      emit(EditMealLoadedState(usesImperialUnits: config.usesImperialUnits, formMode: mode));
+      final mode = CustomMealFormMode.fromString(
+        await _configRepository.getCustomMealFormMode(),
+      );
+      emit(EditMealLoadedState(
+        usesImperialUnits: config.usesImperialFoodUnits,
+        formMode: mode,
+      ));
     });
   }
 
@@ -137,7 +142,12 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
       mealQuantity: mealQuantityText.toStringOrNull(),
       mealUnit: unitText,
       servingQuantity: servingQuantityText.toDoubleOrNull(),
-      servingUnit: servingQuantityText.toStringOrNull(),
+      // The custom-meal form has a single unit selector shared by the meal
+      // size and the serving size, so the serving unit is that selected unit
+      // — not the serving *quantity* text, which used to land here and made
+      // the meal-detail serving option read "Serving (50.0 50)" instead of
+      // "Serving (50 g)" (#495).
+      servingUnit: unitText,
       servingSize: oldMealEntity.servingSize,
       nutriments: newMealNutriments,
       source: oldMealEntity.source,

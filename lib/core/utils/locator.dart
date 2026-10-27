@@ -159,7 +159,9 @@ Future<void> initLocator() async {
   locator.registerLazySingleton(() => CalendarDayBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton<ProfileBloc>(() => ProfileBloc(locator(), locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton<RecipesBloc>(() => RecipesBloc(locator()));
-  locator.registerFactory<TrendsBloc>(
+  // Singleton so a unit change in Settings can refresh the live Trends page
+  // (it lives in the main IndexedStack and isn't recreated on tab switch).
+  locator.registerLazySingleton<TrendsBloc>(
       () => TrendsBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<RecipeBuilderBloc>(
     () => RecipeBuilderBloc(locator(), locator()),

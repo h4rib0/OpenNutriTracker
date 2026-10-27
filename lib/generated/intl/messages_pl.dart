@@ -162,7 +162,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "appTitle": MessageLookupByLibrary.simpleMessage("OpenNutriTracker"),
         "appVersionName": m0,
         "baseQuantityLabel":
-            MessageLookupByLibrary.simpleMessage("Podstawowa ilość (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Wartości odżywcze na"),
         "betaVersionName": MessageLookupByLibrary.simpleMessage("[Beta]"),
         "bmiInfo": MessageLookupByLibrary.simpleMessage(
             "Wskaźnik Masy Ciała (BMI) to wskaźnik służący do klasyfikacji nadwagi i otyłości u dorosłych. Jest definiowany jako waga w kilogramach podzielona przez kwadrat wzrostu w metrach (kg/m²).\n\nBMI nie rozróżnia między tkanką tłuszczową a mięśniową i może być mylący dla niektórych osób."),
@@ -384,6 +384,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "fiberLabel": MessageLookupByLibrary.simpleMessage("błonnik"),
         "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
         "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
+        "inLabel": MessageLookupByLibrary.simpleMessage("in"),
         "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("kobieta"),
         "genderLabel": MessageLookupByLibrary.simpleMessage("Płeć"),
         "genderMaleLabel": MessageLookupByLibrary.simpleMessage("mężczyzna"),
@@ -467,6 +468,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("kJ dziennie"),
         "kgLabel": MessageLookupByLibrary.simpleMessage("kg"),
         "lbsLabel": MessageLookupByLibrary.simpleMessage("lbs"),
+        "stLabel": MessageLookupByLibrary.simpleMessage("st"),
         "lunchExample":
             MessageLookupByLibrary.simpleMessage("np. pizza, sałatka, ryż ..."),
         "lunchLabel": MessageLookupByLibrary.simpleMessage("Obiad"),
@@ -490,9 +492,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "mealProteinLabel":
             MessageLookupByLibrary.simpleMessage("Białko"),
         "mealSizeLabel":
-            MessageLookupByLibrary.simpleMessage("Rozmiar posiłku (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Rozmiar opakowania"),
         "mealSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Rozmiar posiłku (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Rozmiar opakowania (oz/fl oz)"),
         "mealUnitLabel":
             MessageLookupByLibrary.simpleMessage("Jednostka posiłku"),
         "micronutrientsLabel": MessageLookupByLibrary.simpleMessage("Mikroskładniki"),
@@ -585,6 +587,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "onboardingWeightQuestionSubtitle":
             MessageLookupByLibrary.simpleMessage(
                 "Jaka jest Twoja aktualna waga?"),
+        "onboardingFoodUnitsSubtitle": MessageLookupByLibrary.simpleMessage("Jak rejestrujesz jedzenie i napoje"),
         "onboardingTargetWeightSubtitle":
             MessageLookupByLibrary.simpleMessage(
                 "Czy masz wagę, do której dążysz? Możesz zostawić to pole puste lub zmienić je później w Profilu."),
@@ -1117,9 +1120,9 @@ class MessageLookup extends MessageLookupByLibrary {
             "Wyślij anonimowe dane użytkowania"),
         "servingLabel": MessageLookupByLibrary.simpleMessage("Porcja"),
         "servingSizeLabelImperial":
-            MessageLookupByLibrary.simpleMessage("Rozmiar porcji (oz/fl oz)"),
+            MessageLookupByLibrary.simpleMessage("Jedna porcja (oz/fl oz)"),
         "servingSizeLabelMetric":
-            MessageLookupByLibrary.simpleMessage("Rozmiar porcji (g/ml)"),
+            MessageLookupByLibrary.simpleMessage("Jedna porcja"),
         "settingAboutLabel":
             MessageLookupByLibrary.simpleMessage("O aplikacji"),
         "settingFeedbackLabel": MessageLookupByLibrary.simpleMessage("Opinia"),
@@ -1283,6 +1286,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "settingsThemeSystemDefaultLabel":
             MessageLookupByLibrary.simpleMessage("Domyślny systemu"),
         "settingsUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednostki"),
+        "settingsFoodUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednostki żywności"),
+        "settingsHeightUnitsLabel": MessageLookupByLibrary.simpleMessage("Jednostki wzrostu"),
+        "settingsBodyWeightUnitLabel": MessageLookupByLibrary.simpleMessage("Jednostka masy ciała"),
+        "settingsFoodUnitsMetric": MessageLookupByLibrary.simpleMessage("Metryczny (g, kg, ml, l)"),
+        "settingsFoodUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperialny (lbs, oz, fl oz)"),
+        "settingsHeightUnitsMetric": MessageLookupByLibrary.simpleMessage("Metryczny (mm, cm, m)"),
+        "settingsHeightUnitsImperial": MessageLookupByLibrary.simpleMessage("Imperialny (ft, in)"),
         "settingsVolumeLabel": MessageLookupByLibrary.simpleMessage("Objętość"),
         "shareActivityLabel":
             MessageLookupByLibrary.simpleMessage("Udostępnij trening"),
@@ -1387,7 +1397,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "customMealFormAdvanced":
             MessageLookupByLibrary.simpleMessage("Zaawansowany"),
         "customMealFormAdvancedHelp": MessageLookupByLibrary.simpleMessage(
-            "Ustaw ilość bazową i wartości na 100 g/ml dla dokładnego przeliczenia."),
+            "Ustaw rozmiary i wartości na 100 g/ml dla dokładnego przeliczenia."),
         "customMealFormModeLabel":
             MessageLookupByLibrary.simpleMessage("Widok formularza"),
         "customMealFormSimple":
