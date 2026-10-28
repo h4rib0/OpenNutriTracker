@@ -74,18 +74,27 @@ abstract final class PolarWidgetExtras {
       CalorieWidgetSnapshot.storageKey,
     );
     if (rawBase == null || rawSnapshot == null) return;
-    final base = PolarWidgetBase.fromJson(
+    var base = PolarWidgetBase.fromJson(
       jsonDecode(rawBase) as Map<String, dynamic>,
     );
+    var snapshot = jsonDecode(rawSnapshot) as Map<String, dynamic>;
     final day = DayBoundaryCalc.logicalDayOfMinutes(at, base.offsetMinutes);
-    if (CalorieWidgetSnapshot.formatDayId(day) != base.dayId) return;
+    final dayId = CalorieWidgetSnapshot.formatDayId(day);
 
     final polar = PolarInfluxdbDataSource();
     if (!await polar.isPolarConfigured()) return;
+
+    // A day the app has not been opened on yet: nothing is eaten, logged
+    // or drunk until it is, so the background can start it on Polar's
+    // figures instead of showing "Open the app" until then.
+    final newDay = base.dayId != dayId;
+    if (newDay) {
+      base = base.forDay(dayId);
+      snapshot = PolarWidgetBase.emptyDay(snapshot, dayId);
+    }
+
     final weightKg = await polar.fetchLatestWeightKg() ?? base.weightKg;
     final activeKcal = await polar.fetchActiveKcalForDate(day) ?? 0;
-
-    final snapshot = jsonDecode(rawSnapshot) as Map<String, dynamic>;
     final updated = base.applyTo(
       snapshot,
       weightKg: weightKg,
@@ -93,11 +102,13 @@ abstract final class PolarWidgetExtras {
     );
     await _save({
       CalorieWidgetSnapshot.storageKey: jsonEncode(updated),
+      if (newDay) baseKey: jsonEncode(base.toJson()),
       extrasKey: jsonEncode(
         base.extras(weightKg: weightKg, polarActiveKcal: activeKcal, at: at),
       ),
       refreshedAtKey: at.millisecondsSinceEpoch.toString(),
     });
+    if (newDay) await _scheduleRefreshes(base, at);
     await _redraw();
   }
 
@@ -175,6 +186,42 @@ class PolarWidgetBase {
   });
 
   double bmr(double weightKg) => bmrWithoutWeight + 10 * weightKg;
+
+  /// The same person and settings on [dayId], before anything is logged:
+  /// no activities yet.
+  PolarWidgetBase forDay(String dayId) => PolarWidgetBase(
+    dayId: dayId,
+    offsetMinutes: offsetMinutes,
+    bmrWithoutWeight: bmrWithoutWeight,
+    activityKcal: 0,
+    adjustmentKcal: adjustmentKcal,
+    proteinGPerKg: proteinGPerKg,
+    fatGPerKg: fatGPerKg,
+    weightKg: weightKg,
+  );
+
+  /// [snapshot] turned into [dayId] with nothing eaten, burned or drunk;
+  /// the water goal carries over. The goals are filled in by [applyTo].
+  static Map<String, dynamic> emptyDay(
+    Map<String, dynamic> snapshot,
+    String dayId,
+  ) {
+    final water = snapshot['water'] as List? ?? const [0, 0];
+    return {
+      ...snapshot,
+      'hasData': true,
+      'day': dayId,
+      'consumed': 0,
+      'burned': 0,
+      'macros': {
+        'carbs': [0, 0],
+        'fat': [0, 0],
+        'protein': [0, 0],
+      },
+      'water': [0, water.length > 1 ? water[1] : 0],
+      'meals': {'breakfast': 0, 'lunch': 0, 'dinner': 0, 'snack': 0},
+    };
+  }
 
   /// Same sum as `GetKcalGoalUsecase` with Polar.
   double goal({required double weightKg, required double polarActiveKcal}) =>

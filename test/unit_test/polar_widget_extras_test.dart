@@ -39,7 +39,11 @@ void main() {
       'water': [250, 1900],
     };
 
-    final updated = base.applyTo(snapshot, weightKg: 65.4, polarActiveKcal: 483);
+    final updated = base.applyTo(
+      snapshot,
+      weightKg: 65.4,
+      polarActiveKcal: 483,
+    );
 
     final protein = MacroCalc.getProteinGoalFromBodyWeight(65.4, 2.2);
     final fat = MacroCalc.getFatGoalFromBodyWeight(65.4, 0.8);
@@ -80,5 +84,54 @@ void main() {
     });
     expect(shifted.dayEnd(), DateTime(2026, 10, 29, 4));
     expect(PolarWidgetBase.fromJson(base.toJson()).toJson(), base.toJson());
+  });
+
+  test('a new day starts empty on Polar\'s figures, water goal kept', () {
+    final yesterday = {
+      'hasData': true,
+      'day': '2026-10-28',
+      'offsetMinutes': 0,
+      'consumed': 1191,
+      'goal': 1129,
+      'burned': 210,
+      'macros': {
+        'carbs': [66, 20],
+        'fat': [53, 52],
+        'protein': [100, 144],
+      },
+      'water': [1500, 1900],
+      'meals': {'breakfast': 354, 'lunch': 837, 'dinner': 0, 'snack': 0},
+      'labels': {'goal': 'of 1129'},
+    };
+    final today = PolarWidgetBase(
+      dayId: '2026-10-28',
+      offsetMinutes: 0,
+      bmrWithoutWeight: bmrRest,
+      activityKcal: 210,
+      adjustmentKcal: -300,
+      proteinGPerKg: 2.2,
+      fatGPerKg: 0.8,
+      weightKg: 65.4,
+    ).forDay('2026-10-29');
+
+    final updated = today.applyTo(
+      PolarWidgetBase.emptyDay(yesterday, '2026-10-29'),
+      weightKg: 65.4,
+      polarActiveKcal: 0,
+    );
+
+    expect(today.activityKcal, 0);
+    expect(updated['day'], '2026-10-29');
+    expect(updated['consumed'], 0);
+    expect(updated['burned'], 0);
+    expect(updated['goal'], 1129);
+    expect(updated['water'], [0, 1900]);
+    expect(updated['meals'], {
+      'breakfast': 0,
+      'lunch': 0,
+      'dinner': 0,
+      'snack': 0,
+    });
+    expect((updated['macros'] as Map)['protein'], [0, 144]);
   });
 }
