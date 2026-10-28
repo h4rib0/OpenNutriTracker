@@ -41,6 +41,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late List<PreferredSizeWidget> _appbarPages;
 
   StreamSubscription<Uri?>? _widgetLinks;
+  static final _followedWidgetLinks = <String>{};
 
   @override
   void initState() {
@@ -73,10 +74,25 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// Runs after the frame in progress: a cold start reaches this while the
+  /// splash route is still being replaced by this one.
   void _openWidgetLink(Uri? uri) {
     final link = CalorieWidgetLink.parse(uri);
-    if (link == null || !mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // The same tap can be read twice — as the launching intent and from the
+    // stream, or again by a later MainScreen — so each is followed once.
+    // MainActivity stamps every tap, which keeps two real taps apart.
+    if (link == null || !_followedWidgetLinks.add(uri.toString())) return;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _followWidgetLink(link),
+    );
+  }
+
+  void _followWidgetLink(CalorieWidgetLink link) {
+    if (!mounted) return;
+    // Close whatever sits on top of this screen, never this screen itself:
+    // during the splash hand-over it is not yet the first route.
+    final self = ModalRoute.of(context);
+    Navigator.of(context).popUntil((route) => route == self || route.isFirst);
     _setPage(0);
     switch (link) {
       case CalorieWidgetLink.open:
