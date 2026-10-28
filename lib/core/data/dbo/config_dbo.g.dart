@@ -41,7 +41,23 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         fastingWarningAcknowledged: fields[25] as bool?,
         useMaterialYou: fields[20] as bool?,
         accentColor: (fields[26] as num?)?.toInt(),
-        syncNutrientsToSupabase: fields[27] as bool?,
+        scannerPortraitLock: fields[27] as bool?,
+        usesImperialFoodUnits: fields[28] as bool?,
+        usesImperialHeightUnits: fields[29] as bool?,
+        bodyWeightUnitIndex: (fields[30] as num?)?.toInt(),
+        foodSourceToggles: (fields[31] as Map?)?.cast<String, bool>(),
+        isDemoData: fields[32] as bool?,
+        healthImportEnabled: fields[33] as bool?,
+        healthWorkoutKcalMultiplier: (fields[34] as num?)?.toDouble(),
+        healthLastImportAt: fields[35] as DateTime?,
+        healthDeletedExternalIds: (fields[36] as List?)?.cast<String>(),
+        policyNoticeRevisionSeen: (fields[37] as num?)?.toInt(),
+        healthDeletedWorkouts: (fields[38] as Map?)?.cast<String, DateTime>(),
+        defaultToRawFoodUnits: fields[39] as bool?,
+        trackedDaysOffsetMinutes: (fields[40] as num?)?.toInt(),
+        localeSyncSeeded: fields[41] as bool?,
+        syncNutrientsToSupabase: fields[200] as bool?,
+        useBodyWeightMacros: fields[201] as bool?,
       )
       ..userCarbGoalPct = (fields[6] as num?)?.toDouble()
       ..userProteinGoalPct = (fields[7] as num?)?.toDouble()
@@ -51,7 +67,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
   @override
   void write(BinaryWriter writer, ConfigDBO obj) {
     writer
-      ..writeByte(28)
+      ..writeByte(44)
       ..writeByte(0)
       ..write(obj.hasAcceptedDisclaimer)
       ..writeByte(1)
@@ -107,7 +123,39 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..writeByte(26)
       ..write(obj.accentColor)
       ..writeByte(27)
-      ..write(obj.syncNutrientsToSupabase);
+      ..write(obj.scannerPortraitLock)
+      ..writeByte(28)
+      ..write(obj.usesImperialFoodUnits)
+      ..writeByte(29)
+      ..write(obj.usesImperialHeightUnits)
+      ..writeByte(30)
+      ..write(obj.bodyWeightUnitIndex)
+      ..writeByte(31)
+      ..write(obj.foodSourceToggles)
+      ..writeByte(32)
+      ..write(obj.isDemoData)
+      ..writeByte(33)
+      ..write(obj.healthImportEnabled)
+      ..writeByte(34)
+      ..write(obj.healthWorkoutKcalMultiplier)
+      ..writeByte(35)
+      ..write(obj.healthLastImportAt)
+      ..writeByte(36)
+      ..write(obj.healthDeletedExternalIds)
+      ..writeByte(37)
+      ..write(obj.policyNoticeRevisionSeen)
+      ..writeByte(38)
+      ..write(obj.healthDeletedWorkouts)
+      ..writeByte(39)
+      ..write(obj.defaultToRawFoodUnits)
+      ..writeByte(40)
+      ..write(obj.trackedDaysOffsetMinutes)
+      ..writeByte(41)
+      ..write(obj.localeSyncSeeded)
+      ..writeByte(200)
+      ..write(obj.syncNutrientsToSupabase)
+      ..writeByte(201)
+      ..write(obj.useBodyWeightMacros);
   }
 
   @override
@@ -158,7 +206,35 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) =>
         fastingWarningAcknowledged: json['fastingWarningAcknowledged'] as bool?,
         useMaterialYou: json['useMaterialYou'] as bool?,
         accentColor: (json['accentColor'] as num?)?.toInt(),
+        scannerPortraitLock: json['scannerPortraitLock'] as bool?,
+        usesImperialFoodUnits: json['usesImperialFoodUnits'] as bool?,
+        usesImperialHeightUnits: json['usesImperialHeightUnits'] as bool?,
+        bodyWeightUnitIndex: (json['bodyWeightUnitIndex'] as num?)?.toInt(),
+        foodSourceToggles: (json['foodSourceToggles'] as Map<String, dynamic>?)
+            ?.map((k, e) => MapEntry(k, e as bool)),
+        isDemoData: json['isDemoData'] as bool?,
+        healthImportEnabled: json['healthImportEnabled'] as bool?,
+        healthWorkoutKcalMultiplier:
+            (json['healthWorkoutKcalMultiplier'] as num?)?.toDouble(),
+        healthLastImportAt: json['healthLastImportAt'] == null
+            ? null
+            : DateTime.parse(json['healthLastImportAt'] as String),
+        healthDeletedExternalIds:
+            (json['healthDeletedExternalIds'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList(),
+        policyNoticeRevisionSeen: (json['policyNoticeRevisionSeen'] as num?)
+            ?.toInt(),
+        healthDeletedWorkouts:
+            (json['healthDeletedWorkouts'] as Map<String, dynamic>?)?.map(
+              (k, e) => MapEntry(k, DateTime.parse(e as String)),
+            ),
+        defaultToRawFoodUnits: json['defaultToRawFoodUnits'] as bool?,
+        trackedDaysOffsetMinutes: (json['trackedDaysOffsetMinutes'] as num?)
+            ?.toInt(),
+        localeSyncSeeded: json['localeSyncSeeded'] as bool?,
         syncNutrientsToSupabase: json['syncNutrientsToSupabase'] as bool?,
+        useBodyWeightMacros: json['useBodyWeightMacros'] as bool?,
       )
       ..userCarbGoalPct = (json['userCarbGoalPct'] as num?)?.toDouble()
       ..userProteinGoalPct = (json['userProteinGoalPct'] as num?)?.toDouble()
@@ -192,7 +268,25 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
   'fastingWarningAcknowledged': instance.fastingWarningAcknowledged,
   'useMaterialYou': instance.useMaterialYou,
   'accentColor': instance.accentColor,
+  'scannerPortraitLock': instance.scannerPortraitLock,
+  'usesImperialFoodUnits': instance.usesImperialFoodUnits,
+  'usesImperialHeightUnits': instance.usesImperialHeightUnits,
+  'bodyWeightUnitIndex': instance.bodyWeightUnitIndex,
+  'foodSourceToggles': instance.foodSourceToggles,
+  'isDemoData': instance.isDemoData,
+  'healthImportEnabled': instance.healthImportEnabled,
+  'healthWorkoutKcalMultiplier': instance.healthWorkoutKcalMultiplier,
+  'healthLastImportAt': instance.healthLastImportAt?.toIso8601String(),
+  'healthDeletedExternalIds': instance.healthDeletedExternalIds,
+  'healthDeletedWorkouts': instance.healthDeletedWorkouts?.map(
+    (k, e) => MapEntry(k, e.toIso8601String()),
+  ),
+  'policyNoticeRevisionSeen': instance.policyNoticeRevisionSeen,
+  'defaultToRawFoodUnits': instance.defaultToRawFoodUnits,
+  'trackedDaysOffsetMinutes': instance.trackedDaysOffsetMinutes,
+  'localeSyncSeeded': instance.localeSyncSeeded,
   'syncNutrientsToSupabase': instance.syncNutrientsToSupabase,
+  'useBodyWeightMacros': instance.useBodyWeightMacros,
 };
 
 const _$AppThemeDBOEnumMap = {

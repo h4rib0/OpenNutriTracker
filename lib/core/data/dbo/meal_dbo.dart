@@ -50,6 +50,51 @@ class MealDBO extends HiveObject {
   @HiveField(13)
   final String? localImagePath;
 
+  /// True when this cached entry holds the full product record. Search
+  /// results from Search-a-licious are cached thin (`false` / null on legacy
+  /// rows); barcode and hydrated lookups are cached full (`true`). Used so a
+  /// thin cache entry doesn't satisfy a hydration/barcode lookup and so
+  /// [RemoteSearchCacheDataSource.cacheFromSearch] never downgrades a full
+  /// entry. Nullable for backward compatibility with pre-existing rows.
+  @HiveField(14)
+  final bool? detailed;
+
+  /// Backend food_source.code ('fdc_sr_legacy', 'bls'...) for foods from
+  /// the Supabase backend. Null for OFF/custom/recipe meals and for rows
+  /// cached before this field existed — the UI then falls back to the
+  /// generic FoodData Central label.
+  @HiveField(15)
+  final String? backendSource;
+
+  /// True when [name] is an unreviewed machine translation (see
+  /// MealEntity.machineTranslatedName). Nullable for rows cached before
+  /// this field existed — treated as false.
+  @HiveField(16)
+  final bool? machineTranslatedName;
+
+  /// Which convention this row's nutriments were written under; see
+  /// [currentDataVersion]. Null on rows written before the field existed —
+  /// every intake, cached product and recipe ingredient from a released
+  /// build — and for an Open Food Facts row that is the signal
+  /// `OffMicronutrientRepair` acts on (#1152). Copied through JSON and CSV
+  /// exports so a bundle re-imported into a repaired install is not scaled
+  /// a second time.
+  @HiveField(17)
+  final int? dataVersion;
+
+  /// Rows at this version or above carry every micronutrient in the app's
+  /// units: milligrams for the minerals, cholesterol and vitamins C, B6 and
+  /// niacin, micrograms for vitamins A, D and B12. Below it (null included)
+  /// an Open Food Facts row still holds the raw grams the API sends, which
+  /// #775 (`MealNutrimentsEntity.fromOffNutriments`) had copied through
+  /// unconverted.
+  static const dataVersionOffMicronutrientsInAppUnits = 1;
+
+  /// Stamped on every row [fromMealEntity] produces. Bump it, and add a
+  /// repair step for the versions below, whenever the stored meaning of a
+  /// field changes again.
+  static const currentDataVersion = dataVersionOffMicronutrientsInAppUnits;
+
   MealDBO({
     required this.code,
     required this.name,
@@ -65,8 +110,14 @@ class MealDBO extends HiveObject {
     required this.nutriments,
     required this.source,
     this.localImagePath,
+    this.detailed,
+    this.backendSource,
+    this.machineTranslatedName,
+    this.dataVersion,
   });
 
+  /// Entities always carry app units — every remote mapping converts on
+  /// the way in — so a row built from one is stamped current.
   factory MealDBO.fromMealEntity(MealEntity mealEntity) => MealDBO(
         code: mealEntity.code,
         name: mealEntity.name,
@@ -84,6 +135,10 @@ class MealDBO extends HiveObject {
         ),
         source: MealSourceDBO.fromMealSourceEntity(mealEntity.source),
         localImagePath: mealEntity.localImagePath,
+        detailed: mealEntity.detailed,
+        backendSource: mealEntity.backendSource,
+        machineTranslatedName: mealEntity.machineTranslatedName,
+        dataVersion: currentDataVersion,
       );
 
   factory MealDBO.fromJson(Map<String, dynamic> json) =>
@@ -104,6 +159,8 @@ enum MealSourceDBO {
   fdc,
   @HiveField(4)
   recipe,
+  // Fork-only: Swiss Food Composition DB, removed as a search source with the
+  // upstream search backend. Kept so meals already stored with it still load.
   @HiveField(5)
   sfcd;
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:opennutritracker/core/domain/entity/custom_activity_template_entity.dart';
 import 'package:opennutritracker/core/domain/entity/physical_activity_entity.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/features/activity_detail/presentation/bloc/activity_detail_bloc.dart';
@@ -16,8 +18,12 @@ import 'package:provider/provider.dart';
 /// from saved" affordance (#70 follow-up) so people who do the same
 /// workout repeatedly can avoid retyping the kcal each time.
 class ActivityDetailBottomSheet extends StatefulWidget {
-  final Function(BuildContext, {String? templateName, bool saveAsTemplate})
-      onAddButtonPressed;
+  final Future<void> Function(
+    BuildContext, {
+    String? templateName,
+    bool saveAsTemplate,
+  })
+  onAddButtonPressed;
   final PhysicalActivityEntity activityEntity;
   final TextEditingController quantityTextController;
   final ActivityDetailBloc activityDetailBloc;
@@ -38,6 +44,30 @@ class ActivityDetailBottomSheet extends StatefulWidget {
 class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
   final TextEditingController _nameController = TextEditingController();
   bool _saveAsTemplate = false;
+
+  /// Set from the first tap on Add until its save ends. The save can wait
+  /// for the tracked-day lock (#1317) with the screen still open, and a
+  /// second tap would log the activity, and credit its energy, twice.
+  bool _saving = false;
+
+  Future<void> _onAddPressed() async {
+    // Checked here, not only through the disabled button: a second tap
+    // can land before the rebuild that disables it.
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final trimmedName = _nameController.text.trim();
+      await widget.onAddButtonPressed(
+        context,
+        templateName: trimmedName.isEmpty ? null : trimmedName,
+        saveAsTemplate: _saveAsTemplate,
+      );
+    } finally {
+      // A save that succeeds leaves the screen; one that fails lets the
+      // user try again.
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -82,7 +112,7 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                           ? S.of(listContext).kjLabel
                           : S.of(listContext).kcalLabel;
                       return ListTile(
-                        leading: const Icon(Icons.bookmark_outline),
+                        leading: const Icon(Icons.bookmark_rounded),
                         title: Text(template.name),
                         subtitle: Text('${tileValue.toInt()} $tileUnit'),
                         onTap: () =>
@@ -108,8 +138,38 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
     }
   }
 
+  InputDecoration _fieldDecoration(
+    BuildContext context, {
+    String? labelText,
+    String? hintText,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    final accent = Theme.of(context).colorScheme.primary;
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      filled: true,
+      fillColor: palette.surfaceMuted,
+      border: OutlineInputBorder(
+        borderRadius: Dimens.borderRadiusM,
+        borderSide: BorderSide(color: palette.border, width: Dimens.hairline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: Dimens.borderRadiusM,
+        borderSide: BorderSide(color: palette.border, width: Dimens.hairline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: Dimens.borderRadiusM,
+        borderSide: BorderSide(color: accent, width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
     final isCustom = widget.activityEntity.isCustom;
     // For Custom activities the input field follows the user's Energy
     // unit setting — typing happens in the same unit the rest of the
@@ -120,21 +180,22 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
     final customUnitSuffix =
         usesKj ? S.of(context).kjLabel : S.of(context).kcalLabel;
     return BottomSheet(
-      elevation: 10,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
       onClosing: () {},
       enableDrag: false,
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline,
-              width: 0.5,
-            ),
-            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: palette.border, width: Dimens.hairline),
+            color: palette.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
+              topLeft: Radius.circular(Dimens.radiusXL),
+              topRight: Radius.circular(Dimens.radiusXL),
             ),
+            boxShadow: [
+              BoxShadow(color: palette.shadow, blurRadius: 18, offset: const Offset(0, -6)),
+            ],
           ),
           // SafeArea(top: false) — keeps the sticky bottom Add button above
           // the gesture-nav strip on devices that don't reserve insets
@@ -144,7 +205,12 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
             child: Wrap(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 8.0),
+                  padding: const EdgeInsets.fromLTRB(
+                    Dimens.spacing16,
+                    Dimens.spacing32,
+                    Dimens.spacing16,
+                    Dimens.spacing8,
+                  ),
                   child: Column(
                     children: [
                       if (isCustom) ...[
@@ -156,8 +222,8 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                                 container: true,
                                 child: TextFormField(
                                   controller: _nameController,
-                                  decoration: InputDecoration(
-                                    border: const OutlineInputBorder(),
+                                  decoration: _fieldDecoration(
+                                    context,
                                     labelText: S
                                         .of(context)
                                         .customActivityNameFieldLabel,
@@ -168,20 +234,20 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8.0),
+                            const SizedBox(width: Dimens.spacing8),
                             Semantics(
                               identifier: 'activity-detail-pick-template',
                               child: IconButton(
                                 tooltip: S
                                     .of(context)
                                     .customActivityPickFromTemplate,
-                                icon: const Icon(Icons.bookmark_outline),
+                                icon: const Icon(Icons.bookmark_rounded),
                                 onPressed: _openTemplatePicker,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8.0),
+                        const SizedBox(height: Dimens.spacing8),
                       ],
                       Row(
                         children: [
@@ -202,8 +268,8 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                                     ),
                                   ),
                                 ],
-                                decoration: InputDecoration(
-                                  border: const OutlineInputBorder(),
+                                decoration: _fieldDecoration(
+                                  context,
                                   labelText: isCustom
                                       ? (usesKj
                                           ? S.of(context).mealEnergyLabel
@@ -218,17 +284,20 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16.0),
+                          const SizedBox(width: Dimens.spacing16),
                           Expanded(
                             child: DropdownButtonFormField(
-                              decoration: InputDecoration(
-                                border: const OutlineInputBorder(),
+                              itemHeight: null,
+                              decoration: _fieldDecoration(
+                                context,
                                 labelText: S.of(context).unitLabel,
                               ),
                               items: <DropdownMenuItem<String>>[
                                 DropdownMenuItem(
                                   child: Text(
-                                    isCustom ? customUnitSuffix : 'min',
+                                    isCustom
+                                        ? customUnitSuffix
+                                        : S.of(context).minuteShortLabel,
                                   ),
                                 ),
                               ],
@@ -261,16 +330,7 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                         child: Semantics(
                           identifier: 'activity-detail-add-button',
                           child: ElevatedButton.icon(
-                            onPressed: () {
-                              final trimmedName = _nameController.text.trim();
-                              widget.onAddButtonPressed(
-                                context,
-                                templateName: trimmedName.isEmpty
-                                    ? null
-                                    : trimmedName,
-                                saveAsTemplate: _saveAsTemplate,
-                              );
-                            },
+                            onPressed: _saving ? null : _onAddPressed,
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Theme.of(context)
                                   .colorScheme
@@ -278,10 +338,14 @@ class _ActivityDetailBottomSheetState extends State<ActivityDetailBottomSheet> {
                               backgroundColor: Theme.of(context)
                                   .colorScheme
                                   .primaryContainer,
+                              shape: Dimens.shapeM,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: Dimens.spacing16,
+                              ),
                             ).copyWith(
                               elevation: ButtonStyleButton.allOrNull(0.0),
                             ),
-                            icon: const Icon(Icons.add_outlined),
+                            icon: const Icon(Icons.add_rounded),
                             label: Text(S.of(context).addLabel),
                           ),
                         ),

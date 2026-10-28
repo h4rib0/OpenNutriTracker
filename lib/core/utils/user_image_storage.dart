@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -15,7 +16,8 @@ import 'package:path_provider/path_provider.dart';
 /// meals — and the storage layer now reflects that distinction.
 enum UserImageKind {
   recipe('recipe_images'),
-  meal('meal_images');
+  meal('meal_images'),
+  profile('profile_images');
 
   const UserImageKind(this.subdir);
 
@@ -29,8 +31,8 @@ enum UserImageKind {
 /// across app reinstalls and iOS sandbox refreshes, where the documents
 /// directory's parent prefix can change between launches.
 ///
-/// Photos are stored as WebP at quality 80, capped at 1024px on the
-/// longest edge — small enough that an export zip of a few dozen
+/// Photos are stored as WebP at quality 80, bounded at 1024px on the
+/// shortest edge — small enough that an export zip of a few dozen
 /// recipes and meals stays in the low-megabyte range, while still
 /// being plenty crisp for a list thumbnail and the detail-screen
 /// header. WebP roughly halves the bytes of an equivalent-quality JPEG
@@ -81,7 +83,7 @@ class UserImageStorage {
     return imagesDir;
   }
 
-  /// Reads `sourcePath`, re-encodes it to WebP (quality 80, longest
+  /// Reads `sourcePath`, re-encodes it to WebP (quality 80, shortest
   /// edge 1024px), writes the result to the matching images directory
   /// under `<ownerId>.webp`, and returns the relative slug to persist.
   /// The source file is left untouched.
@@ -104,6 +106,11 @@ class UserImageStorage {
     } else {
       await File(sourcePath).copy(destPath);
     }
+    // A fresh import always wins over any stale photo-credit sidecar (see
+    // [writeCredit]) — a real user picking their own photo over a
+    // previously-seeded demo one should never keep showing someone else's
+    // attribution.
+    await _deleteCreditFile(destPath);
     return relativePathFor(kind, ownerId);
   }
 
@@ -118,6 +125,56 @@ class UserImageStorage {
     if (await file.exists()) {
       await file.delete();
     }
+    await _deleteCreditFile(absolute);
+  }
+
+  /// Records a photographer credit for the image at `relativePath`, kept
+  /// as a `<relativePath>.credit.json` sidecar rather than a DBO field —
+  /// this is only ever written by the dev-only demo-data seeder for its
+  /// curated Unsplash photos, and a sidecar file needed no schema change
+  /// (and no Hive codegen) to add. Real user-picked photos never have one.
+  static Future<void> writeCredit(
+    String relativePath, {
+    required String name,
+    required String profileUrl,
+  }) async {
+    final sanitized = sanitizeRelative(relativePath);
+    if (sanitized == null) return;
+    final absolute = await absolutePath(sanitized);
+    await File(
+      '$absolute.credit.json',
+    ).writeAsString(jsonEncode({'name': name, 'profileUrl': profileUrl}));
+  }
+
+  /// The credit written by [writeCredit] for `relativePath`, or null when
+  /// there isn't one (the common case).
+  static Future<({String name, String profileUrl})?> readCredit(
+    String relativePath,
+  ) async {
+    try {
+      final sanitized = sanitizeRelative(relativePath);
+      if (sanitized == null) return null;
+      final absolute = await absolutePath(sanitized);
+      final file = File('$absolute.credit.json');
+      if (!await file.exists()) return null;
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map) return null;
+      final name = decoded['name'];
+      final profileUrl = decoded['profileUrl'];
+      if (name is! String || profileUrl is! String) return null;
+      return (name: name, profileUrl: profileUrl);
+    } catch (_) {
+      // Optional UI metadata — a corrupt/partial sidecar must not break
+      // the profile editor or meal detail screen.
+      return null;
+    }
+  }
+
+  static Future<void> _deleteCreditFile(String absoluteImagePath) async {
+    final creditFile = File('$absoluteImagePath.credit.json');
+    if (await creditFile.exists()) {
+      await creditFile.delete();
+    }
   }
 
   static Future<Uint8List?> _compressToWebP(String sourcePath) async {
@@ -128,9 +185,12 @@ class UserImageStorage {
         quality: 80,
         minWidth: 1024,
         minHeight: 1024,
-        // `minWidth`/`minHeight` are upper bounds for the *longest*
-        // edge when the source exceeds them; the compressor preserves
-        // aspect ratio. Shorter-edge images pass through untouched.
+        // `minWidth`/`minHeight` bound the *shortest* edge, not the longest.
+        // The compressor takes `min(width/minWidth, height/minHeight)` as its
+        // scale factor, so the smaller ratio wins and the edge that lands on
+        // 1024 is the short one: a 4080x3072 frame comes out 1360x1024, and a
+        // 16:9 frame wider still. Aspect ratio is preserved and an image
+        // already smaller than 1024 on both edges passes through untouched.
       );
     } catch (_) {
       return null;

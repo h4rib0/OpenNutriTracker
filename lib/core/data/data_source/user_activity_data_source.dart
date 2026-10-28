@@ -1,28 +1,72 @@
-import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/data_source/box_upsert.dart';
 import 'package:opennutritracker/core/data/data_source/user_activity_dbo.dart';
 import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
+import 'package:opennutritracker/core/utils/hive_db_provider.dart';
 
 class UserActivityDataSource {
   final log = Logger('UserActivityDataSource');
-  final Box<UserActivityDBO> _userActivityBox;
+  final HiveDBProvider _db;
 
-  UserActivityDataSource(this._userActivityBox);
+  UserActivityDataSource(this._db);
+
+  Box<UserActivityDBO> get _userActivityBox => _db.userActivityBox;
 
   Future<void> addUserActivity(UserActivityDBO userActivityDBO) async {
     log.fine('Adding new user activity to db');
     await _userActivityBox.add(userActivityDBO);
   }
 
-  Future<void> addAllUserActivities(
+  /// Upserts by [UserActivityDBO.id]: an activity whose id is already
+  /// stored replaces it, so importing a bundle twice leaves one copy
+  /// (#1357). Where a bundle holds an id twice the last row wins — the old
+  /// edit deleted the first copy and appended the edited one. A row with a
+  /// blank id gets one derived from its content first ([withContentIds]).
+  Future<void> upsertAllUserActivities(
     List<UserActivityDBO> userActivityDBOList,
   ) async {
-    log.fine('Adding new user activities to db');
-    await _userActivityBox.addAll(userActivityDBOList);
+    log.fine('Upserting user activities into db');
+    await _userActivityBox.upsertAllBy(
+      withContentIds(
+        userActivityDBOList,
+        idOf: (dbo) => dbo.id,
+        contentOf: _contentOf,
+        withId: (dbo, id) => UserActivityDBO(
+          id,
+          dbo.duration,
+          dbo.burnedKcal,
+          dbo.date,
+          dbo.physicalActivityDBO,
+          userKcal: dbo.userKcal,
+          externalId: dbo.externalId,
+          sourceReportedKcal: dbo.sourceReportedKcal,
+        ),
+      ),
+      (dbo) => isBlankId(dbo.id) ? null : dbo.id,
+      winner: UpsertWinner.last,
+    );
   }
 
+  /// What a blank-id activity's derived id is made of: when, which
+  /// activity, for how long and for how many kcal. These fields are in
+  /// every export ever written; the optional ones added later (`userKcal`,
+  /// `externalId`, `sourceReportedKcal`) are left out so a backup reads
+  /// the same before and after them. Changing this list moves every
+  /// derived id, and re-importing an old backup would then duplicate its
+  /// blank-id rows.
+  static List<String?> _contentOf(UserActivityDBO dbo) => [
+    dbo.date.toIso8601String(),
+    dbo.physicalActivityDBO.code,
+    dbo.physicalActivityDBO.specificActivity,
+    contentNumber(dbo.duration),
+    contentNumber(dbo.burnedKcal),
+  ];
+
+  /// Rewrites every stored copy of [id], so an install the old import
+  /// doubled (#1357) ends up with copies that agree. The fields an edit
+  /// does not set come from the last copy, which is the one the old edit
+  /// appended.
   Future<UserActivityDBO?> updateUserActivity(
     String id,
     double newDuration,
@@ -30,20 +74,27 @@ class UserActivityDataSource {
     double? userKcal,
   }) async {
     log.fine('Updating user activity in db');
-    final existing =
-        _userActivityBox.values.firstWhereOrNull((dbo) => dbo.id == id);
-    if (existing == null) return null;
-    final updated = UserActivityDBO(
+    final keys = [
+      for (final entry in _userActivityBox.toMap().entries)
+        if (entry.value.id == id) entry.key,
+    ];
+    if (keys.isEmpty) return null;
+    final existing = _userActivityBox.get(keys.last)!;
+    // A Hive object lives under one key, so each copy gets its own.
+    UserActivityDBO edited() => UserActivityDBO(
       existing.id,
       newDuration,
       newBurnedKcal,
       existing.date,
       existing.physicalActivityDBO,
       userKcal: userKcal ?? existing.userKcal,
+      // Carried over rather than dropped: losing the external id would make
+      // an edited imported workout eligible for a second import.
+      externalId: existing.externalId,
+      sourceReportedKcal: existing.sourceReportedKcal,
     );
-    await existing.delete();
-    await _userActivityBox.add(updated);
-    return updated;
+    await _userActivityBox.putAll({for (final key in keys) key: edited()});
+    return _userActivityBox.get(keys.first);
   }
 
   Future<void> deleteIntakeFromId(String activityId) async {
@@ -60,40 +111,53 @@ class UserActivityDataSource {
     return _userActivityBox.values.toList();
   }
 
+  /// Activities filed under the calendar day [day].
+  ///
+  /// [day] is a day label, not a moment — see [IntakeDataSource
+  /// .getAllIntakesByDate] for the rationale (#139, #586).
   Future<List<UserActivityDBO>> getAllUserActivitiesByDate(
-    DateTime dateTime, {
+    DateTime day, {
     int dayStartOffsetHours = 0,
     int dayStartOffsetMinutes = 0,
   }) async {
-    // #139: see IntakeDataSource for the rationale — a zero total offset
-    // preserves the original wall-clock day behaviour. The follow-up to
-    // #139 adds the minutes companion which composes additively here.
-    final totalMinutes = dayStartOffsetHours * 60 +
-        dayStartOffsetMinutes.clamp(0, 59);
-    if (totalMinutes == 0) {
-      return _userActivityBox.values
-          .where((activity) => DateUtils.isSameDay(dateTime, activity.date))
-          .toList();
-    }
+    final totalMinutes = DayBoundaryCalc.totalMinutesOf(
+      dayStartOffsetHours,
+      dayStartOffsetMinutes,
+    );
     return _userActivityBox.values
         .where(
-          (activity) => DayBoundaryCalc.isSameLogicalDayMinutes(
-            dateTime,
+          (activity) => DayBoundaryCalc.isMomentInLogicalDayMinutes(
+            day,
             activity.date,
             totalMinutes,
+            clockReading: activity.externalId != null,
           ),
         )
         .toList();
   }
 
-  Future<List<UserActivityDBO>> getRecentlyAddedUserActivity(
-      {int number = 100}) async {
+  /// External record ids of activities dated at or after [from].
+  ///
+  /// The workout importer checks membership in this set before writing, so
+  /// re-reading an overlapping window from Health Connect / Apple Health
+  /// cannot produce a duplicate entry.
+  Future<Set<String>> getExternalIdsSince(DateTime from) async {
+    return _userActivityBox.values
+        .where(
+          (activity) =>
+              activity.externalId != null && !activity.date.isBefore(from),
+        )
+        .map((activity) => activity.externalId!)
+        .toSet();
+  }
+
+  Future<List<UserActivityDBO>> getRecentlyAddedUserActivity({
+    int number = 100,
+  }) async {
     final userActivities = _userActivityBox.values.toList();
 
     //  sort list by date descending and filter unique activities
-    userActivities.sort(
-      (a, b) => b.date.compareTo(a.date),
-    );
+    userActivities.sort((a, b) => b.date.compareTo(a.date));
 
     final filterActivityCodes = <String>{};
     final uniqueUserActivities = userActivities

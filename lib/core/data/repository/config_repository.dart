@@ -2,6 +2,7 @@ import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/app_theme_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/config_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 
 class ConfigRepository {
@@ -24,6 +25,14 @@ class ConfigRepository {
     await _configDataSource.setConfigAcceptedAnonymousData(
       hasAcceptedAnonymousData,
     );
+  }
+
+  Future<void> setConfigHasAcceptedPolicy(bool hasAcceptedPolicy) async {
+    await _configDataSource.setConfigAcceptedPolicy(hasAcceptedPolicy);
+  }
+
+  Future<void> setConfigPolicyNoticeRevisionSeen(int revision) async {
+    await _configDataSource.setConfigPolicyNoticeRevisionSeen(revision);
   }
 
   Future<bool> getConfigHasAcceptedAnonymousData() async {
@@ -55,6 +64,18 @@ class ConfigRepository {
     await _configDataSource.setConfigUsesImperialUnits(usesImperialUnits);
   }
 
+  Future<void> setConfigUsesImperialFoodUnits(bool usesImperial) async {
+    await _configDataSource.setConfigUsesImperialFoodUnits(usesImperial);
+  }
+
+  Future<void> setConfigUsesImperialHeightUnits(bool usesImperial) async {
+    await _configDataSource.setConfigUsesImperialHeightUnits(usesImperial);
+  }
+
+  Future<void> setConfigBodyWeightUnit(BodyWeightUnit unit) async {
+    await _configDataSource.setConfigBodyWeightUnitIndex(unit.index);
+  }
+
   Future<double> getConfigKcalAdjustment() async {
     return await _configDataSource.getKcalAdjustment();
   }
@@ -77,6 +98,24 @@ class ConfigRepository {
     await _configDataSource.setConfigFatGoalPct(fat);
   }
 
+  Future<void> setConfigGoalSettings({
+    required double? kcalAdjustment,
+    required double? carbGoalPct,
+    required double? proteinGoalPct,
+    required double? fatGoalPct,
+    required Map<String, int>? mealKcalSharesPct,
+    required int? dailyWaterGoalMl,
+  }) async {
+    await _configDataSource.setConfigGoalSettings(
+      kcalAdjustment: kcalAdjustment,
+      carbGoalPct: carbGoalPct,
+      proteinGoalPct: proteinGoalPct,
+      fatGoalPct: fatGoalPct,
+      mealKcalSharesPct: mealKcalSharesPct,
+      dailyWaterGoalMl: dailyWaterGoalMl,
+    );
+  }
+
   Future<void> setNotificationsEnabled(bool enabled) async {
     await _configDataSource.setNotificationsEnabled(enabled);
   }
@@ -93,12 +132,28 @@ class ConfigRepository {
     await _configDataSource.setSelectedLocale(locale);
   }
 
+  Future<bool> getLocaleSyncSeeded() async {
+    return await _configDataSource.getLocaleSyncSeeded();
+  }
+
+  Future<void> setLocaleSyncSeeded() async {
+    await _configDataSource.setLocaleSyncSeeded();
+  }
+
+  Future<void> clearLocaleSyncSeeded() async {
+    await _configDataSource.clearLocaleSyncSeeded();
+  }
+
   Future<void> setConfigShowMicronutrients(bool show) async {
     await _configDataSource.setConfigShowMicronutrients(show);
   }
 
   Future<void> setConfigUsesKilojoules(bool usesKilojoules) async {
     await _configDataSource.setConfigUsesKilojoules(usesKilojoules);
+  }
+
+  Future<void> setConfigDefaultToRawFoodUnits(bool value) async {
+    await _configDataSource.setConfigDefaultToRawFoodUnits(value);
   }
 
   Future<void> setConfigMealKcalSharesPct(Map<String, int> shares) async {
@@ -127,20 +182,16 @@ class ConfigRepository {
     await _configDataSource.setConfigNutrientPanelVisibility(visibility);
   }
 
-  Future<void> setConfigDayStartOffsetHours(int hours) async {
-    await _configDataSource.setConfigDayStartOffsetHours(hours);
-  }
-
-  Future<void> setConfigDayStartOffsetMinutes(int minutes) async {
-    await _configDataSource.setConfigDayStartOffsetMinutes(minutes);
-  }
-
   Future<void> setConfigDailyWaterGoalMl(int goalMl) async {
     await _configDataSource.setConfigDailyWaterGoalMl(goalMl);
   }
 
   Future<void> setFastingWarningAcknowledged(bool acknowledged) async {
     await _configDataSource.setFastingWarningAcknowledged(acknowledged);
+  }
+
+  Future<void> setIsDemoData(bool isDemoData) async {
+    await _configDataSource.setIsDemoData(isDemoData);
   }
 
   Future<void> setConfigUseMaterialYou(bool useMaterialYou) async {
@@ -151,7 +202,45 @@ class ConfigRepository {
     await _configDataSource.setConfigAccentColor(value);
   }
 
+  Future<void> setConfigScannerPortraitLock(bool value) async {
+    await _configDataSource.setConfigScannerPortraitLock(value);
+  }
+
+  Future<void> setConfigFoodSourceToggles(Map<String, bool> toggles) async {
+    await _configDataSource.setConfigFoodSourceToggles(toggles);
+  }
+
+  Future<void> setConfigHealthImportEnabled(bool enabled) async {
+    await _configDataSource.setConfigHealthImportEnabled(enabled);
+  }
+
+  Future<void> setConfigHealthWorkoutKcalMultiplier(double multiplier) async {
+    await _configDataSource.setConfigHealthWorkoutKcalMultiplier(multiplier);
+  }
+
+  Future<void> setConfigHealthLastImportAt(DateTime? importedAt) async {
+    await _configDataSource.setConfigHealthLastImportAt(importedAt);
+  }
+
+  Future<void> addConfigHealthDeletedWorkout(
+    String externalId,
+    DateTime startedAt,
+  ) async {
+    await _configDataSource.addConfigHealthDeletedWorkout(
+      externalId,
+      startedAt,
+    );
+  }
+
+  Future<void> pruneConfigHealthDeletedWorkouts(DateTime cutoff) async {
+    await _configDataSource.pruneConfigHealthDeletedWorkouts(cutoff);
+  }
+
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     await _configDataSource.setConfigSyncNutrientsToSupabase(sync);
+  }
+
+  Future<void> setConfigUseBodyWeightMacros(bool value) async {
+    await _configDataSource.setConfigUseBodyWeightMacros(value);
   }
 }

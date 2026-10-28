@@ -26,20 +26,23 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
     tz.initializeTimeZones();
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    final timeZone = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZone.identifier));
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const initSettings =
-        InitializationSettings(android: androidSettings, iOS: iosSettings);
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
 
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(settings: initSettings);
     _initialized = true;
     _log.fine('NotificationService initialized');
   }
@@ -48,23 +51,39 @@ class NotificationService {
   Future<bool> requestPermission() async {
     final android = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return granted ?? false;
     }
     final ios = _plugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (ios != null) {
       final granted = await ios.requestPermissions(
-          alert: true, badge: true, sound: true);
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       return granted ?? false;
     }
     return false;
   }
 
-  /// Schedules a daily recurring notification at [hour]:[minute].
+  /// Schedules a daily recurring notification at [hour]:[minute], replacing
+  /// the one already pending.
+  ///
+  /// Deliberately no cancel first (#1389): if `zonedSchedule` then failed,
+  /// the user would be left with no reminder while the setting still read
+  /// on. Scheduling under the same id replaces the pending one on both
+  /// platforms. On Android the alarm's `PendingIntent` is keyed by the id
+  /// (`getBroadcast` with `FLAG_UPDATE_CURRENT`, and `AlarmManager` drops an
+  /// earlier alarm for an equal intent), and the plugin's cache of scheduled
+  /// notifications only swaps the old entry for the new one once the alarm
+  /// is set. On iOS the plugin adds a `UNNotificationRequest` whose
+  /// identifier is the id, and a request matching a pending one replaces it.
   Future<void> scheduleDailyReminder({
     required int hour,
     required int minute,
@@ -74,7 +93,6 @@ class NotificationService {
     required String channelDescription,
   }) async {
     await _ensureInitialized();
-    await _plugin.cancel(_dailyReminderId);
 
     final androidDetails = AndroidNotificationDetails(
       _channelId,
@@ -84,8 +102,10 @@ class NotificationService {
       priority: Priority.defaultPriority,
     );
     const iosDetails = DarwinNotificationDetails();
-    final details =
-        NotificationDetails(android: androidDetails, iOS: iosDetails);
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     final scheduledDate = computeNextOccurrence(
       tz.TZDateTime.now(tz.local),
@@ -94,11 +114,11 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      _dailyReminderId,
-      title,
-      body,
-      scheduledDate,
-      details,
+      id: _dailyReminderId,
+      title: title,
+      body: body,
+      scheduledDate: scheduledDate,
+      notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -108,8 +128,15 @@ class NotificationService {
   /// Cancels any pending daily reminder.
   Future<void> cancelDailyReminder() async {
     await _ensureInitialized();
-    await _plugin.cancel(_dailyReminderId);
+    await _plugin.cancel(id: _dailyReminderId);
     _log.fine('Daily reminder cancelled');
+  }
+
+  /// Whether the OS holds a daily reminder right now.
+  Future<bool> isDailyReminderPending() async {
+    await _ensureInitialized();
+    final pending = await _plugin.pendingNotificationRequests();
+    return pending.any((request) => request.id == _dailyReminderId);
   }
 
   /// Schedules a one-shot notification for the moment a fasting session is
@@ -124,7 +151,7 @@ class NotificationService {
     required String channelDescription,
   }) async {
     await _ensureInitialized();
-    await _plugin.cancel(_fastingCompleteId);
+    await _plugin.cancel(id: _fastingCompleteId);
 
     final scheduled = tz.TZDateTime.from(when, tz.local);
     final androidDetails = AndroidNotificationDetails(
@@ -135,15 +162,17 @@ class NotificationService {
       priority: Priority.defaultPriority,
     );
     const iosDetails = DarwinNotificationDetails();
-    final details =
-        NotificationDetails(android: androidDetails, iOS: iosDetails);
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await _plugin.zonedSchedule(
-      _fastingCompleteId,
-      title,
-      body,
-      scheduled,
-      details,
+      id: _fastingCompleteId,
+      title: title,
+      body: body,
+      scheduledDate: scheduled,
+      notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
     _log.fine('Fasting-complete notification scheduled for $scheduled');
@@ -152,8 +181,22 @@ class NotificationService {
   /// Cancels any pending fasting-complete notification.
   Future<void> cancelFastingComplete() async {
     await _ensureInitialized();
-    await _plugin.cancel(_fastingCompleteId);
+    await _plugin.cancel(id: _fastingCompleteId);
     _log.fine('Fasting-complete notification cancelled');
+  }
+
+  /// Cancels every notification this app has scheduled.
+  ///
+  /// For the delete-all path, which must not leave an alarm behind that
+  /// outlives the record of it. Deliberately not a list of the ids above: a
+  /// notification added later would not be on such a list, and the omission
+  /// would surface as a ping on a stranger's phone weeks afterwards rather
+  /// than as anything a test or a reviewer would catch. `cancelAll` reaches
+  /// only this app's own notifications.
+  Future<void> cancelAllScheduled() async {
+    await _ensureInitialized();
+    await _plugin.cancelAll();
+    _log.fine('All scheduled notifications cancelled');
   }
 
   Future<void> _ensureInitialized() async {
@@ -171,7 +214,13 @@ class NotificationService {
     int minute,
   ) {
     var scheduled = tz.TZDateTime(
-        now.location, now.year, now.month, now.day, hour, minute);
+      now.location,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (!scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }

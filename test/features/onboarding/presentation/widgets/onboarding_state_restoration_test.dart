@@ -6,16 +6,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_activity_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_gender_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_goal_selection_entity.dart';
 import 'package:opennutritracker/features/onboarding/presentation/onboarding_intro_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_first_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_fourth_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_second_page_body.dart';
-import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_third_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_about_you_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_goal_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_body_measurements_page_body.dart';
+import 'package:opennutritracker/features/onboarding/presentation/widgets/onboarding_activity_page_body.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
+import '../../../../helpers/test_l10n.dart';
 
 void main() {
   setUpAll(() {
@@ -30,7 +33,7 @@ void main() {
 
   Widget wrap(Widget child) => MaterialApp(
         localizationsDelegates: const [S.delegate],
-        supportedLocales: S.delegate.supportedLocales,
+        supportedLocales: S.supportedLocales,
         home: Scaffold(body: child),
       );
 
@@ -50,10 +53,10 @@ void main() {
     });
   });
 
-  group('OnboardingFirstPageBody restoration', () {
+  group('OnboardingAboutYouPageBody restoration', () {
     testWidgets('reflects initialGender on the correct ChoiceChip',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingFirstPageBody(
+      await tester.pumpWidget(wrap(OnboardingAboutYouPageBody(
         setPageContent: (_, _, _, _) {},
         initialGender: UserGenderSelectionEntity.genderFemale,
       )));
@@ -67,7 +70,7 @@ void main() {
     testWidgets('reflects initialBirthday in the date input field',
         (tester) async {
       final birthday = DateTime(1990, 6, 15);
-      await tester.pumpWidget(wrap(OnboardingFirstPageBody(
+      await tester.pumpWidget(wrap(OnboardingAboutYouPageBody(
         setPageContent: (_, _, _, _) {},
         initialBirthday: birthday,
       )));
@@ -79,11 +82,11 @@ void main() {
     });
   });
 
-  group('OnboardingSecondPageBody restoration', () {
+  group('OnboardingBodyMeasurementsPageBody restoration', () {
     testWidgets('metric: shows the stored cm/kg values in the text fields',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingSecondPageBody(
-        setButtonContent: (_, _, _, _, _) {},
+      await tester.pumpWidget(wrap(OnboardingBodyMeasurementsPageBody(
+        setButtonContent: (_, _, _, _, _, _, _) {},
         initialHeightCm: 178,
         initialWeightKg: 72.5,
       )));
@@ -93,49 +96,63 @@ void main() {
       expect(find.text('72.5'), findsOneWidget);
     });
 
-    testWidgets('imperial: stored cm/kg are converted to ft/lbs for display',
+    testWidgets('imperial: stored cm restores to feet+inches, kg to lbs',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingSecondPageBody(
-        setButtonContent: (_, _, _, _, _) {},
+      await tester.pumpWidget(wrap(OnboardingBodyMeasurementsPageBody(
+        setButtonContent: (_, _, _, _, _, _, _) {},
         initialHeightCm: 180,
         initialWeightKg: 80,
-        initialUsesImperial: true,
+        initialHeightImperial: true,
+        initialBodyWeightUnit: BodyWeightUnit.lb,
       )));
       await tester.pumpAndSettle();
 
-      // 180 cm ≈ 5.9 ft; 80 kg ≈ 176.4 lbs (one decimal place).
-      // Just verify the fields are non-empty and contain the leading digit.
-      final fields =
-          tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
-      expect(fields[0].controller?.text, isNotEmpty);
-      expect(fields[1].controller?.text, isNotEmpty);
-      expect(fields[1].controller?.text, startsWith('17'));
+      // 180 cm restores into the feet + inches fields (5 ft 11 in). These are
+      // raw TextFields; the first two in the tree are feet then inches.
+      final raw =
+          tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(raw[0].controller?.text, '5');
+      expect(raw[1].controller?.text, isNotEmpty);
+
+      // 80 kg ≈ 176.4 lbs in the first weight TextFormField.
+      final weightField =
+          tester.widget<TextFormField>(find.byType(TextFormField).first);
+      expect(weightField.controller?.text, startsWith('17'));
     });
   });
 
-  group('OnboardingThirdPageBody restoration', () {
-    testWidgets('reflects initialActivity on the correct ChoiceChip',
+  group('OnboardingActivityPageBody restoration', () {
+    testWidgets('reflects initialActivity on the correct activity card',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingThirdPageBody(
+      await tester.pumpWidget(wrap(OnboardingActivityPageBody(
         setButtonContent: (_, _) {},
         initialActivity: UserActivitySelectionEntity.active,
       )));
       await tester.pumpAndSettle();
 
-      final chips =
-          tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).toList();
-      // Order is sedentary, lowActive, active, veryActive.
-      expect(chips[0].selected, isFalse);
-      expect(chips[1].selected, isFalse);
-      expect(chips[2].selected, isTrue);
-      expect(chips[3].selected, isFalse);
+      // The four levels each render a card carrying a radio indicator;
+      // exactly the restored one is filled in. Order is sedentary,
+      // lowActive, active, veryActive.
+      expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+      expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(3));
+      expect(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text(l10nEn.palActiveLabel),
+            matching: find.byType(Row),
+          ),
+          matching: find.byIcon(Icons.radio_button_checked),
+        ),
+        findsOneWidget,
+        reason: 'the filled indicator belongs to the restored level',
+      );
     });
   });
 
-  group('OnboardingFourthPageBody restoration', () {
+  group('OnboardingGoalPageBody restoration', () {
     testWidgets('reflects initialGoal on the correct ChoiceChip',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingFourthPageBody(
+      await tester.pumpWidget(wrap(OnboardingGoalPageBody(
         setButtonContent: (_, _) {},
         initialGoal: UserGoalSelectionEntity.gainWeigh,
       )));
@@ -162,9 +179,9 @@ void main() {
       expect(boxes.every((b) => b.value == false), isTrue);
     });
 
-    testWidgets('first page: no chip selected, date field empty',
+    testWidgets('about-you page: no chip selected, date field empty',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingFirstPageBody(
+      await tester.pumpWidget(wrap(OnboardingAboutYouPageBody(
         setPageContent: (_, _, _, _) {},
       )));
       await tester.pumpAndSettle();
@@ -177,10 +194,10 @@ void main() {
       expect(dateField.controller?.text, isEmpty);
     });
 
-    testWidgets('second page: text fields empty when no initial values given',
+    testWidgets('body-measurements page: fields empty without initial values',
         (tester) async {
-      await tester.pumpWidget(wrap(OnboardingSecondPageBody(
-        setButtonContent: (_, _, _, _, _) {},
+      await tester.pumpWidget(wrap(OnboardingBodyMeasurementsPageBody(
+        setButtonContent: (_, _, _, _, _, _, _) {},
       )));
       await tester.pumpAndSettle();
 

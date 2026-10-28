@@ -17,7 +17,27 @@ class PolarInfluxdbDataSource {
   static const double _defaultFatGPerKg = 0.8;
 
   final _log = Logger('PolarInfluxdbDataSource');
-  final FlutterSecureStorage _storage = SecureAppStorageProvider.secureAppStorage;
+
+  // One home load asks for the weight and the active kcal from several
+  // usecases. Each value is queried once and the answer — a failure too — is
+  // kept briefly, so a bad connection costs one timeout, not one per caller.
+  static const _cacheTtl = Duration(seconds: 30);
+  static const _queryTimeout = Duration(seconds: 5);
+  _CachedQuery? _weight;
+  final _activeKcalByDay = <String, _CachedQuery>{};
+
+  // The last good answers, for when InfluxDB cannot be reached: the weight
+  // as `<kg>`, the active kcal as `<yyyy-mm-dd>|<kcal>` (only used that day).
+  static const _keyLastWeightKg = 'polar_last_weight_kg';
+  static const _keyLastActiveKcal = 'polar_last_active_kcal';
+
+  final FlutterSecureStorage _storage;
+  final http.Client _http;
+
+  /// [httpClient] and [storage] are for tests.
+  PolarInfluxdbDataSource({http.Client? httpClient, FlutterSecureStorage? storage})
+    : _http = httpClient ?? http.Client(),
+      _storage = storage ?? SecureAppStorageProvider.secureAppStorage;
 
   Future<String> getUrl() async => await _storage.read(key: _keyUrl) ?? '';
   Future<String> getDatabase() async => await _storage.read(key: _keyDatabase) ?? '';
@@ -49,6 +69,16 @@ class PolarInfluxdbDataSource {
     await _storage.write(key: _keyIsV2, value: isV2.toString());
     await _storage.write(key: _keyToken, value: token);
     await _storage.write(key: _keyTriggerUrl, value: triggerUrl);
+    // Another server's last values are not this one's.
+    await _storage.delete(key: _keyLastWeightKg);
+    await _storage.delete(key: _keyLastActiveKcal);
+    clearCache();
+  }
+
+  /// Forgets the briefly cached answers, so the next read queries InfluxDB.
+  void clearCache() {
+    _weight = null;
+    _activeKcalByDay.clear();
   }
 
   /// Calls the configured trigger URL to start a fresh Polar → InfluxDB sync.
@@ -57,11 +87,14 @@ class PolarInfluxdbDataSource {
     final triggerUrl = await getTriggerUrl();
     if (triggerUrl.isEmpty) return false;
     try {
-      final response = await http.get(Uri.parse(triggerUrl)).timeout(const Duration(seconds: 30));
+      final response = await _http.get(Uri.parse(triggerUrl)).timeout(const Duration(seconds: 30));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
       _log.warning('triggerSync failed: $e');
       return false;
+    } finally {
+      // Whatever the sync brought in should show on the reload that follows.
+      clearCache();
     }
   }
 
@@ -138,7 +171,7 @@ class PolarInfluxdbDataSource {
     if (isV2 && token.isNotEmpty) {
       request.headers['Authorization'] = 'Token $token';
     }
-    final streamed = await http.Client().send(request).timeout(const Duration(seconds: 10));
+    final streamed = await _http.send(request).timeout(const Duration(seconds: 10));
     if (streamed.statusCode >= 300) {
       _log.warning('InfluxDB write HTTP ${streamed.statusCode}');
     }
@@ -158,127 +191,120 @@ class PolarInfluxdbDataSource {
     if (isV2 && token.isNotEmpty) {
       request.headers['Authorization'] = 'Token $token';
     }
-    await http.Client().send(request).timeout(const Duration(seconds: 10));
+    await _http.send(request).timeout(const Duration(seconds: 10));
   }
 
-  Future<double?> fetchLatestWeightKg() async {
-    final url = await getUrl();
-    final database = await getDatabase();
-    if (url.isEmpty || database.isEmpty) return null;
+  /// The latest weight in InfluxDB (`koerpergewicht`), the last one seen
+  /// when InfluxDB cannot be reached, or null when there is none.
+  Future<double?> fetchLatestWeightKg() {
+    final cached = _weight;
+    if (cached != null && cached.isFresh) return cached.value;
+    final value = _loadLatestWeightKg();
+    _weight = _CachedQuery(value);
+    return value;
+  }
 
-    final isV2 = await getIsV2();
-    final token = await getToken();
-    final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-
-    const q = 'SELECT last(weight) FROM koerpergewicht';
-    try {
-      final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
-      final request = http.Request('GET', uri);
-      if (isV2 && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Token $token';
-      }
-      final streamed = await http.Client().send(request).timeout(const Duration(seconds: 10));
-      final response = await http.Response.fromStream(streamed);
-
-      if (response.statusCode != 200) return null;
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
-      if (series == null || series.isEmpty) return null;
-
-      final values = series[0]['values'] as List?;
-      if (values == null || values.isEmpty) return null;
-
-      return (values[0][1] as num?)?.toDouble();
-    } catch (e) {
-      _log.warning('Failed to fetch weight from InfluxDB: $e');
-      return null;
+  Future<double?> _loadLatestWeightKg() async {
+    final result = await _queryLast('SELECT last(weight) FROM koerpergewicht');
+    if (!result.reached) {
+      return double.tryParse(await _storage.read(key: _keyLastWeightKg) ?? '');
     }
+    final weightKg = result.value;
+    if (weightKg != null) {
+      await _storage.write(key: _keyLastWeightKg, value: weightKg.toString());
+    }
+    return weightKg;
   }
 
   /// Fetches the total calories burned for [date] from the `polar_activity`
   /// measurement (field: `calories`). Returns null when Polar is not reachable.
   Future<double?> fetchTotalKcalForDate(DateTime date) async {
-    final url = await getUrl();
-    final database = await getDatabase();
-    if (url.isEmpty || database.isEmpty) return null;
-
-    final isV2 = await getIsV2();
-    final token = await getToken();
-
-    final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-    final start = DateTime(date.year, date.month, date.day).toUtc();
-    final stop = start.add(const Duration(days: 1));
-
-    final q = "SELECT last(\"calories\") FROM \"polar_activity\" WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
-    try {
-      final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
-      final request = http.Request('GET', uri);
-      if (isV2 && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Token $token';
-      }
-      final streamedResponse = await http.Client().send(request).timeout(const Duration(seconds: 10));
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode != 200) {
-        _log.warning('InfluxDB query HTTP ${response.statusCode}');
-        return null;
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
-      if (series == null || series.isEmpty) return null;
-
-      final values = series[0]['values'] as List?;
-      if (values == null || values.isEmpty) return null;
-
-      return (values[0][1] as num?)?.toDouble();
-    } catch (e) {
-      _log.warning('Failed to fetch Polar total kcal from InfluxDB: $e');
-      return null;
-    }
+    final result = await _queryLast('SELECT last("calories") FROM "polar_activity" ${_dayRange(date)}');
+    return result.value;
   }
 
-  Future<double?> fetchActiveKcalForDate(DateTime date) async {
+  /// Polar's active energy for [date]. Null when InfluxDB has nothing for
+  /// that day yet; when it cannot be reached, the last value seen for that
+  /// day, if any.
+  Future<double?> fetchActiveKcalForDate(DateTime date) {
+    final day = _dayKey(date);
+    final cached = _activeKcalByDay[day];
+    if (cached != null && cached.isFresh) return cached.value;
+    final value = _loadActiveKcal(date, day);
+    _activeKcalByDay[day] = _CachedQuery(value);
+    return value;
+  }
+
+  Future<double?> _loadActiveKcal(DateTime date, String day) async {
+    final result = await _queryLast('SELECT last(active_calories) FROM polar_activity ${_dayRange(date)}');
+    if (!result.reached) {
+      final last = (await _storage.read(key: _keyLastActiveKcal))?.split('|');
+      if (last == null || last.length != 2 || last[0] != day) return null;
+      return double.tryParse(last[1]);
+    }
+    final kcal = result.value;
+    if (kcal != null) {
+      await _storage.write(key: _keyLastActiveKcal, value: '$day|$kcal');
+    }
+    return kcal;
+  }
+
+  static String _dayKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  static String _dayRange(DateTime date) {
+    final start = DateTime(date.year, date.month, date.day).toUtc();
+    final stop = start.add(const Duration(days: 1));
+    return "WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
+  }
+
+  /// Runs an InfluxQL `SELECT last(...)` via the v1 compatibility endpoint
+  /// (works for both v1 and v2). [reached] is false when InfluxDB could not
+  /// be asked or did not answer; [value] is null when it had no data.
+  Future<({bool reached, double? value})> _queryLast(String q) async {
     final url = await getUrl();
     final database = await getDatabase();
-    if (url.isEmpty || database.isEmpty) return null;
+    if (url.isEmpty || database.isEmpty) return (reached: false, value: null);
 
     final isV2 = await getIsV2();
     final token = await getToken();
-
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-    final start = DateTime(date.year, date.month, date.day).toUtc();
-    final stop = start.add(const Duration(days: 1));
 
-    // Use InfluxQL via the v1 compatibility endpoint (works for both v1 and v2)
-    final q = "SELECT last(active_calories) FROM polar_activity WHERE time >= '${start.toIso8601String()}' AND time < '${stop.toIso8601String()}'";
     try {
       final uri = Uri.parse('$baseUrl/query').replace(queryParameters: {'db': database, 'q': q});
       final request = http.Request('GET', uri);
       if (isV2 && token.isNotEmpty) {
         request.headers['Authorization'] = 'Token $token';
       }
-      final streamedResponse = await http.Client().send(request).timeout(const Duration(seconds: 10));
-      final response = await http.Response.fromStream(streamedResponse);
+      final streamed = await _http.send(request).timeout(_queryTimeout);
+      final response = await http.Response.fromStream(streamed).timeout(_queryTimeout);
 
       if (response.statusCode != 200) {
         _log.warning('InfluxDB query HTTP ${response.statusCode}');
-        return null;
+        return (reached: false, value: null);
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final series = (json['results'] as List?)?.firstOrNull?['series'] as List?;
-      if (series == null || series.isEmpty) return null;
-
-      final values = series[0]['values'] as List?;
-      if (values == null || values.isEmpty) return null;
+      final values = (series == null || series.isEmpty) ? null : series[0]['values'] as List?;
+      if (values == null || values.isEmpty) return (reached: true, value: null);
 
       // columns: ['time', 'last'] — value is at index 1
-      return (values[0][1] as num?)?.toDouble();
+      return (reached: true, value: (values[0][1] as num?)?.toDouble());
     } catch (e) {
-      _log.warning('Failed to fetch Polar InfluxDB data: $e');
-      return null;
+      _log.warning('InfluxDB query failed: $e');
+      return (reached: false, value: null);
     }
   }
+}
+
+/// One query's answer, shared by every caller while it is fresh — including
+/// callers that arrive while it is still in flight.
+class _CachedQuery {
+  _CachedQuery(this.value) : _at = DateTime.now();
+
+  final Future<double?> value;
+  final DateTime _at;
+
+  bool get isFresh => DateTime.now().difference(_at) < PolarInfluxdbDataSource._cacheTtl;
 }

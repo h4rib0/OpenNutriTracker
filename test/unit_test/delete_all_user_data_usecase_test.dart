@@ -1,0 +1,407 @@
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:opennutritracker/core/data/data_source/user_activity_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/user_activity_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/config_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/fasting_session_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/favourite_meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/user_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/water_intake_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/weight_log_dbo.dart';
+import 'package:opennutritracker/core/domain/usecase/delete_all_user_data_usecase.dart';
+import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
+import 'package:opennutritracker/core/data/repository/config_repository.dart';
+import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
+import 'package:opennutritracker/core/utils/ai_credential_storage.dart';
+import 'package:opennutritracker/core/utils/daily_reminder_scheduler.dart';
+import 'package:opennutritracker/core/utils/notification_service.dart';
+import 'package:opennutritracker/core/utils/hive_db_provider.dart';
+import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/core/utils/tracked_day_reconciler.dart';
+import 'package:opennutritracker/core/utils/widget/calorie_widget_labels.dart';
+import 'package:opennutritracker/core/utils/widget/calorie_widget_snapshot.dart';
+import 'package:opennutritracker/core/utils/widget/calorie_widget_writer.dart';
+import 'package:opennutritracker/generated/l10n.dart';
+
+import '../fixture/physical_activity_entity_fixtures.dart';
+import '../helpers/hive_test_setup.dart';
+
+/// In-memory stand-in for the platform keystore. The AI credentials live
+/// there rather than in Hive, which is the whole reason #892 existed: a wipe
+/// written against the box list could not see them.
+class _MemoryStorage implements FlutterSecureStorage {
+  final store = <String, String>{};
+
+  @override
+  Future<String?> read({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async => store[key];
+
+  @override
+  Future<void> write({
+    required String key,
+    required String? value,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    if (value == null) {
+      store.remove(key);
+    } else {
+      store[key] = value;
+    }
+  }
+
+  @override
+  Future<void> delete({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async => store.remove(key);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Hands the usecase pre-opened, unencrypted boxes so it can run without the
+/// Hive/encryption bootstrap. The shared content libraries are deliberately
+/// left unset — the usecase must never reach for them, and a `late final`
+/// that was never assigned throws loudly if it does.
+/// A notification service that does nothing, for a test that is not about
+/// notifications.
+///
+/// Cancelling arrived on this use case from `develop` (#764) while this test
+/// was written on the AI branch; the two met at the merge. The real service
+/// reaches the platform plugin, which is not available here — and
+/// `_stopScheduledNotifications` wraps its calls in `_bestEffort`, so a
+/// throwing stand-in would be swallowed and prove nothing either way.
+class _SilentNotificationService extends NotificationService {
+  @override
+  Future<void> cancelAllScheduled() async {}
+}
+
+/// Records whether the wipe reached the iOS widget's copy of the figures,
+/// which lives in the App Group rather than in Hive.
+class _RecordingWidgetStore implements CalorieWidgetStore {
+  final bool fails;
+  int clears = 0;
+
+  _RecordingWidgetStore({this.fails = false});
+
+  @override
+  int get generation => 0;
+
+  @override
+  Future<void> write(
+    CalorieWidgetSnapshot snapshot,
+    CalorieWidgetLabels labels, {
+    int? generation,
+  }) async {}
+
+  @override
+  Future<void> clear() async {
+    clears++;
+    if (fails) throw MissingPluginException('home_widget');
+  }
+
+  @override
+  Future<void> relabel(S s) async {}
+}
+
+/// A tracked-day row with no entries' totals, only a goal.
+TrackedDayDBO _row(DateTime day, {double calorieGoal = 2000}) => TrackedDayDBO(
+  day: day,
+  calorieGoal: calorieGoal,
+  caloriesTracked: 0,
+  carbsGoal: 250,
+  carbsTracked: 0,
+  fatGoal: 70,
+  fatTracked: 0,
+  proteinGoal: 100,
+  proteinTracked: 0,
+);
+
+class _TestHiveDBProvider extends HiveDBProvider {
+  final Box<ConfigDBO> config;
+  final Box<IntakeDBO> intake;
+  final Box<UserActivityDBO> activity;
+  final Box<UserDBO> user;
+  final Box<TrackedDayDBO> trackedDay;
+  final Box<WeightLogDBO> weight;
+  final Box<WaterIntakeDBO> water;
+  final Box<FastingSessionDBO> fasting;
+  final Box<FavouriteMealDBO> favourites;
+  final Box<ConfigDBO> sharedAppConfig;
+
+  _TestHiveDBProvider({
+    required this.config,
+    required this.intake,
+    required this.activity,
+    required this.user,
+    required this.trackedDay,
+    required this.weight,
+    required this.water,
+    required this.fasting,
+    required this.favourites,
+    required this.sharedAppConfig,
+  });
+
+  @override
+  Box<ConfigDBO> get configBox => config;
+  @override
+  Box<IntakeDBO> get intakeBox => intake;
+  @override
+  Box<UserActivityDBO> get userActivityBox => activity;
+  @override
+  Box<UserDBO> get userBox => user;
+  @override
+  Box<TrackedDayDBO> get trackedDayBox => trackedDay;
+  @override
+  Box<WeightLogDBO> get weightLogBox => weight;
+  @override
+  Box<WaterIntakeDBO> get waterIntakeBox => water;
+  @override
+  Box<FastingSessionDBO> get fastingBox => fasting;
+  @override
+  Box<FavouriteMealDBO> get favouriteMealBox => favourites;
+  @override
+  Box<ConfigDBO> get appConfigBox => sharedAppConfig;
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late _TestHiveDBProvider provider;
+  late _MemoryStorage backing;
+  late AiCredentialStorage credentials;
+  late DeleteAllUserDataUsecase sut;
+  late Box<ConfigDBO> configBox;
+  late Box<ConfigDBO> appConfigBox;
+  late Box<FavouriteMealDBO> favouriteBox;
+  late _RecordingWidgetStore widgetStore;
+
+  setUp(() async {
+    Hive.init('.');
+    registerHiveAdaptersOnce();
+    final tag = DateTime.now().microsecondsSinceEpoch;
+
+    configBox = await Hive.openBox<ConfigDBO>('wipe_config_$tag');
+    appConfigBox = await Hive.openBox<ConfigDBO>('wipe_app_config_$tag');
+
+    provider = _TestHiveDBProvider(
+      config: configBox,
+      intake: await Hive.openBox<IntakeDBO>('wipe_intake_$tag'),
+      activity: await Hive.openBox<UserActivityDBO>('wipe_activity_$tag'),
+      user: await Hive.openBox<UserDBO>('wipe_user_$tag'),
+      trackedDay: await Hive.openBox<TrackedDayDBO>('wipe_tracked_$tag'),
+      weight: await Hive.openBox<WeightLogDBO>('wipe_weight_$tag'),
+      water: await Hive.openBox<WaterIntakeDBO>('wipe_water_$tag'),
+      fasting: await Hive.openBox<FastingSessionDBO>('wipe_fasting_$tag'),
+      favourites: favouriteBox = await Hive.openBox<FavouriteMealDBO>(
+        'wipe_favourites_$tag',
+      ),
+      sharedAppConfig: appConfigBox,
+    );
+
+    backing = _MemoryStorage();
+    credentials = AiCredentialStorage(backing);
+    widgetStore = _RecordingWidgetStore();
+    sut = DeleteAllUserDataUsecase(
+      provider,
+      DailyReminderScheduler(
+        ConfigRepository(ConfigDataSource(provider)),
+        _SilentNotificationService(),
+      ),
+      credentials,
+      calorieWidgetStore: widgetStore,
+    );
+  });
+
+  tearDown(() async {
+    await Hive.deleteFromDisk();
+  });
+
+  test('takes the AI credentials with it', () async {
+    // #892. Every one of these survived the wipe, so a reset landed on
+    // onboarding with the provider still selected, still enabled, and a
+    // working paid key behind it.
+    await credentials.writeApiKey('sk-ant', provider: AiProvider.anthropic);
+    await credentials.setActiveProvider(AiProvider.openrouter);
+    await credentials.writeApiKey('sk-or', provider: AiProvider.openrouter);
+    await credentials.setTermsAccepted(true);
+    await credentials.setEnabled(true);
+    expect(await credentials.isEnabled(), isTrue, reason: 'setup');
+
+    await sut.deleteAll();
+
+    expect(backing.store, isEmpty);
+    expect(
+      await credentials.readApiKey(provider: AiProvider.anthropic),
+      isNull,
+    );
+    expect(await credentials.isEnabled(), isFalse);
+    // The agreement is a record of consent, not a setting. #836 already
+    // refused to let one outlive the credential it authorised; a wipe is the
+    // strongest case of that.
+    expect(await credentials.hasAcceptedTerms(), isFalse);
+  });
+
+  test('takes the address of a server the user runs', () async {
+    // The endpoint is the one credential that is not a key, and it names a
+    // machine on someone's own network. #732 put it in this store so it
+    // could not be left behind on its own.
+    await credentials.setActiveProvider(AiProvider.ownServer);
+    await credentials.writeOwnServerConfiguration(
+      endpoint: 'http://192.168.1.4:11434',
+      model: 'llama3.2',
+      provider: AiProvider.ownServer,
+    );
+    expect(
+      await credentials.readEndpoint(provider: AiProvider.ownServer),
+      isNotNull,
+      reason: 'setup',
+    );
+
+    await sut.deleteAll();
+
+    expect(
+      await credentials.readEndpoint(provider: AiProvider.ownServer),
+      isNull,
+    );
+    expect(await credentials.readModel(provider: AiProvider.ownServer), isNull);
+  });
+
+  test('still clears the active profile boxes', () async {
+    await configBox.put(
+      'ConfigKey',
+      ConfigDBO.empty()
+        ..userKcalAdjustment = 300
+        ..healthImportEnabled = true,
+    );
+    await provider.trackedDay.put('2026-10-04', _row(DateTime(2026, 10, 4)));
+
+    await sut.deleteAll();
+
+    // All the profile config keeps is the boundary its rows are keyed by.
+    final config = configBox.get('ConfigKey')!;
+    expect(config.userKcalAdjustment, isNull);
+    expect(config.healthImportEnabled, isNull);
+    expect(provider.trackedDay.isEmpty, isTrue);
+  });
+
+  test('a profile reset, re-onboarded under a kept 04:00 boundary, does not '
+      'credit an activity before the boundary twice on activation', () async {
+    // #1317. The boundary is app-wide, so the reset keeps it, and the
+    // reset profile's rows are keyed by it from the first entry on.
+    final configs = ConfigDataSource(provider);
+    await configs.initializeConfig();
+    await configs.setConfigDayStartOffsetHours(4);
+    await configs.setConfigTrackedDaysOffsetMinutes(240);
+
+    await sut.deleteAll();
+    expect(configs.getConfigNow().trackedDaysOffsetMinutes, 240);
+
+    // Re-onboarded, then a 150 kcal walk logged from Home at 02:00: the
+    // Diary lists it on the 4th, so it raised the 4th's goal from 2000.
+    final at = DateTime(2026, 10, 5, 2);
+    await UserActivityDataSource(provider).addUserActivity(
+      UserActivityDBO.fromUserActivityEntity(
+        UserActivityEntity(
+          'walk',
+          30,
+          150,
+          at,
+          PhysicalActivityFixtures.moderateBicycling,
+        ),
+      ),
+    );
+    await provider.trackedDay.put(
+      '2026-10-04',
+      _row(DateTime(2026, 10, 4), calorieGoal: 2150),
+    );
+
+    await ensureTrackedDaysMatchEntries(provider, configs);
+
+    expect(provider.trackedDay.length, 1);
+    expect(provider.trackedDay.get('2026-10-04')!.calorieGoal, 2150);
+  });
+
+  test('clears the active profile\'s favourites', () async {
+    // #1307: Favourites are per-profile, so a reset takes them with the
+    // rest of this profile's data.
+    await favouriteBox.put(
+      'off:1',
+      FavouriteMealDBO(
+        meal: MealDBO.fromMealEntity(MealEntity.empty()),
+        addedAt: DateTime(2026, 10, 4),
+      ),
+    );
+
+    await sut.deleteAll();
+
+    expect(favouriteBox.isEmpty, isTrue);
+  });
+
+  test('clears the home-screen widget', () async {
+    // The widget reads an App Group copy, not Hive, so without this it kept
+    // showing the deleted profile's intake and goal until the day ended.
+    await sut.deleteAll();
+
+    expect(widgetStore.clears, 1);
+  });
+
+  test('a widget that cannot be cleared does not keep the data', () async {
+    await configBox.put(
+      'ConfigKey',
+      ConfigDBO.empty()..userKcalAdjustment = 300,
+    );
+    await provider.trackedDay.put('2026-10-04', _row(DateTime(2026, 10, 4)));
+    await credentials.setEnabled(true);
+    final failing = _RecordingWidgetStore(fails: true);
+
+    await DeleteAllUserDataUsecase(
+      provider,
+      DailyReminderScheduler(
+        ConfigRepository(ConfigDataSource(provider)),
+        _SilentNotificationService(),
+      ),
+      credentials,
+      calorieWidgetStore: failing,
+    ).deleteAll();
+
+    expect(failing.clears, 1);
+    expect(configBox.get('ConfigKey')!.userKcalAdjustment, isNull);
+    expect(provider.trackedDay.isEmpty, isTrue);
+    expect(await credentials.isEnabled(), isFalse);
+  });
+
+  test('leaves the shared app settings alone', () async {
+    // The exclusions #892 warned against widening. App-wide settings are
+    // shared by every profile, so a per-profile reset must not touch them —
+    // the AI store is the single deliberate exception, and it is the one
+    // thing here the confirmation dialog names.
+    await appConfigBox.put('ConfigKey', ConfigDBO.empty());
+
+    await sut.deleteAll();
+
+    expect(appConfigBox.isNotEmpty, isTrue);
+  });
+}

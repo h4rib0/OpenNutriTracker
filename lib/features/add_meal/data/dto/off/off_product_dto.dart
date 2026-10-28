@@ -6,6 +6,19 @@ import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_nutr
 
 part 'off_product_dto.g.dart';
 
+String? _brandsFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is List) {
+    final parts = value
+        .map((e) => e?.toString().trim())
+        .whereType<String>()
+        .where((e) => e.isNotEmpty);
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+  final text = value.toString().trim();
+  return text.isEmpty ? null : text;
+}
+
 @JsonSerializable()
 class OFFProductDTO {
   final String? code;
@@ -13,16 +26,22 @@ class OFFProductDTO {
   final String? product_name_en;
   final String? product_name_fr;
   final String? product_name_de;
-  // OFF carries product names in many languages — these five cover the
-  // remaining locales the ONT UI ships in (cs / it / sk / tr / uk). When any
-  // are missing or blank for a particular product the lookup falls
-  // through to product_name / product_name_en / etc as before.
+  // OFF carries product names in many languages — these are the other
+  // locales SupportedLanguage names (cs / it / sk / tr / uk / hu / es). Each
+  // must also be requested in OFFConst's field lists, or OFF never sends
+  // it. When any are missing or blank for a particular product the lookup
+  // falls through to product_name / product_name_en / etc as before.
   final String? product_name_cs;
   final String? product_name_it;
   final String? product_name_sk;
   final String? product_name_tr;
   final String? product_name_uk;
+  final String? product_name_hu;
+  final String? product_name_es;
 
+  // Search-a-licious returns brands as a list, the v2 product endpoint as a
+  // comma-separated string; normalise both to a single display string.
+  @JsonKey(fromJson: _brandsFromJson)
   final String? brands;
 
   final String? image_front_thumb_url;
@@ -37,6 +56,22 @@ class OFFProductDTO {
   final dynamic product_quantity; // Can either be int or String
   final dynamic serving_quantity; // Can either be int or String
   final String? serving_size; // E.g. 2 Tbsp (32 g)
+  // OFF-normalised unit of serving_quantity ('g' or 'ml'). Preferred
+  // source for the product's entry unit; only the v2 product endpoint
+  // carries it (absent from the Search-a-licious projection).
+  final String? serving_quantity_unit;
+
+  // Open Food Facts' precomputed ranking key (a composite of scan popularity,
+  // data completeness and quality). Higher is better; null/absent for sparse
+  // or never-scanned products. Used to re-rank text-search results so popular,
+  // well-maintained products surface first. Only present on Search-a-licious
+  // results — the v2 barcode endpoint omits it, which is fine (single product).
+  final num? popularity_key;
+
+  // Open Food Facts country tags (e.g. `en:united-kingdom`). Used to softly
+  // boost products sold in the user's country up the search ranking. Only
+  // present on Search-a-licious results.
+  final List<String>? countries_tags;
 
   final OFFProductNutrimentsDTO? nutriments;
 
@@ -63,6 +98,12 @@ class OFFProductDTO {
         break;
       case SupportedLanguage.uk:
         localeName = product_name_uk;
+        break;
+      case SupportedLanguage.hu:
+        localeName = product_name_hu;
+        break;
+      case SupportedLanguage.es:
+        localeName = product_name_es;
         break;
       case SupportedLanguage.pl:
       case SupportedLanguage.zh:
@@ -92,6 +133,8 @@ class OFFProductDTO {
     this.product_name_sk,
     this.product_name_tr,
     this.product_name_uk,
+    this.product_name_hu,
+    this.product_name_es,
     required this.brands,
     required this.image_front_thumb_url,
     required this.image_front_url,
@@ -103,7 +146,10 @@ class OFFProductDTO {
     required this.product_quantity,
     required this.serving_quantity,
     required this.serving_size,
+    this.serving_quantity_unit,
     required this.nutriments,
+    this.popularity_key,
+    this.countries_tags,
   });
 
   factory OFFProductDTO.fromJson(Map<String, dynamic> json) =>

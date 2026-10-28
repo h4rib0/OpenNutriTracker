@@ -18,7 +18,9 @@ OFFProductDTO _$OFFProductDTOFromJson(Map<String, dynamic> json) =>
       product_name_sk: json['product_name_sk'] as String?,
       product_name_tr: json['product_name_tr'] as String?,
       product_name_uk: json['product_name_uk'] as String?,
-      brands: json['brands'] as String?,
+      product_name_hu: json['product_name_hu'] as String?,
+      product_name_es: json['product_name_es'] as String?,
+      brands: _brandsFromJson(json['brands']),
       image_front_thumb_url: json['image_front_thumb_url'] as String?,
       image_front_url: json['image_front_url'] as String?,
       image_ingredients_url: json['image_ingredients_url'] as String?,
@@ -29,11 +31,16 @@ OFFProductDTO _$OFFProductDTOFromJson(Map<String, dynamic> json) =>
       product_quantity: json['product_quantity'],
       serving_quantity: json['serving_quantity'],
       serving_size: json['serving_size'] as String?,
+      serving_quantity_unit: json['serving_quantity_unit'] as String?,
       nutriments: json['nutriments'] == null
           ? null
           : OFFProductNutrimentsDTO.fromJson(
               json['nutriments'] as Map<String, dynamic>,
             ),
+      popularity_key: json['popularity_key'] as num?,
+      countries_tags: (json['countries_tags'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$OFFProductDTOToJson(OFFProductDTO instance) =>
@@ -48,6 +55,8 @@ Map<String, dynamic> _$OFFProductDTOToJson(OFFProductDTO instance) =>
       'product_name_sk': instance.product_name_sk,
       'product_name_tr': instance.product_name_tr,
       'product_name_uk': instance.product_name_uk,
+      'product_name_hu': instance.product_name_hu,
+      'product_name_es': instance.product_name_es,
       'brands': instance.brands,
       'image_front_thumb_url': instance.image_front_thumb_url,
       'image_front_url': instance.image_front_url,
@@ -59,5 +68,8 @@ Map<String, dynamic> _$OFFProductDTOToJson(OFFProductDTO instance) =>
       'product_quantity': instance.product_quantity,
       'serving_quantity': instance.serving_quantity,
       'serving_size': instance.serving_size,
+      'serving_quantity_unit': instance.serving_quantity_unit,
+      'popularity_key': instance.popularity_key,
+      'countries_tags': instance.countries_tags,
       'nutriments': instance.nutriments,
     };

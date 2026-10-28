@@ -1,28 +1,10 @@
 class FDCConst {
-  static const _pageSize = "20";
-
-  // URL
+  // Public FDC website. Used only to build the attribution/detail links the
+  // user can tap through to; the app makes no requests to USDA itself — FDC
+  // food data reaches the app through the Supabase backend.
   static const fdcWebsiteUrl = "https://fdc.nal.usda.gov/fdc-app.html#";
   static const _fdcFoodDetailPath = "/food-details/";
   static const _fdcFoodDetailNutrientsPath = "/nutrients";
-  static const _fdcBaseUrl = "api.nal.usda.gov";
-  static const _fdcFoodSearchPath = "/fdc/v1/foods/search";
-
-  static const _fdcQueryTag = "query";
-  static const _fdcPageSizeTag = "pageSize";
-  static const _fdcDataTypeTag = "dataType";
-
-  // static const _fdcDataTypeBrandedValue = "Branded";
-  static const _fdcDataTypeFoundationValue = "Foundation";
-  static const _fdcDataTypeSRLegacyValue = "SR Legacy";
-  static const _fdcSortOrderTag = "sortOrder";
-  static const _fdcSortOrderAscValue = "asc";
-  static const _fdcApiKeyTag = "api_key";
-
-  static const _dataTypeParams = [
-    _fdcDataTypeFoundationValue,
-    _fdcDataTypeSRLegacyValue,
-  ];
 
   static const fdcDefaultUnit = 'g/ml';
 
@@ -154,7 +136,7 @@ class FDCConst {
 
   static String getFoodDetailUrlString(String? code) {
     if (code == null) {
-      return _fdcBaseUrl;
+      return fdcWebsiteUrl;
     } else {
       return fdcWebsiteUrl +
           _fdcFoodDetailPath +
@@ -163,50 +145,44 @@ class FDCConst {
     }
   }
 
-  static String _getDataTypeParams() => _dataTypeParams.join(",");
-
-  static Uri getFDCWordSearchUrl(String searchString, String apiKey) {
-    final queryParameters = {
-      _fdcQueryTag: searchString,
-      _fdcPageSizeTag: _pageSize,
-      _fdcDataTypeTag: _getDataTypeParams(),
-      _fdcSortOrderTag: _fdcSortOrderAscValue,
-      _fdcApiKeyTag: apiKey,
-    };
-
-    return Uri.https(_fdcBaseUrl, _fdcFoodSearchPath, queryParameters);
-  }
-
-  // Nutriment codes
+  // Nutriment codes. These are FDC nutrient *ids* (the `nutrient.id` /
+  // `nutrientId` field), not the FDC nutrient *numbers*. The Supabase
+  // `fdc_nutrients.nutrient_id` column keys on the id. The Atwater energy ids
+  // differ from their numbers (957/958), so they must be the ids 2047/2048 to
+  // match; using the numbers meant Foundation foods that carry only Atwater
+  // energy (no plain Energy 1008) silently resolved to no kcal and were
+  // rejected as "missing required kcal" (#252).
   static const fdcTotalKcalId = 1008;
-  static const fdcKcalAtwaterGeneralId = 957;
-  static const fdcKcalAtwaterSpecificId = 958;
+  static const fdcKcalAtwaterGeneralId = 2047; // number 957
+  static const fdcKcalAtwaterSpecificId = 2048; // number 958
   static const fdcTotalCarbsId = 1005;
   static const fdcTotalFatId = 1004;
   static const fdcTotalProteinsId = 1003;
   static const fdcTotalSugarId = 1063;
   static const fdcTotalSaturatedFatId = 1258;
   static const fdcTotalDietaryFiberId = 1079;
-  // #237: Extended lipid profile
-  static const fdcMonounsaturatedFatId = 645;
-  static const fdcPolyunsaturatedFatId = 646;
-  static const fdcTransFatId = 605;
-  static const fdcCholesterolId = 601;
+  // #237: Extended lipid profile (FDC ids; trailing comment is the number)
+  static const fdcMonounsaturatedFatId = 1292; // number 645, g
+  static const fdcPolyunsaturatedFatId = 1293; // number 646, g
+  static const fdcTransFatId = 1257; // number 605, g
+  static const fdcCholesterolId = 1253; // number 601, mg
   // #237: Minerals
-  static const fdcSodiumId = 307;
-  static const fdcPotassiumId = 306;
-  static const fdcMagnesiumId = 304;
-  static const fdcCalciumId = 301;
-  static const fdcIronId = 303;
-  static const fdcZincId = 309;
-  static const fdcPhosphorusId = 305;
-  // #237: Vitamins
-  static const fdcVitaminAId = 318; // µg RAE
-  static const fdcVitaminCId = 401; // mg
-  static const fdcVitaminDId = 328; // µg
-  static const fdcVitaminB6Id = 415; // mg
-  static const fdcVitaminB12Id = 418; // µg
-  static const fdcNiacinId = 406; // mg (B3)
+  static const fdcSodiumId = 1093; // number 307, mg
+  static const fdcPotassiumId = 1092; // number 306, mg
+  static const fdcMagnesiumId = 1090; // number 304, mg
+  static const fdcCalciumId = 1087; // number 301, mg
+  static const fdcIronId = 1089; // number 303, mg
+  static const fdcZincId = 1095; // number 309, mg
+  static const fdcPhosphorusId = 1091; // number 305, mg
+  // #237: Vitamins. Vitamin A uses the RAE id (1106), not the IU form (1104),
+  // so the value matches the µg RAE the panel expects; Vitamin D uses the µg
+  // id (1114), not the IU form (1110).
+  static const fdcVitaminAId = 1106; // number 320, µg RAE
+  static const fdcVitaminCId = 1162; // number 401, mg
+  static const fdcVitaminDId = 1114; // number 328, µg
+  static const fdcVitaminB6Id = 1175; // number 415, mg
+  static const fdcVitaminB12Id = 1178; // number 418, µg
+  static const fdcNiacinId = 1167; // number 406, mg (B3)
 
   // Measure unit codes
   static const fdcPortionServingId = 1049;

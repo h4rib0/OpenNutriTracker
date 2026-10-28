@@ -1,111 +1,4 @@
 {
-  "@clearOffCacheSubtitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "size": {
-        "type": "String"
-      }
-    }
-  },
-  "@csvImportPartialLabel": {
-    "placeholders": {
-      "imported": {
-        "type": "int"
-      },
-      "skipped": {
-        "type": "int"
-      }
-    }
-  },
-  "@csvImportSuccessLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@deleteSelectedRecipesConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@driPanelReferenceLabel": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@diaryMealKcalConsumedOfTarget": {
-    "placeholders": {
-      "consumed": {
-        "type": "String"
-      },
-      "target": {
-        "type": "String"
-      }
-    }
-  },
-  "@importActivityConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importMealConfirmContent": {
-    "placeholders": {
-      "mealType": {
-        "type": "String"
-      }
-    }
-  },
-  "@importMealConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importOffFetchFailedLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importRecipeConfirmContent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@profileTargetWeightToGo": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@recipeIngredientCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@selectionCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "activityExample": "наприклад, біг, їзда на велосипеді, йога ...",
   "activityLabel": "Активність",
   "addItemLabel": "Додати новий елемент:",
@@ -113,6 +6,110 @@
   "additionalInfoLabelCompendium2011": "Інформація надана\n \"2024 Compendium\n of Physical Activities\"",
   "additionalInfoLabelCustom": "Власний елемент їжі",
   "additionalInfoLabelFDC": "Більше інформації на\nFoodData Central",
+  "additionalInfoLabelSource": "Більше інформації на\n{sourceName}",
+  "foodSourcesAlwaysEnabledLabel": "Завжди ввімкнено",
+  "foodSourcesHelpText": "Результати пошуку надходять із цих баз даних продуктів. Open Food Facts забезпечує пошук продуктів і штрих-кодів і завжди ввімкнена.",
+  "machineTranslatedNameHint": "Назву перекладено автоматично",
+  "measureUnitBar": "{count, plural, one{батончик} few{батончики} many{батончиків} other{батончика}}",
+  "@measureUnitBar": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitBottle": "{count, plural, one{пляшка} few{пляшки} many{пляшок} other{пляшки}}",
+  "@measureUnitBottle": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCan": "{count, plural, one{банка} few{банки} many{банок} other{банки}}",
+  "@measureUnitCan": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCup": "{count, plural, one{чашка} few{чашки} many{чашок} other{чашки}}",
+  "@measureUnitCup": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitEgg": "{count, plural, one{яйце} few{яйця} many{яєць} other{яйця}}",
+  "@measureUnitEgg": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPackage": "{count, plural, one{упаковка} few{упаковки} many{упаковок} other{упаковки}}",
+  "@measureUnitPackage": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPiece": "{count, plural, one{шматок} few{шматки} many{шматків} other{шматка}}",
+  "@measureUnitPiece": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPortion": "{count, plural, one{порція} few{порції} many{порцій} other{порції}}",
+  "@measureUnitPortion": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitServing": "{count, plural, one{порція} few{порції} many{порцій} other{порції}}",
+  "@measureUnitServing": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitSlice": "{count, plural, one{скибка} few{скибки} many{скибок} other{скибки}}",
+  "@measureUnitSlice": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTablespoon": "{count, plural, one{столова ложка} few{столові ложки} many{столових ложок} other{столової ложки}}",
+  "@measureUnitTablespoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTeaspoon": "{count, plural, one{чайна ложка} few{чайні ложки} many{чайних ложок} other{чайної ложки}}",
+  "@measureUnitTeaspoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "settingsFoodSourcesLabel": "Бази даних продуктів",
+  "settingsFoodSourcesSubtitle": "Виберіть, звідки надходять результати пошуку",
+  "onboardingOtherOptionsLabel": "Інші параметри",
+  "onboardingOtherOptionsSubtitle": "Налаштуйте застосунок — усе можна змінити пізніше в налаштуваннях",
   "additionalInfoLabelOFF": "Більше інформації на\nOpenFoodFacts",
   "additionalInfoLabelRecipe": "Власний рецепт",
   "additionalInfoLabelUnknown": "Невідомий елемент їжі",
@@ -124,9 +121,11 @@
   "appTitle": "OpenNutriTracker",
   "appVersionName": "Версія {versionNumber}",
   "barcodeInvalidEan13CheckDigit": "Цей 13-значний штрих-код, схоже, введено з помилкою: остання цифра не збігається з рештою",
-  "baseQuantityLabel": "Базова кількість (г/мл)",
-  "betaVersionName": "[Бета]",
+  "baseQuantityLabel": "Поживність на",
   "bmiInfo": "Індекс маси тіла (ІМТ) — це індекс для класифікації надмірної ваги та ожиріння у дорослих. Визначається як вага в кілограмах, поділена на квадрат зросту в метрах (кг/м²). ІМТ не розрізняє жирову і м'язову масу і може бути неточним для деяких людей.",
+  "bmiInfoClassificationSection": "Класифікація ВООЗ",
+  "bmiInfoFormulaSection": "Формула",
+  "bmiInfoScreenTitle": "Як обчислюється ваш ІМТ",
   "bmiLabel": "ІМТ",
   "breakfastExample": "наприклад, пластівці, молоко, кава ...",
   "breakfastLabel": "Сніданок",
@@ -157,6 +156,16 @@
   "clearOffCacheConfirmTitle": "Очистити кеш?",
   "clearOffCacheLabel": "Очистити кеш",
   "clearOffCacheSubtitle": "{count} елементів · {size}",
+  "@clearOffCacheSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "cmLabel": "см",
   "codeCopiedLabel": "Код скопійовано",
   "copyCodeLabel": "Копіювати код",
@@ -171,7 +180,24 @@
   "csvImportContributeOffPrefix": "Маєте штрих-код? Додайте продукт до Open Food Facts:",
   "csvImportErrorLabel": "Не вдалося прочитати CSV файл. Перевірте формат і спробуйте знову.",
   "csvImportPartialLabel": "Імпортовано {imported} страв; {skipped} рядків пропущено через неправильні дані.",
+  "@csvImportPartialLabel": {
+    "placeholders": {
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
   "csvImportSuccessLabel": "Імпортовано {count} страв.",
+  "@csvImportSuccessLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "customActivityDescription": "Введіть спалені калорії безпосередньо — для тренувань, яких немає у списку, або показників із фітнес-трекера",
   "customActivityDescriptionKj": "Введіть спалені кілоджоулі безпосередньо — для тренувань, яких немає у списку, або показників із фітнес-трекера",
   "customActivityKcalHint": "напр. 250",
@@ -187,7 +213,7 @@
   "customMealBarcodeLabel": "Штрих-код",
   "customMealBarcodeScanButton": "Сканувати штрих-код",
   "customMealFormAdvanced": "Розширений",
-  "customMealFormAdvancedHelp": "Вкажіть базову кількість і значення на 100 г/мл для точного перерахунку.",
+  "customMealFormAdvancedHelp": "Вкажіть розміри і значення на 100 г/мл для точного перерахунку.",
   "customMealFormModeLabel": "Вигляд форми",
   "customMealFormSimple": "Простий",
   "customMealFormSimpleHelp": "Введіть значення для однієї порції.",
@@ -204,13 +230,17 @@
   "customMealsEmptyLabel": "Ще немає збережених власних страв.",
   "dailyKcalAdjustmentLabel": "Щоденна корекція калорій:",
   "dailyKjAdjustmentLabel": "Щоденна корекція кДж:",
-  "dataCollectionLabel": "Надсилати анонімні звіти про збої, щоб допомогти виправляти помилки. Жодні дані про їжу, вагу чи особисті дані не передаються.",
+  "dataCollectionLabel": "Надсилати звіти про збої, щоб допомогти виправляти помилки. Жодні дані про їжу чи вагу не передаються.",
   "deleteAllLabel": "Видалити все",
-  "settingsDeleteAllDataLabel": "Видалити всі мої дані",
-  "settingsDeleteAllDataSubtitle": "Профіль, прийоми їжі, активності та історію ваги",
-  "settingsDeleteAllDataConfirmTitle": "Видалити всі ваші дані?",
-  "settingsDeleteAllDataConfirmContent": "Це остаточно видалить з цього пристрою ваш профіль, прийоми їжі, активності, історію ваги та всі власні рецепти. Бази Open Food Facts та USDA Food Data Central залишаться без змін. Цю дію не можна скасувати.",
-  "settingsDeleteAllDataConfirmAction": "Видалити все",
+  "settingsDeleteAllDataLabel": "Скинути дані профілю",
+  "settingsDeleteAllDataSubtitle": "Профіль, прийоми їжі, активності, історія ваги та пости",
+  "settingsDeleteAllDataConfirmTitle": "Скинути дані профілю?",
+  "settingsDeleteAllDataConfirmContent": "Це видалить ваш профіль, прийоми їжі, активності, історію ваги та пости – лише для поточного профілю. Також буде видалено ключ API та адресу сервера для функцій ШІ, які спільні для всіх профілів на цьому пристрої. Спільний вміст (власні страви, рецепти, шаблони активностей) і каталоги Open Food Facts та USDA Food Data Central залишаться без змін. Цю дію не можна скасувати.",
+  "policyChangeNoticeTitle": "Ми оновили політику конфіденційності",
+  "policyChangeNoticeBody": "У тому, що робить застосунок, нічого не змінилося. Змінилося те, скільки ми тобі про це розповідаємо.\n\nСервіси, які завжди отримували твої пошукові запити, тепер названі поіменно. З’явився новий розділ про дані про здоров’я — для імпорту тренувань, який ти можеш увімкнути. А ще ми тепер розкриваємо приблизне місцеперебування, яке наш бекенд пошуку продуктів записує разом із запитом і зберігає 24 години.\n\nТвій щоденник залишається на твоєму пристрої, як і завжди.",
+  "policyChangeNoticeReadAction": "Прочитати політику",
+  "policyChangeNoticeDismissAction": "Зрозуміло",
+  "settingsDeleteAllDataConfirmAction": "Скинути профіль",
   "lowKcalWarningTitle": "Ця денна ціль доволі низька",
   "lowKcalWarningBody": "Дорослим без медичного нагляду не варто тривало споживати менше ніж {threshold} ккал на день. Будь ласка, перш ніж залишати такий низький рівень, проконсультуйтеся з лікарем.",
   "@lowKcalWarningBody": {
@@ -222,6 +252,13 @@
   },
   "lowKcalWarningViewDisclaimer": "Переглянути застереження",
   "deleteSelectedRecipesConfirmTitle": "Видалити {count} рецепт(ів)?",
+  "@deleteSelectedRecipesConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteTimeDialogContent": "Ви хочете видалити вибраний елемент?",
   "deleteTimeDialogPluralContent": "Ви хочете видалити всі елементи цієї страви?",
   "deleteTimeDialogPluralTitle": "Видалити елементи?",
@@ -233,12 +270,29 @@
   "diaryFutureDateWarning": "Ви редагуєте майбутню дату",
   "diaryLabel": "Щоденник",
   "diaryMealKcalConsumedOfTarget": "{consumed} / {target} kcal",
+  "@diaryMealKcalConsumedOfTarget": {
+    "placeholders": {
+      "consumed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
   "diaryNutrientPanelDataDisclaimer": "Тут підсумовуються лише ті поживні речовини, які записані для зареєстрованих страв. Страва без значення не додає нічого до відповідного показника — тож суми можуть бути занижені.",
   "diaryNutrientPanelTitle": "Поживні речовини за сьогодні",
   "driPanelInfoTitle": "Орієнтовне споживання",
   "driPanelInfoBody": "Ці орієнтовні значення взято з рекомендованих норм споживання IOM для дорослих і вони залежать від віку та статі. Це точка відліку, а не мета — твої власні потреби можуть бути іншими.",
   "driPanelInfoLinkLabel": "Джерело: IOM Dietary Reference Intakes",
   "driPanelReferenceLabel": "орієнт. {value}",
+  "@driPanelReferenceLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "diarySortByCarbs": "Вуглеводи (за спаданням)",
   "diarySortByFat": "Жири (за спаданням)",
   "diarySortByKcal": "Калорії (за спаданням)",
@@ -250,6 +304,7 @@
   "discardChangesConfirmLabel": "Скасувати",
   "discardChangesContent": "Ваші незбережені зміни будуть втрачені.",
   "discardChangesTitle": "Скасувати зміни?",
+  "disclaimerAcknowledgeLabel": "Зрозуміло",
   "disclaimerText": "OpenNutriTracker не є медичним додатком. Всі надані дані не перевіряються і повинні використовуватися з обережністю. Будь ласка, ведіть здоровий спосіб життя і консультуйтеся з фахівцем, якщо у вас виникли проблеми. Використання під час хвороби, вагітності або лактації не рекомендується. Рецензовані джерела для кожного розрахунку відкриваються через піктограму інформації на екрані Головна або Профіль.",
   "downloadSampleCsvAction": "Зразкові страви (csv)",
   "downloadSampleJsonAction": "Зразкові страви (json)",
@@ -277,12 +332,15 @@
   "exportImportCsvRecipesNote": "CSV зберігає активність, журнал прийомів їжі та відстежувані дні. Рецепти й додані фото зберігаються лише в JSON — перейдіть на JSON, якщо хочете залишити їх у резервній копії.",
   "exportImportDescription": "Ви можете експортувати дані додатка у zip-файл і імпортувати їх пізніше. Це корисно, якщо ви хочете зробити резервну копію або перенести дані на інший пристрій. Додаток не використовує жодних хмарних сервісів для зберігання ваших даних.",
   "exportImportErrorLabel": "Помилка експорту / імпорту",
+  "exportImportErrorUnreadableLabel": "Не вдалося прочитати вибраний файл. Виберіть резервну копію .zip, експортовану OpenNutriTracker.",
+  "exportImportErrorWriteFailedLabel": "Не вдалося зберегти файл у вибраному місці. Спробуйте іншу папку.",
   "exportImportSuccessLabel": "Експорт / Імпорт успішний",
   "fatLabel": "жири",
   "fatLabelShort": "ж",
   "fiberLabel": "клітковина",
   "flOzUnit": "рідка унція",
   "ftLabel": "фут",
+  "inLabel": "дюйм",
   "genderFemaleLabel": "жінка",
   "genderLabel": "Стать",
   "genderMaleLabel": "чоловік",
@@ -295,22 +353,73 @@
   "gramUnit": "г",
   "heightLabel": "Зріст",
   "homeLabel": "Головна",
+  "homeFirstMealHint": "Натисніть +, щоб додати першу їжу чи активність",
+  "homeDemoBannerLabel": "Ви переглядаєте зразкові дані",
+  "homeDemoBannerAction": "Налаштувати свій профіль",
+  "homeDemoBannerConfirmTitle": "Налаштувати власний профіль?",
+  "homeDemoBannerConfirmContent": "Зразкові дані буде видалено, і ви налаштуєте власний профіль. Цю дію неможливо скасувати.",
+  "homeDemoBannerConfirmAction": "Продовжити",
+  "trendsDailyAverageLabel": "Середнє за день",
+  "trendsLabel": "Тренди",
+  "youLabel": "Ви",
+  "trendsCaloriesLabel": "Калорії",
+  "trendsDaysOnTrack": "днів у нормі цього тижня",
+  "trendsDayStreakLabel": "днів поспіль",
+  "trendsBestStreakLabel": "рекорд",
+  "trendsPerWeekSuffix": "/тиждень",
+  "trendsWeeksToGoalLabel": "тижнів до мети",
+  "trendsWaterLabel": "Вода",
   "importAction": "Імпортувати",
   "importActivityConfirmContent": "Ці активності буде додано на сьогодні.",
   "importActivityConfirmTitle": "Імпортувати {count} активностей?",
+  "@importActivityConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importActivityLabel": "Імпортувати спільне тренування",
   "importActivitySuccessLabel": "Тренування імпортовано",
   "importCustomFoodDataDescription": "Імпортуйте власні страви з CSV-файлу або вставивши JSON. Завантажте зразок, щоб побачити очікувану форму та обовʼязкові поля.",
   "importCustomFoodDataLabel": "Імпортувати власні дані про їжу",
   "importMealConfirmContent": "These items will be added to your {mealType}.",
+  "@importMealConfirmContent": {
+    "placeholders": {
+      "mealType": {
+        "type": "String"
+      }
+    }
+  },
   "importMealConfirmTitle": "Import {count} items?",
+  "@importMealConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importMealErrorLabel": "Invalid QR code",
   "importMealLabel": "Import shared meal",
   "importMealSuccessLabel": "Meal imported",
   "importMealsCsvAction": "Імпортувати страви (csv)",
   "importMealsJsonAction": "Імпортувати страви (json)",
   "importOffFetchFailedLabel": "{count} елемент(ів) не вдалося отримати з OpenFoodFacts.",
+  "@importOffFetchFailedLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeConfirmContent": "Імпортувати цей рецепт з {count} інгредієнт(ами)?",
+  "@importRecipeConfirmContent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeErrorLabel": "Не вдалося розпізнати код рецепта",
   "importRecipeLabel": "Імпортувати рецепт",
   "importRecipeSuccessLabel": "Рецепт імпортовано",
@@ -325,12 +434,38 @@
   "ironLabel": "залізо",
   "itemDeletedSnackbar": "Елемент видалено",
   "itemUpdatedSnackbar": "Елемент оновлено",
+  "kcalGoalInfoActivityExplanation": "Калорії, спалені зафіксованими активностями, додаються до цілі, тож запланований дефіцит чи профіцит у тренувальні дні не змінюється.",
+  "kcalGoalInfoActivitySection": "Крок 4 · Сьогоднішні тренування",
+  "kcalGoalInfoAdjustmentExplanationFlat": "Ваша ціль ваги застосовує фіксовану добову поправку: −500 ккал для схуднення, +500 ккал для набору, 0 для підтримання.",
+  "kcalGoalInfoAdjustmentExplanationWeekly": "Добову поправку визначає ваш тижневий темп. 1 кг жирової тканини містить близько 7 700 ккал, тож кожен кг на тиждень зсуває ціль приблизно на 1 100 ккал на день.",
+  "kcalGoalInfoAdjustmentSection": "Крок 2 · Поправка на ціль ваги",
+  "kcalGoalInfoAppliedAdjustmentLabel": "Застосована поправка",
+  "kcalGoalInfoAveragedNote": "З усередненим еталоном ваш TDEE — це середина між чоловічим і жіночим еталонними результатами.",
+  "kcalGoalInfoBaseAdjustmentLabel": "Поправка цілі",
+  "kcalGoalInfoEstimateNote": "Усі формули — це оцінки на рівні популяції, індивідуальні потреби різняться. Ціль — це відправна точка, а не медична порада.",
+  "kcalGoalInfoFemaleReferenceLabel": "Жіночий еталон",
+  "kcalGoalInfoInputsSection": "Ваші дані",
+  "kcalGoalInfoIntro": "Ваша денна ціль калорій обчислюється за опублікованими науковими рівняннями лише з наведених нижче значень. Ця сторінка показує кожне число, що входить у сьогоднішню ціль.",
+  "kcalGoalInfoLearnMoreLabel": "Повна документація розрахунку",
+  "kcalGoalInfoMacroExplanation": "Ваша ціль калорій розподіляється на вуглеводи, жири та білки згідно з вашим розподілом макросів (типово: 60 % вуглеводи, 25 % жири, 15 % білки — можна змінити в Налаштуваннях). Грамові цілі випливають з енергетичної щільності: вуглеводи та білки дають 4 ккал на грам, жири — 9 ккал на грам.",
+  "kcalGoalInfoMacroSection": "Розподіл макронутрієнтів",
+  "kcalGoalInfoMaleReferenceLabel": "Чоловічий еталон",
+  "kcalGoalInfoManualExplanation": "Фіксований зсув, який ви самі задаєте в Налаштуваннях — якщо знаєте, що ваші потреби відрізняються від оцінки.",
+  "kcalGoalInfoManualSection": "Крок 3 · Ручна поправка",
+  "kcalGoalInfoPaRowLabel": "Коефіцієнт активності (PA)",
+  "kcalGoalInfoPalRowLabel": "Рівень фізичної активності (PAL)",
+  "kcalGoalInfoResultSection": "Сьогоднішня ціль калорій",
+  "kcalGoalInfoTaperNote": "Оскільки ввімкнено плавне зменшення біля цільової ваги, поправка зменшується з наближенням до цілі (повний ефект понад 5 кг, підтримання в межах 1 кг).",
+  "kcalGoalInfoTdeeExplanation": "Ваші загальні добові енерговитрати (TDEE) — енергія, яку ви витрачаєте у звичайний день — оцінюються рівнянням IOM 2005 за віком, вагою, зростом і рівнем активності.",
+  "kcalGoalInfoTdeeResultLabel": "Ваш TDEE",
+  "kcalGoalInfoTdeeSection": "Крок 1 · Енергія підтримання (TDEE)",
   "kcalLabel": "ккал",
   "kjLabel": "кДж",
   "kcalLeftLabel": "залишилось ккал",
   "kcalTooMuchLabel": "ккал понад норму",
   "kgLabel": "кг",
   "lbsLabel": "фунт",
+  "stLabel": "стоун",
   "lunchExample": "наприклад, піца, салат, рис ...",
   "lunchLabel": "Обід",
   "macroDistributionLabel": "Розподіл макроелементів:",
@@ -358,8 +493,8 @@
   "mealPatternStandard": "Стандарт",
   "mealPatternTwoMeal": "2 прийоми",
   "mealProteinLabel": "Білки",
-  "mealSizeLabel": "Розмір страви (г/мл)",
-  "mealSizeLabelImperial": "Розмір страви (унція/рідка унція)",
+  "mealSizeLabel": "Розмір упаковки",
+  "mealSizeLabelImperial": "Розмір упаковки (унція/рідка унція)",
   "mealUnitLabel": "Одиниця страви",
   "micronutrientsLabel": "Мікроелементи",
   "milliliterUnit": "мл",
@@ -370,6 +505,9 @@
   "noActivityRecentlyAddedLabel": "Нещодавно не додано активності",
   "noMealsRecentlyAddedLabel": "Нещодавно не додано страв",
   "noResultsFound": "Нічого не знайдено",
+  "noResultsSubtitle": "Жоден продукт не відповідає цьому пошуку. Спробуйте іншу назву, відскануйте штрих-код або створіть власний.",
+  "noResultsScanBarcode": "Сканувати штрих-код",
+  "noResultsCreateCustomFood": "Створити власний продукт",
   "notAvailableLabel": "Н/Д",
   "nothingAddedLabel": "Нічого не додано",
   "notificationsDailyReminderBody": "Не забудьте сьогодні записати свої страви!",
@@ -397,16 +535,40 @@
   "nutritionalStatusUnderweight": "Недостатня вага",
   "offDisclaimer": "Дані, які надає цей додаток, отримані з бази даних Open Food Facts. Не гарантується точність, повнота або надійність наданої інформації. Дані надаються “як є”, і джерело даних (Open Food Facts) не несе відповідальності за будь-які збитки, що виникають внаслідок використання даних.",
   "onboardingActivityQuestionSubtitle": "Наскільки ви активні? (без тренувань)",
+  "onboardingAdultEquationNotice": "Калорійні цілі розраховуються за референсними рівняннями для дорослих. До 19 років порадьтеся щодо результату з лікарем або дієтологом.",
   "onboardingBirthdayHint": "Введіть дату",
   "onboardingBirthdayQuestionSubtitle": "Коли у вас день народження?",
+  "onboardingBlockedActivitySnack": "Виберіть рівень активності, щоб продовжити",
+  "onboardingBlockedBodySnack": "Введіть коректний зріст і вагу, щоб продовжити",
+  "onboardingBlockedDemoPolicySnack": "Прийміть політику конфіденційності, щоб спробувати демо",
+  "onboardingBlockedGoalSnack": "Виберіть свою вагову ціль, щоб продовжити",
+  "onboardingBlockedOverviewSnack": "Деяких даних бракує. Поверніться та завершіть попередні кроки.",
+  "onboardingBlockedPolicySnack": "Прийміть політику конфіденційності, щоб продовжити",
+  "onboardingBlockedProfileSnack": "Виберіть стать і вкажіть дату народження, щоб продовжити",
   "onboardingEnterBirthdayLabel": "День народження",
   "onboardingGenderQuestionSubtitle": "Ваша стать?",
   "onboardingGoalQuestionSubtitle": "Яка ваша поточна ціль ваги?",
+  "onboardingFoodSourcesEnabledCount": "Увімкнено: {enabled} з {total}",
+  "onboardingGoalSuggestedBadge": "Рекомендовано",
+  "onboardingGoalSuggestionBmi": "Ваш ІМТ — {bmi} — ВООЗ: {status}.",
+  "onboardingGoalSuggestionTarget": "На основі введеної цільової ваги.",
   "onboardingHeightExampleHintCm": "наприклад, 170",
   "onboardingHeightExampleHintFt": "наприклад, 5.8",
   "onboardingHeightQuestionSubtitle": "Який ваш поточний зріст?",
+  "onboardingHealthyRangeApply": "Використати {weight}",
+  "onboardingHealthyRangeLabel": "Здоровий діапазон для {height}: {range}",
+  "onboardingHealthyRangeSource": "ВООЗ, ІМТ 18,5–24,9",
+  "onboardingImplausibleChange": "Змінити",
+  "onboardingImplausibleHeightBody": "{value} — незвичний зріст. Залишити?",
+  "onboardingImplausibleKeep": "Залишити",
+  "onboardingImplausibleTitle": "Перевірте це значення",
+  "onboardingImplausibleWeightBody": "{value} — незвична вага. Залишити?",
   "onboardingIntroDescription": "Для початку додаток потребує деяку інформацію про вас, щоб розрахувати вашу щоденну ціль калорій.\nВся інформація про вас зберігається безпечно на вашому пристрої.",
   "onboardingIntroSourcesLinkLabel": "Переглянути джерела наших медичних обчислень",
+  "onboardingTryDemoLabel": "Спробувати демо",
+  "onboardingTryDemoSubtitle": "Пропустіть налаштування та дослідіть програму зі зразковими даними. Спочатку прийміть політику конфіденційності.",
+  "onboardingTryDemoDisclaimer": "Використовує лише вигадані зразкові дані. Звіти про збої лишаються вимкненими, доки ви не увімкнете їх пізніше. Зразкові фото та пошук їжі можуть використовувати мережу.",
+  "onboardingTryDemoError": "Не вдалося налаштувати демо. Будь ласка, спробуйте ще раз.",
   "onboardingKcalPerDayLabel": "ккал на день",
   "onboardingKjPerDayLabel": "кДж на день",
   "onboardingNonBinaryDisclaimer": "Опублікованої калорійної основи для небінарних людей не існує, тож за замовчуванням ми використовуємо середнє чоловічої та жіночої формул — це відправна точка, а не точна оцінка. Ти можеш скоригувати це у Налаштування → Розрахунки в будь-який час.",
@@ -417,6 +579,7 @@
   "onboardingWeightExampleHintKg": "наприклад, 60",
   "onboardingWeightExampleHintLbs": "наприклад, 132",
   "onboardingWeightQuestionSubtitle": "Яка ваша поточна вага?",
+  "onboardingFoodUnitsSubtitle": "Як ви записуєте їжу та напої",
   "onboardingWelcomeLabel": "Ласкаво просимо до",
   "onboardingWrongHeightLabel": "Введіть коректний зріст",
   "onboardingWrongWeightLabel": "Введіть коректну вагу",
@@ -612,7 +775,6 @@
   "paTaiChiQiGongGeneralDesc": "загальне",
   "paTennisGeneral": "теніс",
   "paTennisGeneralDesc": "загальне",
-  "paTrackField": "легка атлетика",
   "paTrackField1Desc": "(наприклад, штовхання ядра, метання диска, метання молота)",
   "paTrackField2Desc": "(наприклад, стрибки у висоту, стрибки в довжину, потрійний стрибок, метання списа, стрибки з жердиною)",
   "paTrackField3Desc": "(наприклад, стипль-чез, біг з бар'єрами)",
@@ -662,6 +824,13 @@
   "profileTargetWeightNotSetLabel": "Не задано",
   "profileTargetWeightReached": "Ви досягли своєї цілі",
   "profileTargetWeightToGo": "Залишилось {value} до цілі",
+  "@profileTargetWeightToGo": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightHistoryTitle": "Історія ваги",
   "proteinLabel": "білки",
   "proteinLabelShort": "б",
@@ -690,6 +859,13 @@
   "recipeImageTakePhoto": "Зробити фото",
   "recipeIngredientAmountLabel": "Кількість",
   "recipeIngredientCountLabel": "{count} інгредієнт(ів)",
+  "@recipeIngredientCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recipeIngredientUnitLabel": "Одиниця",
   "recipeIngredientsLabel": "Інгредієнти",
   "recipeInvalidTotalWeightLabel": "Загальна вага має бути більшою за нуль",
@@ -708,7 +884,6 @@
   "recipeServingsCountLabel": "Порції (необов'язково)",
   "recipeTagsHelper": "Через кому, напр. \"сніданок, веганське\"",
   "recipeTagsLabel": "Теги",
-  "recipeTotalWeightHelper": "За замовчуванням сума інгредієнтів. Рідини приблизно як 1 мл ≈ 1 г.",
   "recipeTotalWeightLabel": "Загальна вага (г)",
   "recipesEmptyHint": "Створіть страву з кількох інгредієнтів і використовуйте її як будь-який інший продукт.",
   "recipesEmptyLabel": "Поки немає рецептів",
@@ -729,17 +904,23 @@
   "searchFoodPage": "Їжа",
   "searchLabel": "Пошук",
   "searchProductsPage": "Продукти",
-  "searchSwissFoodPage": "Swiss Food",
   "searchResultsLabel": "Результати пошуку",
   "selectGenderDialogLabel": "Виберіть стать",
   "selectHeightDialogLabel": "Виберіть зріст",
   "selectPalCategoryLabel": "Виберіть рівень активності",
   "selectWeightDialogLabel": "Виберіть вагу",
   "selectionCountLabel": "Вибрано: {count}",
-  "sendAnonymousUserData": "Надсилати анонімні дані про використання",
+  "@selectionCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sendCrashReports": "Надсилати звіти про збої",
   "servingLabel": "Порція",
-  "servingSizeLabelImperial": "Розмір порції (унція/рідка унція)",
-  "servingSizeLabelMetric": "Розмір порції (г/мл)",
+  "servingSizeLabelImperial": "Одна порція (унція/рідка унція)",
+  "servingSizeLabelMetric": "Одна порція",
   "settingAboutLabel": "Про додаток",
   "settingFeedbackLabel": "Відгук",
   "settingsCalciumGoalDescription": "Денна ціль кальцію в міліграмах. Стандартне значення — 1000 мг.",
@@ -777,8 +958,15 @@
   "settingsFibreGoalLabel": "Ціль клітковини",
   "settingsImperialLabel": "Імперська (фунти, фут, унції)",
   "settingsKcalAdjustmentLabel": "Щоденне коригування ккал",
+  "settingsKcalGoalInfoLabel": "Як обчислюється ваша ціль",
   "settingsIronGoalDescription": "Денна ціль заліза в міліграмах. Стандартне значення залежить від статі (8 мг чоловік, 18 мг жінка, інакше 14 мг).",
   "settingsIronGoalLabel": "Ціль заліза",
+  "settingsCategoryAbout": "Про застосунок",
+  "settingsCategoryAppearance": "Вигляд",
+  "settingsCategoryData": "Дані",
+  "settingsCategoryDisplay": "Відображення",
+  "settingsCategoryGoals": "Цілі та харчування",
+  "settingsCategoryUnits": "Одиниці та енергія",
   "settingsLabel": "Налаштування",
   "settingsLanguageLabel": "Мова",
   "settingsMaterialYouTitle": "Використовувати системні кольори",
@@ -817,6 +1005,7 @@
   "settingsPotassiumGoalDescription": "Денна ціль калію в міліграмах. Стандартне значення — 3500 мг.",
   "settingsPotassiumGoalLabel": "Ціль калію",
   "settingsPrivacySettings": "Налаштування конфіденційності",
+  "settingsDemoPrivacyNote": "Звіти про збої недоступні під час перегляду зразкових даних. Спочатку налаштуйте власний профіль.",
   "settingsReportErrorLabel": "Повідомити про помилку",
   "settingsSaturatedFatGoalDescription": "Денний ліміт насичених жирів у грамах. Стандартне значення — 20 г.",
   "settingsSaturatedFatGoalLabel": "Ціль насичених жирів",
@@ -835,6 +1024,13 @@
   "settingsThemeLightLabel": "Світла",
   "settingsThemeSystemDefaultLabel": "Системна за замовчуванням",
   "settingsUnitsLabel": "Одиниці вимірювання",
+  "settingsFoodUnitsLabel": "Одиниці їжі",
+  "settingsHeightUnitsLabel": "Одиниці зросту",
+  "settingsBodyWeightUnitLabel": "Одиниця ваги тіла",
+  "settingsFoodUnitsMetric": "Метрична (г, кг, мл, л)",
+  "settingsFoodUnitsImperial": "Імперська (фунти, унції, рідкі унції)",
+  "settingsHeightUnitsMetric": "Метрична (мм, см, м)",
+  "settingsHeightUnitsImperial": "Імперська (фут, дюйми)",
   "settingsVitaminB12GoalDescription": "Денна ціль вітаміну B12 в мікрограмах. Стандартне значення — 2,4 мкг.",
   "settingsVitaminB12GoalLabel": "Ціль вітаміну B12",
   "settingsVitaminDGoalDescription": "Денна ціль вітаміну D в мікрограмах. Стандартне значення — 15 мкг.",
@@ -863,6 +1059,7 @@
   "sourcesOpenSourceLabel": "Відкрити джерело",
   "sourcesScreenIntro": "OpenNutriTracker використовує для кожного розрахунку усталені, рецензовані методики. Наведені нижче посилання ведуть до оригінальних джерел, щоб ти могла самостійно перевірити будь-яке число.",
   "sugarLabel": "цукор",
+  "suggestedLabel": "Запропоновано",
   "suppliedLabel": "спожито",
   "transFatLabel": "трансжири",
   "unitLabel": "Одиниця",
@@ -936,30 +1133,196 @@
   "customMealsMergeConfirmContent": "Це замінить усі записи, додані з {loser}, щоб вони показували {winner}, і видалить {loser} з ваших власних страв. Цю дію не можна скасувати.",
   "@customMealsMergeConfirmContent": {
     "placeholders": {
-      "loser": { "type": "String" },
-      "winner": { "type": "String" }
+      "loser": {
+        "type": "String"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "customMealsMergeConfirmAction": "Об’єднати",
   "customMealsMergeSuccessSnackbarOne": "Об'єднано — {winner} тепер має 1 запис.",
   "@customMealsMergeSuccessSnackbarOne": {
-    "placeholders": { "winner": { "type": "String" } }
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
   },
   "customMealsMergeSuccessSnackbarOther": "Об'єднано — {winner} тепер має {count} записів.",
   "@customMealsMergeSuccessSnackbarOther": {
     "placeholders": {
-      "count": { "type": "int" },
-      "winner": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "fastingHomeChipBody": "Голодування · залишилось {remaining}",
   "@fastingHomeChipBody": {
     "placeholders": {
-      "remaining": { "type": "String" }
+      "remaining": {
+        "type": "String"
+      }
     }
   },
   "fastingNotificationChannelName": "Таймер голодування",
   "fastingNotificationChannelDescription": "Одноразові сповіщення, коли голодування досягає своєї мети.",
   "fastingNotificationCompleteTitle": "Сесія голодування завершена",
-  "fastingNotificationCompleteBody": "Цільовий час досягнуто."
+  "fastingNotificationCompleteBody": "Цільовий час досягнуто.",
+  "profileImageLabel": "Додати фото",
+  "profileImageReplace": "Змінити фото",
+  "profileImageRemove": "Видалити фото",
+  "switchProfileLabel": "Змінити профіль",
+  "addProfileLabel": "Додати профіль",
+  "manageProfilesLabel": "Керувати профілями",
+  "editProfileTitle": "Редагувати профіль",
+  "profileNameLabel": "Ім'я",
+  "profileNameHint": "Назва профілю",
+  "defaultProfileName": "Профіль 1",
+  "profileActiveLabel": "Активний",
+  "deleteProfileConfirmTitle": "Видалити профіль?",
+  "deleteProfileConfirmContent": "Це назавжди видалить профіль та всі його дані. Цю дію не можна скасувати.",
+  "copyToProfileLabel": "Копіювати в профіль",
+  "copiedToProfileSnackbar": "Прийом їжі скопійовано в профіль",
+  "copyActionLabel": "Копіювати",
+  "quickAddActivityTitleLabel": "Швидке додавання активності",
+  "quickAddActivityDurationLabel": "Тривалість (хв, необов'язково)",
+  "quickAddActivityEnergyLabelKcal": "Спалена енергія (ккал)",
+  "quickAddActivityEnergyLabelKj": "Спалена енергія (кДж)",
+  "quickAddActivityAddedSnack": "Активність додано",
+  "quickAddActivityNameLabel": "Назва (необов'язково)",
+  "scannerLockOrientationTooltip": "Зафіксувати вертикально",
+  "scannerUnlockOrientationTooltip": "Дозволити обертання",
+  "bulkAddTitle": "Додати кілька позицій",
+  "bulkAddInputHint": "2 яйця, 100g тост, чорна кава",
+  "bulkAddParseLabel": "Знайти продукти",
+  "bulkAddSubmitLabel": "Записати {count} позицій",
+  "bulkAddNoMatchLabel": "Не вдалося знайти відповідник",
+  "bulkAddUncertainLabel": "Перевірте відповідник",
+  "bulkAddSkipLabel": "Пропустити",
+  "bulkAddIncludeLabel": "Включити",
+  "bulkAddChooseFoodLabel": "Вибрати інший продукт",
+  "bulkAddNothingToLogLabel": "Поки що нічого записувати",
+  "bulkAddSearchFailedLabel": "Не вдалося виконати пошук продуктів",
+  "bulkAddCheckAmountLabel": "Перевірте одиницю для цієї кількості",
+  "bulkAddDefaultAmountLabel": "Кількість не вказано",
+  "bulkAddErrorInvalidName": "Пункт {number}: некоректна назва продукту",
+  "bulkAddErrorQuantityTooSmall": "Пункт {number}: кількість має бути більшою за 0",
+  "bulkAddErrorQuantityTooLarge": "Пункт {number}: кількість не може перевищувати {bound}",
+  "bulkAddRowQuantityInvalid": "Введіть число щонайбільше з двома десятковими знаками",
+  "bulkAddRowQuantityTooSmall": "Кількість має бути більшою за 0",
+  "bulkAddRowQuantityTooLarge": "Кількість не може перевищувати {bound}",
+  "settingsAiAssistLabel": "Підтримка ШІ",
+  "settingsAiAssistNotConfiguredLabel": "Вимкнено — ключ не збережено",
+  "settingsAiAssistOnLabel": "Увімкнено",
+  "settingsAiAssistPausedLabel": "Призупинено — ключ збережено",
+  "settingsAiAssistEnabledLabel": "Використовувати підтримку ШІ",
+  "aiAssistExperimentalLabel": "Експериментально",
+  "aiAssistExperimentalNote": "Ця функція може змінитися або бути видаленою, а пропоновані постачальники та моделі можуть змінитися разом із нею.",
+  "aiConsentTitle": "Перш ніж це вмикати",
+  "bulkAddModelHintLabel": "Модель може прочитати це за тебе",
+  "bulkAddModelHintKeyLabel": "З власним ключем API",
+  "aiConsentChangeProviderNote": "Постачальника можна змінити пізніше. Умови кожного постачальника є в Налаштуваннях, і нічого з того, що ви вводите або фотографуєте, не надсилається, доки ви не скористаєтеся функцією.",
+  "aiConsentOwnServerCheckNote": "Коли ви зберігаєте адресу свого сервера, застосунок також запитує в нього, які моделі він подає, і виконує одну перевірку налаштування — незмінний рядок-приклад і наше зразкове фото, ніколи нічого вашого.",
+  "aiConsentAgreeLabel": "ЗРОЗУМІЛО",
+  "aiAssistDisclosureCommon": "Ваш щоденник і ваш профіль ніколи не надсилаються. Поживні значення завжди беруться з баз даних продуктів, а не від моделі. Ключ зберігається лише на цьому пристрої: OpenNutriTracker ніколи його не бачить і не платить за його використання.",
+  "aiAssistDisclosureAnthropic": "Зі збереженим ключем текст, який ви вводите на екрані додавання кількох позицій — і будь-яке фото, яке ви там зчитуєте — надсилається до Anthropic. Фотографії надсилаються лише для цього одного запиту й ніколи не зберігаються.",
+  "aiAssistDisclosureOpenRouter": "Зі збереженим ключем текст, який ви вводите на екрані додавання кількох позицій — і будь-яке фото, яке ви там зчитуєте — надсилається до OpenRouter, який передає його постачальнику обраної вами моделі. Крім того, OpenRouter із кожним запитом передає цьому постачальнику ідентифікатор облікового запису, і це неможливо вимкнути. Ваш вміст не зберігається довше, ніж потрібно для маршрутизації запиту, за винятком випадків, необхідних для виявлення зловживань, безпеки, виставлення рахунків або дотримання законодавства. Постачальник, який обслуговує вашу модель, зберігає отримане згідно з власною політикою.",
+  "aiAssistDisclosureOpenAI": "Зі збереженим ключем текст, який ви вводите на екрані додавання кількох позицій — і будь-яке фото, яке ви там зчитуєте — надсилається до OpenAI. OpenAI зберігає надіслане до 30 днів для виявлення зловживань, а довше — якщо цього вимагає закон або це обґрунтовано необхідно для захисту її сервісів чи третіх осіб від шкоди.",
+  "aiAssistProviderOwnServerLabel": "Ваш власний сервер",
+  "aiAssistEndpointFieldLabel": "Адреса сервера",
+  "aiAssistModelFieldLabel": "Назва моделі",
+  "aiAssistDisclosureOwnServerSecure": "Зі збереженою адресою текст, який ви вводите на екрані додавання кількох позицій, і будь-яке фото, яке ви даєте прочитати там, надсилається на {host} — сервер, який ви обслуговуєте самі. Його не отримує жодна третя сторона, і проєкт не має стосунку до цієї машини та нічого не може обіцяти щодо того, що вона зберігає. З’єднання зашифроване.",
+  "@aiAssistDisclosureOwnServerSecure": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistDisclosureOwnServerPlaintext": "Зі збереженою адресою текст, який ви вводите на екрані додавання кількох позицій, і будь-яке фото, яке ви даєте прочитати там, надсилається на {host} — сервер, який ви обслуговуєте самі. Його не отримує жодна третя сторона, і проєкт не має стосунку до цієї машини та нічого не може обіцяти щодо того, що вона зберігає. Ця адреса використовує звичайний HTTP, тому з’єднання не зашифроване: усе в мережі між цим телефоном і тим сервером може прочитати те, що надсилається.",
+  "@aiAssistDisclosureOwnServerPlaintext": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistEndpointInvalidLabel": "Введіть адресу, що починається з http:// або https://",
+  "aiAssistModelRequiredLabel": "Вкажіть назву моделі, яку має використовувати цей сервер.",
+  "aiAssistEndpointPublicPlaintextLabel": "Ця адреса публічна й незашифрована, тому запити до неї відхиляються. Використайте https або приватну адресу.",
+  "aiAssistProbeSectionLabel": "Перевірка налаштування",
+  "aiAssistProbeRunningLabel": "Триває перевірка сервера. Обидві перевірки виконуються одна за одною, тож це може тривати до {minutes, plural, one{{minutes} хвилини} few{{minutes} хвилин} many{{minutes} хвилин} other{{minutes} хвилини}} — можете закрити це вікно, відповідь буде тут, коли повернетеся.",
+  "aiAssistProbeCheckLabel": "Перевірити сервер",
+  "aiAssistProbeTextLabel": "Текст страви",
+  "aiAssistProbePhotoLabel": "Фотографії",
+  "aiAssistProbePassedLabel": "Перевірено — цей сервер повернув позиції.",
+  "aiAssistProbeUnknownLabel": "Ще не перевірено.",
+  "aiAssistProbeNoAnswerLabel": "Перевірено — відповіді не надійшло, тож про цей сервер нічого не з'ясовано. Спробуйте ще раз, коли він буде увімкнений і доступний.",
+  "aiAssistProbeTextFailedLabel": "Перевірено — ця модель не повернула жодної позиції. Набраний текст і надалі читає офлайновий аналізатор, і ви все одно можете спробувати.",
+  "aiAssistProbePhotoFailedLabel": "Перевірено — ця модель не повернула жодної позиції для фотографії, тож читання фотографій для цього сервера не пропонується.",
+  "aiAssistLoadModelsLabel": "Завантажити моделі",
+  "aiAssistPickModelLabel": "Виберіть модель",
+  "aiAssistModelsUnreachableLabel": "Не вдалося зв'язатися з {host}. Сервер може спати, бути в іншій мережі або за вимкненим VPN — введіть натомість назву моделі.",
+  "aiAssistModelsEmptyLabel": "{host} відповів і не подає жодної моделі. Введіть назву моделі.",
+  "aiAssistModelsRejectedLabel": "{host} відповів, але не списком моделей. Перевірте адресу або введіть назву моделі.",
+  "aiAssistModelsInsecureLabel": "Нічого не надіслано: ця адреса публічна й незашифрована. Використайте https або введіть назву моделі.",
+  "aiAssistProviderLabel": "Постачальник",
+  "aiAssistModelLabel": "Модель",
+  "aiAssistServedByLabel": "Обслуговує {provider}",
+  "aiAssistModelRecommendedLabel": "Рекомендовано",
+  "aiAssistModelCheaperLabel": "Дешевша, але слабша на фото низької якості",
+  "aiAssistModelMoreItemsLabel": "Перелічує більше позицій із фото",
+  "aiAssistModelCheapestLabel": "Найдешевша у цьому списку",
+  "aiAssistNoKeyForProviderLabel": "Для цього постачальника ключ не збережено.",
+  "aiAssistKeyFieldLabel": "Ключ API {provider}",
+  "aiAssistKeySavedLabel": "Ключ збережено",
+  "aiAssistRemoveKeyLabel": "Видалити ключ",
+  "bulkAddReadByModelLabel": "Прочитано ШІ — перевірте кожен рядок",
+  "bulkAddModelKeyRejectedLabel": "ШІ не спрацював: ваш ключ API відхилено.",
+  "bulkAddModelUnsupportedLabel": "ШІ не спрацював: вибрану модель не вдалося використати.",
+  "bulkAddModelNoCreditLabel": "ШІ не запущено: на рахунку у постачальника закінчилися кошти.",
+  "bulkAddModelInsecureServerLabel": "ШІ не запущено: адреса публічна та незашифрована.",
+  "bulkAddModelTimedOutLabel": "ШІ не запущено: ваш сервер не відповів вчасно.",
+  "bulkAddWaitElapsedLabel": "Очікування вашого сервера · {seconds} с",
+  "bulkAddWaitModelLoadingLabel": "Ваш сервер, імовірно, завантажує свою модель. Перший запит після тривалої паузи може тривати хвилину або дві — це нормально.",
+  "bulkAddWaitCancelLabel": "Скасувати",
+  "bulkAddPhotoLabel": "Зчитати фото",
+  "bulkAddPhotoDisclosureCommon": "OpenNutriTracker не зберігає власної копії, і фото ніколи не потрапляє до ваших експортів.",
+  "bulkAddPhotoDisclosureAnthropic": "Фото надсилається до Anthropic, щоб розпізнати продукти на ньому.",
+  "bulkAddPhotoDisclosureOpenRouter": "Фото надсилається до OpenRouter, який передає його до {provider}, щоб розпізнати продукти на ньому.",
+  "bulkAddPhotoDisclosureOpenAI": "Фото надсилається до OpenAI, щоб розпізнати продукти на ньому. OpenAI зберігає його до 30 днів для виявлення зловживань, а довше — якщо цього вимагає закон або це обґрунтовано необхідно для захисту її сервісів чи третіх осіб від шкоди.",
+  "bulkAddPhotoDisclosureOwnServer": "Фото надсилається на адресу {host}, щоб розпізнати продукти на ньому.",
+  "bulkAddReadFromPhotoLabel": "Зчитано з фото — перевірте кожен продукт і кількість",
+  "bulkAddPhotoUnavailableLabel": "Увімкніть ШІ-помічник для страв у налаштуваннях, щоб зчитувати фото",
+  "bulkAddPhotoKeyRejectedLabel": "Ваш API-ключ відхилено. Перевірте його в налаштуваннях.",
+  "bulkAddPhotoCameraFailedLabel": "Не вдалося відкрити камеру. Перевірте дозвіл на використання камери та спробуйте ще раз.",
+  "bulkAddPhotoFailedLabel": "Не вдалося зчитати фото. Перевірте з’єднання та спробуйте ще раз.",
+  "bulkAddPhotoUnreadableLabel": "Не вдалося використати це зображення. Спробуйте інше фото.",
+  "bulkAddPhotoUnsupportedLabel": "Ця модель не може читати фото. Виберіть іншу в налаштуваннях або введіть позиції вручну.",
+  "bulkAddPhotoNoCreditLabel": "Цей запит не вдалося оплатити: на рахунку у постачальника закінчилися кошти. Поповніть його у постачальника або введіть позиції вручну.",
+  "bulkAddPhotoNoFoodLabel": "На цьому фото не розпізнано жодних продуктів. Спробуйте інше фото або введіть позиції вручну.",
+  "settingsHealthSyncSubtitle": "Імпортувати тренування",
+  "healthSyncAutoImportLabel": "Автоматично імпортувати тренування з {platform}",
+  "healthSyncKcalMultiplierLabel": "Зарахування калорій за тренування",
+  "healthSyncKcalMultiplierSubtitle": "Організм зазвичай компенсує навантаження, спалюючи менше калорій протягом решти дня. Значення 100% зараховує до денної цілі кожну калорію тренування.",
+  "healthSyncKcalMultiplierValueLabel": "{percent}%",
+  "healthSyncSuggestedLabel": "Рекомендовано для тебе: {percent}%",
+  "healthSyncImportNowLabel": "Імпортувати зараз",
+  "healthSyncLastImportLabel": "Останній імпорт: {time}",
+  "healthSyncNeverImportedLabel": "Тренування ще не імпортовано",
+  "healthSyncImportedCountLabel": "{count, plural, =0{Немає нових тренувань} one{Імпортовано {count} тренування} few{Імпортовано {count} тренування} many{Імпортовано {count} тренувань} other{Імпортовано {count} тренування}}",
+  "healthSyncPermissionDeniedLabel": "Доступ до {platform} не надано. Дозволь OpenNutriTracker читати тренування, щоб імпортувати їх.",
+  "healthSyncDisclosureTitle": "Імпортувати тренування з {platform}?",
+  "healthSyncDisclosureBody": "OpenNutriTracker прочитає твої завершені тренування з {platform} — їхній тип, коли вони відбулися, скільки тривали та енергію, яку вони показують.\n\nТренування потрапляють до щоденника як активності, які можна редагувати або видалити, а показана енергія збільшує калорійну ціль того дня на обрану тобою частку.",
+  "healthSyncDisclosureBodyFatAddendum": "OpenNutriTracker також прочитає останній збережений відсоток жиру в організмі з {platform}. Показник жиру використовується, щоб запропонувати цю частку.",
+  "healthSyncDisclosureFooter": "Нічого не записується назад до {platform} і нічого нікуди не надсилається — усе залишається на цьому пристрої.\n\nТи можеш вимкнути це будь-коли; після цього нічого більше не читається.",
+  "healthSyncDisclosureContinueAction": "Продовжити",
+  "healthSyncUnavailableLabel": "Дані про здоров’я недоступні на цьому пристрої. Для імпорту тренувань потрібен Health Connect на Android або Apple Health на iOS.",
+  "sourcesEnergyCompensationTitle": "Зарахування калорій за тренування",
+  "sourcesEnergyCompensationDescription": "Імпортовані тренування зараховуються з меншою енергією, ніж повідомляє пристрій. Люди компенсують навантаження, спалюючи менше калорій протягом решти дня — у середньому близько 28%, а за вищого відсотка жиру більше. Рекомендоване значення походить із цього дослідження, і його можна змінити в Налаштуваннях → Синхронізація зі здоров’ям. Саму енергію повідомляє застосунок або пристрій, який записав тренування; вона не обчислюється формулою MET у застосунку."
 }

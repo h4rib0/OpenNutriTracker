@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
 
 import '../helpers/hive_test_setup.dart';
+import '../helpers/fake_hive_db_provider.dart';
 
 MealNutrimentsDBO _emptyNutriments({double? kcal}) => MealNutrimentsDBO(
       energyKcal100: kcal,
@@ -52,7 +53,7 @@ void main() {
     setUp(() async {
       box = await Hive.openBox<MealDBO>(
           'custom_meal_test_${DateTime.now().microsecondsSinceEpoch}');
-      ds = CustomMealDataSource(box);
+      ds = CustomMealDataSource(FakeHiveDBProvider(customMealBox: box));
     });
 
     tearDown(() async {
@@ -110,6 +111,127 @@ void main() {
       expect(ds.getAllCustomMeals(), hasLength(2),
           reason: 'incoming meal has a barcode, so it does not match the '
               'name-only entry; both are kept');
+    });
+
+    group('editing a meal (previous given, #1403)', () {
+      test('adding a barcode replaces the meal instead of adding a copy',
+          () async {
+        final before = _meal(code: 'uuid-1', name: 'Oats', kcal: 370);
+        await ds.saveCustomMeal(before);
+
+        await ds.saveCustomMeal(
+          _meal(code: '4006381333931', name: 'Oats', kcal: 370),
+          previous: _meal(code: 'uuid-1', name: 'Oats', kcal: 370),
+        );
+
+        expect(ds.getAllCustomMeals(), hasLength(1));
+        expect(ds.getAllCustomMeals().single.code, equals('4006381333931'));
+      });
+
+      test('changing a barcode replaces the meal', () async {
+        await ds.saveCustomMeal(_meal(code: '11111111', name: 'Oats'));
+
+        await ds.saveCustomMeal(
+          _meal(code: '22222222', name: 'Oats', kcal: 380),
+          previous: _meal(code: '11111111', name: 'Oats'),
+        );
+
+        expect(ds.getAllCustomMeals(), hasLength(1));
+        final saved = ds.getAllCustomMeals().single;
+        expect(saved.code, equals('22222222'));
+        expect(saved.nutriments.energyKcal100, equals(380));
+      });
+
+      test('renaming a meal without a code replaces it', () async {
+        await ds.saveCustomMeal(_meal(code: null, name: 'Banana', kcal: 89));
+        await ds.saveCustomMeal(_meal(code: null, name: 'Apple', kcal: 52));
+
+        await ds.saveCustomMeal(
+          _meal(code: null, name: 'Banana, ripe', kcal: 95),
+          previous: _meal(code: null, name: 'Banana', kcal: 89),
+        );
+
+        expect(ds.getAllCustomMeals(), hasLength(2));
+        expect(ds.getAllCustomMeals().map((m) => m.name).toSet(),
+            equals({'Banana, ripe', 'Apple'}));
+      });
+
+      test('the edited meal keeps its place in the library', () async {
+        await ds.saveCustomMeal(_meal(code: 'uuid-1', name: 'Oats'));
+        await ds.saveCustomMeal(_meal(code: 'uuid-2', name: 'Rice'));
+        final keyBefore = box.values.first.key;
+
+        await ds.saveCustomMeal(
+          _meal(code: '4006381333931', name: 'Oats'),
+          previous: _meal(code: 'uuid-1', name: 'Oats'),
+        );
+
+        expect(box.get(keyBefore)?.code, equals('4006381333931'));
+      });
+
+      test(
+          'a barcode already on another custom meal: the edited meal wins and '
+          'the other entry is dropped, so the barcode stays unique', () async {
+        await ds.saveCustomMeal(_meal(code: '4006381333931', name: 'Old oats'));
+        await ds.saveCustomMeal(_meal(code: 'uuid-1', name: 'Oats', kcal: 370));
+
+        await ds.saveCustomMeal(
+          _meal(code: '4006381333931', name: 'Oats', kcal: 370),
+          previous: _meal(code: 'uuid-1', name: 'Oats', kcal: 370),
+        );
+
+        expect(ds.getAllCustomMeals(), hasLength(1));
+        final saved = ds.getAllCustomMeals().single;
+        expect(saved.code, equals('4006381333931'));
+        expect(saved.name, equals('Oats'));
+      });
+
+      test(
+          'a rename onto another code-less meal\'s name drops that one, but '
+          'leaves a barcoded meal of the same name alone', () async {
+        await ds.saveCustomMeal(_meal(code: null, name: 'Apple', kcal: 52));
+        await ds.saveCustomMeal(_meal(code: '1', name: 'Apple', kcal: 50));
+        await ds.saveCustomMeal(_meal(code: null, name: 'Aple', kcal: 55));
+
+        await ds.saveCustomMeal(
+          _meal(code: null, name: 'Apple', kcal: 55),
+          previous: _meal(code: null, name: 'Aple', kcal: 55),
+        );
+
+        final meals = ds.getAllCustomMeals();
+        expect(meals, hasLength(2));
+        expect(
+          meals.singleWhere((m) => m.code == null).nutriments.energyKcal100,
+          equals(55),
+        );
+        expect(meals.where((m) => m.code == '1'), hasLength(1));
+      });
+
+      test(
+          'a previous meal that is not in the library (a new meal) falls back '
+          'to dedupe by identity', () async {
+        await ds.saveCustomMeal(_meal(code: '4006381333931', name: 'Oats'));
+
+        await ds.saveCustomMeal(
+          _meal(code: '4006381333931', name: 'Oats', kcal: 380),
+          previous: _meal(code: 'uuid-never-saved', name: null),
+        );
+
+        expect(ds.getAllCustomMeals(), hasLength(1));
+        expect(ds.getAllCustomMeals().single.nutriments.energyKcal100,
+            equals(380));
+      });
+
+      test('without previous, a changed barcode is a new meal (importers)',
+          () async {
+        await ds.saveCustomMeal(_meal(code: '11111111', name: 'Oats'));
+
+        await ds.saveCustomMeal(_meal(code: '22222222', name: 'Oats'));
+
+        expect(ds.getAllCustomMeals(), hasLength(2),
+            reason: 'an import keys on identity alone and never renames '
+                'an existing entry');
+      });
     });
 
     test('deleteCustomMeal removes a meal by its barcode', () async {

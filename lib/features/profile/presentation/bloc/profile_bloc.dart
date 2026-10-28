@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_bmi_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -9,12 +10,12 @@ import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/bmi_calc.dart';
-import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
-import 'package:opennutritracker/features/profile/presentation/utils/profile_display_format.dart';
+import 'package:opennutritracker/features/trends/presentation/bloc/trends_bloc.dart';
 
 part 'profile_event.dart';
 
@@ -26,25 +27,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final AddTrackedDayUsecase _addTrackedDayUsecase;
   final GetConfigUsecase _getConfigUsecase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
-  final PolarInfluxdbDataSource _polarDataSource;
+  // Optional so tests (and builds without Polar) can omit it.
+  final PolarInfluxdbDataSource? _polarDataSource;
 
   ProfileBloc(
     this._getUserUsecase,
     this._addUserUsecase,
     this._addTrackedDayUsecase,
     this._getConfigUsecase,
-    this._getKcalGoalUsecase,
+    this._getKcalGoalUsecase, [
     this._polarDataSource,
-  ) : super(ProfileInitial()) {
+  ]) : super(ProfileInitial()) {
     on<LoadProfileEvent>((event, emit) async {
       emit(ProfileLoadingState());
 
       final user = await _getUserUsecase.getUserData();
       final userConfig = await _getConfigUsecase.getConfig();
-      final isPolarActive = await _polarDataSource.isPolarConfigured();
-      final influxWeightKg = isPolarActive
-          ? await _polarDataSource.fetchLatestWeightKg()
-          : null;
+      final polar = _polarDataSource;
+      final isPolarActive = polar != null && await polar.isPolarConfigured();
+      final influxWeightKg = isPolarActive ? await polar.fetchLatestWeightKg() : null;
 
       // Use InfluxDB weight for BMI calculation when available
       final userForBmi = influxWeightKg != null
@@ -60,9 +61,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         ProfileLoadedState(
           userBMI: userBMIEntity,
           userEntity: user,
-          usesImperialUnits: userConfig.usesImperialUnits,
           isPolarActive: isPolarActive,
           influxWeightKg: influxWeightKg,
+          bodyWeightUnit: userConfig.bodyWeightUnit,
+          usesImperialHeightUnits: userConfig.usesImperialHeightUnits,
           effectiveWaterGoalMl: userConfig.effectiveDailyWaterGoalMl(
             user.gender,
             caloriesProfile: user.caloriesProfile,
@@ -78,17 +80,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   /// kcal-goal calc on today's tracked day so the saved goal reflects
   /// the new value immediately rather than waiting for the next day.
   Future<void> setCaloriesTaperEnabled(bool enabled) async {
+    final startedOn = ProfileStamp.now();
     final user = await _getUserUsecase.getUserData();
     user.caloriesTaperEnabled = enabled;
-    await updateUser(user);
+    await _updateUser(user, startedOn);
   }
 
-  Future<void> updateUser(UserEntity userEntity) async {
-    // Update user in DB
-    await _addUserUsecase.addUser(userEntity);
+  Future<void> updateUser(UserEntity userEntity) =>
+      _updateUser(userEntity, ProfileStamp.now());
 
-    // Update Tracked Day
-    await _updateTrackedDayCalorieGoal(userEntity, DateTime.now());
+  Future<void> _updateUser(
+    UserEntity userEntity,
+    ProfileStamp startedOn,
+  ) async {
+    final updated = await withTrackedDayLockOnProfile(() async {
+      await _addUserUsecase.addUser(userEntity);
+      await _updateTrackedDayCalorieGoal(userEntity, DateTime.now());
+      return true;
+    }, startedOn: startedOn);
+    if (updated != true) return;
 
     // Refresh Profile
     add(LoadProfileEvent());
@@ -97,38 +107,26 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     // Refresh Diary Page
     locator<DiaryBloc>().add(const LoadDiaryYearEvent());
     locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
+    // Refresh Trends Page — preserve whatever range chip is currently
+    // selected there rather than resetting it back to the 7-day default.
+    final trendsBloc = locator<TrendsBloc>();
+    final rangeDays = trendsBloc.state is TrendsLoaded
+        ? (trendsBloc.state as TrendsLoaded).rangeDays
+        : 7;
+    trendsBloc.add(LoadTrendsEvent(rangeDays: rangeDays));
   }
 
-  Future<void> _updateTrackedDayCalorieGoal(
-    UserEntity user,
-    DateTime day,
-  ) async {
-    final hasTrackedDay = await _addTrackedDayUsecase.hasTrackedDay(day);
-    if (hasTrackedDay) {
-      final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal(
-        userEntity: user,
-      );
+  Future<void> _updateTrackedDayCalorieGoal(UserEntity user, DateTime day) =>
+      // The goal counts the day's activities, so it is read and written
+      // with no boundary move between (#1317).
+      withTrackedDayLock(() async {
+        final hasTrackedDay = await _addTrackedDayUsecase.hasTrackedDay(day);
+        if (hasTrackedDay) {
+          final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal(
+            userEntity: user,
+          );
 
-      await _addTrackedDayUsecase.updateDayCalorieGoal(day, totalKcalGoal);
-    }
-  }
-
-  /// Returns the user's height in cm or ft/in based on the user's config
-  String getDisplayHeight(UserEntity user, bool usesImperialUnits) {
-    if (usesImperialUnits) {
-      // Convert cm to feet and inches
-      return UnitCalc.cmToFeet(user.heightCM).toStringAsFixed(1);
-    } else {
-      return user.heightCM.roundToDouble().toStringAsFixed(0);
-    }
-  }
-
-  /// Returns the user's weight in kg or lbs based on the user's config
-  String getDisplayWeight(UserEntity user, bool usesImperialUnits) {
-    final displayWeight = usesImperialUnits
-        ? UnitCalc.kgToLbs(user.weightKG)
-        : user.weightKG;
-
-    return formatProfileWeight(displayWeight);
-  }
+          await _addTrackedDayUsecase.updateDayCalorieGoal(day, totalKcalGoal);
+        }
+      });
 }

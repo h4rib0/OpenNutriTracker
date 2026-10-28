@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/features/profile/presentation/widgets/set_weekly_weight_goal_dialog.dart';
 import 'package:opennutritracker/generated/l10n.dart';
+import '../../../../helpers/test_l10n.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -12,7 +14,7 @@ Widget _wrap(Widget child) {
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    supportedLocales: S.delegate.supportedLocales,
+    supportedLocales: S.supportedLocales,
     home: Scaffold(body: child),
   );
 }
@@ -30,7 +32,7 @@ void main() {
                 context: context,
                 builder: (_) => const SetWeeklyWeightGoalDialog(
                   currentGoalKg: null,
-                  usesImperialUnits: false,
+                  bodyWeightUnit: BodyWeightUnit.kg,
                 ),
               );
             },
@@ -40,7 +42,7 @@ void main() {
       })));
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(S.current.dialogCancelLabel));
+      await tester.tap(find.text(l10nEn.dialogCancelLabel));
       await tester.pumpAndSettle();
       expect(captured, isA<WeeklyWeightGoalCancelled>());
     });
@@ -55,7 +57,7 @@ void main() {
                 context: context,
                 builder: (_) => const SetWeeklyWeightGoalDialog(
                   currentGoalKg: 0.5,
-                  usesImperialUnits: false,
+                  bodyWeightUnit: BodyWeightUnit.kg,
                 ),
               );
             },
@@ -65,7 +67,7 @@ void main() {
       })));
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(S.current.buttonResetLabel));
+      await tester.tap(find.text(l10nEn.buttonResetLabel));
       await tester.pumpAndSettle();
       expect(captured, isA<WeeklyWeightGoalCleared>());
     });
@@ -81,7 +83,7 @@ void main() {
                 context: context,
                 builder: (_) => const SetWeeklyWeightGoalDialog(
                   currentGoalKg: -0.25,
-                  usesImperialUnits: false,
+                  bodyWeightUnit: BodyWeightUnit.kg,
                 ),
               );
             },
@@ -91,7 +93,7 @@ void main() {
       })));
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(S.current.dialogOKLabel));
+      await tester.tap(find.text(l10nEn.dialogOKLabel));
       await tester.pumpAndSettle();
       expect(captured, isA<WeeklyWeightGoalSet>());
       expect((captured as WeeklyWeightGoalSet).kgPerWeek, -0.25);

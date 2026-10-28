@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 /// A soft, non-blocking informational card surfaced near the daily kcal
@@ -26,55 +29,58 @@ class LowKcalWarningCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
-    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    final accent = Theme.of(context).colorScheme.primary;
     final textTheme = Theme.of(context).textTheme;
-    // The card is found by text drivers via the "View disclaimer"
-    // content-desc rather than by coordinate, because Semantics inside
-    // a layout-greedy parent (ListView, Stack > Column) inherits the
-    // parent's bounds even with `container: true`. See CLAUDE.md
-    // "The `container: true` gotcha"; the identifier is kept for
-    // future hierarchy queries.
+    // Prefer text/`content-desc` drivers ("View disclaimer") over
+    // coordinate taps: in scrollable/list layouts hit targets still
+    // shift. `container: true` keeps the semantics node bounds tight
+    // (see AGENTS.md "The `container: true` gotcha"); the identifier
+    // remains useful for hierarchy queries.
     return Semantics(
       identifier: 'low-kcal-warning-card',
       container: true,
-      child: Card(
-        margin: margin,
-        color: colors.tertiaryContainer,
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+      child: Padding(
+        padding: margin,
+        child: AppCard(
+          color: palette.surfaceMuted,
+          padding: const EdgeInsets.fromLTRB(Dimens.spacing16, Dimens.spacing16, Dimens.spacing12, Dimens.spacing8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: colors.onTertiaryContainer),
-                  const SizedBox(width: 12),
+                  Icon(Icons.info_outline_rounded, color: accent, size: 22),
+                  const SizedBox(width: Dimens.spacing12),
                   Expanded(
                     child: Text(
                       l10n.lowKcalWarningTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: textTheme.titleSmall?.copyWith(
-                        color: colors.onTertiaryContainer,
-                        fontWeight: FontWeight.w600,
+                        color: palette.textStrong,
                       ),
                     ),
                   ),
                   if (onDismiss != null)
-                    IconButton(
-                      icon: Icon(Icons.close,
-                          size: 18, color: colors.onTertiaryContainer),
-                      onPressed: onDismiss,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    Semantics(
+                      identifier: 'low-kcal-warning-dismiss',
+                      child: IconButton(
+                        icon: Icon(Icons.close, size: 18, color: palette.textMuted),
+                        onPressed: onDismiss,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Dimens.spacing8),
               Text(
                 l10n.lowKcalWarningBody(thresholdKcal.round()),
                 style: textTheme.bodyMedium?.copyWith(
-                  color: colors.onTertiaryContainer,
+                  color: palette.textMuted,
                 ),
               ),
               Align(

@@ -1,142 +1,4 @@
 {
-  "@clearOffCacheSubtitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "size": {
-        "type": "String"
-      }
-    }
-  },
-  "@csvImportPartialLabel": {
-    "placeholders": {
-      "imported": {
-        "type": "int"
-      },
-      "skipped": {
-        "type": "int"
-      }
-    }
-  },
-  "@csvImportSuccessLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@deleteSelectedRecipesConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@driPanelReferenceLabel": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@diaryMealKcalConsumedOfTarget": {
-    "placeholders": {
-      "consumed": {
-        "type": "String"
-      },
-      "target": {
-        "type": "String"
-      }
-    }
-  },
-  "@importActivityConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importMealConfirmContent": {
-    "placeholders": {
-      "mealType": {
-        "type": "String"
-      }
-    }
-  },
-  "@importMealConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importOffFetchFailedLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importRecipeConfirmContent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@mealNutrientsPerQtyLabel": {
-    "placeholders": {
-      "qty": {
-        "type": "String"
-      },
-      "unit": {
-        "type": "String"
-      }
-    }
-  },
-  "@profileTargetWeightToGo": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@recipeIngredientCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@selectionCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@settingsNotificationsTimeLabel": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "@weeklyWeightGoalKgPerWeek": {
-    "placeholders": {
-      "rate": {
-        "type": "String"
-      }
-    }
-  },
-  "@weeklyWeightGoalLbsPerWeek": {
-    "placeholders": {
-      "rate": {
-        "type": "String"
-      }
-    }
-  },
   "activityExample": "ör. koşu, bisiklet, yoga ...",
   "activityLabel": "Aktivite",
   "addItemLabel": "Yeni Öğe Ekle:",
@@ -144,6 +6,110 @@
   "additionalInfoLabelCompendium2011": "Bilgi\n'2024 Compendium\n of Physical Activities'\nden sağlanmıştır",
   "additionalInfoLabelCustom": "Özel Yemek Öğesi",
   "additionalInfoLabelFDC": "Daha Fazla Bilgi\nFoodData Central'da",
+  "additionalInfoLabelSource": "Daha fazla bilgi:\n{sourceName}",
+  "foodSourcesAlwaysEnabledLabel": "Her zaman etkin",
+  "foodSourcesHelpText": "Arama sonuçları bu gıda veritabanlarından gelir. Open Food Facts, ürün ve barkod aramasını sağlar ve her zaman etkindir.",
+  "machineTranslatedNameHint": "Ad otomatik olarak çevrildi",
+  "measureUnitBar": "{count, plural, other{bar}}",
+  "@measureUnitBar": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitBottle": "{count, plural, other{şişe}}",
+  "@measureUnitBottle": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCan": "{count, plural, other{kutu}}",
+  "@measureUnitCan": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCup": "{count, plural, other{fincan}}",
+  "@measureUnitCup": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitEgg": "{count, plural, other{yumurta}}",
+  "@measureUnitEgg": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPackage": "{count, plural, other{paket}}",
+  "@measureUnitPackage": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPiece": "{count, plural, other{parça}}",
+  "@measureUnitPiece": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPortion": "{count, plural, other{porsiyon}}",
+  "@measureUnitPortion": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitServing": "{count, plural, other{porsiyon}}",
+  "@measureUnitServing": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitSlice": "{count, plural, other{dilim}}",
+  "@measureUnitSlice": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTablespoon": "{count, plural, other{yemek kaşığı}}",
+  "@measureUnitTablespoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTeaspoon": "{count, plural, other{çay kaşığı}}",
+  "@measureUnitTeaspoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "settingsFoodSourcesLabel": "Gıda veritabanları",
+  "settingsFoodSourcesSubtitle": "Arama sonuçlarının kaynağını seçin",
+  "onboardingOtherOptionsLabel": "Diğer seçenekler",
+  "onboardingOtherOptionsSubtitle": "Uygulamayı kişiselleştirin — her şeyi daha sonra ayarlardan değiştirebilirsiniz",
   "additionalInfoLabelOFF": "Daha Fazla Bilgi\nOpenFoodFacts'te",
   "additionalInfoLabelRecipe": "Özel Tarif",
   "additionalInfoLabelUnknown": "Bilinmeyen Yemek Öğesi",
@@ -155,9 +121,11 @@
   "appTitle": "OpenNutriTracker",
   "appVersionName": "Versiyon {versionNumber}",
   "barcodeInvalidEan13CheckDigit": "Bu 13 haneli barkod yanlış girilmiş gibi: son hane diğerleriyle uyuşmuyor",
-  "baseQuantityLabel": "Temel miktar (g/ml)",
-  "betaVersionName": "[Beta]",
+  "baseQuantityLabel": "Besin değeri başına",
   "bmiInfo": "Vücut Kitle İndeksi (BMI), yetişkinlerde aşırı kiloyu ve obeziteyi sınıflandırmak için kullanılan bir indekstir. Kilogram cinsinden ağırlığın, metre cinsinden boyun karesine bölünmesiyle tanımlanır (kg/m²).\n\nBMI, yağ ve kas kütlesi arasında ayrım yapmaz ve bazı bireyler için yanıltıcı olabilir.",
+  "bmiInfoClassificationSection": "DSÖ sınıflandırması",
+  "bmiInfoFormulaSection": "Formül",
+  "bmiInfoScreenTitle": "BMI'niz nasıl hesaplanır",
   "bmiLabel": "BMI",
   "breakfastExample": "ör. mısır gevreği, süt, kahve ...",
   "breakfastLabel": "Kahvaltı",
@@ -188,6 +156,16 @@
   "clearOffCacheConfirmTitle": "Önbelleği temizle?",
   "clearOffCacheLabel": "Önbelleği temizle",
   "clearOffCacheSubtitle": "{count} öğe · {size}",
+  "@clearOffCacheSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "cmLabel": "cm",
   "codeCopiedLabel": "Kod kopyalandı",
   "copyCodeLabel": "Kodu kopyala",
@@ -202,7 +180,24 @@
   "csvImportContributeOffPrefix": "Barkod var mı? Ürünü Open Food Facts'e katkıda bulunun:",
   "csvImportErrorLabel": "CSV dosyası okunamadı. Biçimi kontrol edin ve tekrar deneyin.",
   "csvImportPartialLabel": "{imported} öğün içe aktarıldı; geçersiz veri nedeniyle {skipped} satır atlandı.",
+  "@csvImportPartialLabel": {
+    "placeholders": {
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
   "csvImportSuccessLabel": "{count} öğün içe aktarıldı.",
+  "@csvImportSuccessLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "customActivityDescription": "Listede olmayan antrenmanlar veya bir fitness takip cihazından okumalar için yakılan kaloriyi doğrudan girin",
   "customActivityDescriptionKj": "Listede olmayan antrenmanlar veya bir fitness takip cihazından okumalar için yakılan kilojulleri doğrudan girin",
   "customActivityKcalHint": "örn. 250",
@@ -218,7 +213,7 @@
   "customMealBarcodeLabel": "Barkod",
   "customMealBarcodeScanButton": "Barkod tara",
   "customMealFormAdvanced": "Gelişmiş",
-  "customMealFormAdvancedHelp": "Hassas ölçek için temel miktarı ve 100 g/ml değerlerini belirleyin.",
+  "customMealFormAdvancedHelp": "Hassas ölçek için boyutları ve 100 g/ml değerlerini belirleyin.",
   "customMealFormModeLabel": "Form görünümü",
   "customMealFormSimple": "Basit",
   "customMealFormSimpleHelp": "Bir porsiyon için toplam değerleri yazın.",
@@ -235,13 +230,17 @@
   "customMealsEmptyLabel": "Henüz özel yemek kaydedilmedi.",
   "dailyKcalAdjustmentLabel": "Günlük Kcal ayarı:",
   "dailyKjAdjustmentLabel": "Günlük kJ ayarı:",
-  "dataCollectionLabel": "Hataların düzeltilmesine yardımcı olmak için anonim çökme raporları gönderin. Yemek günlüğü, kilo veya kişisel veriler dahil edilmez.",
+  "dataCollectionLabel": "Hataların düzeltilmesine yardımcı olmak için çökme raporları gönderin. Yemek günlüğü veya kilo bilgileri dahil edilmez.",
   "deleteAllLabel": "Tümünü sil",
-  "settingsDeleteAllDataLabel": "Tüm verilerimi sil",
-  "settingsDeleteAllDataSubtitle": "Profil, öğünler, aktiviteler ve kilo geçmişi",
-  "settingsDeleteAllDataConfirmTitle": "Tüm verileriniz silinsin mi?",
-  "settingsDeleteAllDataConfirmContent": "Bu işlem profilinizi, öğünlerinizi, aktivitelerinizi, kilo geçmişinizi ve tüm özel tariflerinizi bu cihazdan kalıcı olarak siler. Open Food Facts ve USDA Food Data Central veritabanları bundan etkilenmez. Bu işlem geri alınamaz.",
-  "settingsDeleteAllDataConfirmAction": "Hepsini sil",
+  "settingsDeleteAllDataLabel": "Profil verilerini sıfırla",
+  "settingsDeleteAllDataSubtitle": "Profil, öğünler, aktiviteler, kilo geçmişi ve oruç kayıtları",
+  "settingsDeleteAllDataConfirmTitle": "Profil verileri sıfırlansın mı?",
+  "settingsDeleteAllDataConfirmContent": "Bu işlem profilinizi, öğünlerinizi, aktivitelerinizi, kilo geçmişinizi ve oruç kayıtlarınızı yalnızca geçerli profil için siler. Ayrıca yapay zekâ özelliklerine ait API anahtarını ve sunucu adresini de siler; bunlar bu cihazdaki tüm profiller tarafından paylaşılır. Paylaşılan içerik (özel öğünler, tarifler, aktivite şablonları) ve Open Food Facts ile USDA Food Data Central katalogları bundan etkilenmez. Bu işlem geri alınamaz.",
+  "policyChangeNoticeTitle": "Gizlilik politikasını güncelledik",
+  "policyChangeNoticeBody": "Uygulamanın yaptığı işte hiçbir şey değişmedi. Değişen, bunun ne kadarını sana anlattığımız.\n\nAramalarını en başından beri alan hizmetler artık adlarıyla belirtiliyor. Açabileceğin antrenman içe aktarma özelliği için sağlık verilerine dair yeni bir bölüm var. Ayrıca besin arama sunucumuzun bir istekle birlikte kaydettiği ve 24 saat sakladığı yaklaşık konumu artık açıkça belirtiyoruz.\n\nGünlüğün her zamanki gibi cihazında kalıyor.",
+  "policyChangeNoticeReadAction": "Politikayı oku",
+  "policyChangeNoticeDismissAction": "Anladım",
+  "settingsDeleteAllDataConfirmAction": "Profili sıfırla",
   "lowKcalWarningTitle": "Bu günlük hedef oldukça düşük",
   "lowKcalWarningBody": "Yetişkinler tıbbi gözetim olmadan uzun süreyle günde {threshold} kcal'nin altında beslenmemelidir. Bu kadar düşük bir hedefte kalmadan önce lütfen bir sağlık uzmanına danışmayı düşün.",
   "@lowKcalWarningBody": {
@@ -253,6 +252,13 @@
   },
   "lowKcalWarningViewDisclaimer": "Sorumluluk reddini görüntüle",
   "deleteSelectedRecipesConfirmTitle": "{count} tarif silinsin mi?",
+  "@deleteSelectedRecipesConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteTimeDialogContent": "Seçilen öğeyi silmek istiyor musunuz?",
   "deleteTimeDialogPluralContent": "Bu öğüne ait tüm girdileri silmek istiyor musunuz?",
   "deleteTimeDialogPluralTitle": "Girdiler silinsin mi?",
@@ -264,12 +270,29 @@
   "diaryFutureDateWarning": "Gelecekteki bir tarihi düzenliyorsunuz",
   "diaryLabel": "Günlük",
   "diaryMealKcalConsumedOfTarget": "{consumed} / {target} kcal",
+  "@diaryMealKcalConsumedOfTarget": {
+    "placeholders": {
+      "consumed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
   "diaryNutrientPanelDataDisclaimer": "Yalnızca kaydettiğin öğünlerde takip edilen besinler burada toplanır. Bir değeri eksik olan öğün o besine katkıda bulunmaz — bu nedenle toplamlar olduğundan az görünebilir.",
   "diaryNutrientPanelTitle": "Bugünün besinleri",
   "driPanelInfoTitle": "Referans alım",
   "driPanelInfoBody": "Bu referans değerler, yetişkinler için IOM Diyet Referans Alımları'ndan gelir ve yaşa ile cinsiyete göre değişir. Bir hedef değil, bir referans noktasıdır — kendi ihtiyaçların farklı olabilir.",
   "driPanelInfoLinkLabel": "Kaynak: IOM Dietary Reference Intakes",
   "driPanelReferenceLabel": "ref. {value}",
+  "@driPanelReferenceLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "diarySortByCarbs": "Karbonhidrat (çoktan aza)",
   "diarySortByFat": "Yağ (çoktan aza)",
   "diarySortByKcal": "Kalori (çoktan aza)",
@@ -281,6 +304,7 @@
   "discardChangesConfirmLabel": "Vazgeç",
   "discardChangesContent": "Kaydedilmemiş değişiklikleriniz kaybolacak.",
   "discardChangesTitle": "Değişiklikler iptal edilsin mi?",
+  "disclaimerAcknowledgeLabel": "Anladım",
   "disclaimerText": "OpenNutriTracker bir tıbbi uygulama değildir. Sağlanan tüm veriler doğrulanmamıştır ve dikkatle kullanılmalıdır. Lütfen sağlıklı bir yaşam tarzı sürdürün ve herhangi bir sorununuz varsa bir profesyonele danışın. Hastalık, hamilelik veya emzirme döneminde kullanımı önerilmez.\n\n\nUygulama hala geliştirme aşamasındadır. Hatalar, aksaklıklar ve çökmeler meydana gelebilir.\n\nHer hesaplamanın hakemli kaynaklarına Ana Sayfa veya Profil ekranındaki bilgi simgesine dokunarak ulaşabilirsin.",
   "downloadSampleCsvAction": "Örnek yemekler (csv)",
   "downloadSampleJsonAction": "Örnek yemekler (json)",
@@ -308,12 +332,15 @@
   "exportImportCsvRecipesNote": "CSV; etkinliklerinizi, öğün günlüğünüzü ve takip edilen günleri saklar. Tarifler ve eklediğiniz fotoğraflar yalnızca JSON'da yer alır — yedeklemenizde olmalarını isterseniz JSON'a geçin.",
   "exportImportDescription": "Uygulama verilerini bir zip dosyasına dışa aktarabilir ve daha sonra içe aktarabilirsiniz. Bu, verilerinizi yedeklemek veya başka bir cihaza aktarmak istiyorsanız kullanışlıdır.\n\nUygulama, verilerinizi saklamak için herhangi bir bulut hizmeti kullanmaz.",
   "exportImportErrorLabel": "Dışa Aktarma / İçe Aktarma hatası",
+  "exportImportErrorUnreadableLabel": "Seçilen dosya okunamadı. OpenNutriTracker'ın dışa aktardığı .zip yedeğini seçin.",
+  "exportImportErrorWriteFailedLabel": "Dosya seçilen konuma kaydedilemedi. Farklı bir klasör deneyin.",
   "exportImportSuccessLabel": "Dışa Aktarma / İçe Aktarma başarılı",
   "fatLabel": "yağ",
   "fatLabelShort": "y",
   "fiberLabel": "lif",
   "flOzUnit": "fl.oz",
   "ftLabel": "ft",
+  "inLabel": "in",
   "genderFemaleLabel": "kadın",
   "genderLabel": "Cinsiyet",
   "genderMaleLabel": "erkek",
@@ -326,22 +353,73 @@
   "gramUnit": "g",
   "heightLabel": "Boy",
   "homeLabel": "Ana Sayfa",
+  "homeFirstMealHint": "İlk öğününü veya aktiviteni eklemek için + simgesine dokun",
+  "homeDemoBannerLabel": "Örnek verileri görüntülüyorsunuz",
+  "homeDemoBannerAction": "Profilini oluştur",
+  "homeDemoBannerConfirmTitle": "Kendi profilini oluştur?",
+  "homeDemoBannerConfirmContent": "Örnek veriler silinecek ve kendi profilini oluşturacaksın. Bu işlem geri alınamaz.",
+  "homeDemoBannerConfirmAction": "Devam",
+  "trendsDailyAverageLabel": "Günlük ortalama",
+  "trendsLabel": "Eğilimler",
+  "youLabel": "Siz",
+  "trendsCaloriesLabel": "Kaloriler",
+  "trendsDaysOnTrack": "bu hafta hedefteki gün",
+  "trendsDayStreakLabel": "gün üst üste",
+  "trendsBestStreakLabel": "rekor",
+  "trendsPerWeekSuffix": "/hafta",
+  "trendsWeeksToGoalLabel": "hafta hedefe",
+  "trendsWaterLabel": "Su",
   "importAction": "İçe Aktar",
   "importActivityConfirmContent": "Bu aktiviteler bugüne eklenecek.",
   "importActivityConfirmTitle": "{count} aktivite içe aktarılsın mı?",
+  "@importActivityConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importActivityLabel": "Paylaşılan antrenmanı içe aktar",
   "importActivitySuccessLabel": "Antrenman içe aktarıldı",
   "importCustomFoodDataDescription": "Kendi yemeklerinizi bir CSV dosyasından veya JSON yapıştırarak içe aktarın. Beklenen şekli ve zorunlu alanları görmek için bir örnek indirin.",
   "importCustomFoodDataLabel": "Özel Gıda Verilerini İçe Aktar",
   "importMealConfirmContent": "These items will be added to your {mealType}.",
+  "@importMealConfirmContent": {
+    "placeholders": {
+      "mealType": {
+        "type": "String"
+      }
+    }
+  },
   "importMealConfirmTitle": "Import {count} items?",
+  "@importMealConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importMealErrorLabel": "Invalid QR code",
   "importMealLabel": "Import shared meal",
   "importMealSuccessLabel": "Meal imported",
   "importMealsCsvAction": "Yemekleri içe aktar (csv)",
   "importMealsJsonAction": "Yemekleri içe aktar (json)",
   "importOffFetchFailedLabel": "{count} öğe OpenFoodFacts'ten alınamadı.",
+  "@importOffFetchFailedLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeConfirmContent": "{count} malzeme içeren bu tarif içe aktarılsın mı?",
+  "@importRecipeConfirmContent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeErrorLabel": "Tarif kodu çözümlenemedi",
   "importRecipeLabel": "Tarifi içe aktar",
   "importRecipeSuccessLabel": "Tarif içe aktarıldı",
@@ -356,12 +434,38 @@
   "ironLabel": "demir",
   "itemDeletedSnackbar": "Öğe silindi",
   "itemUpdatedSnackbar": "Öğe güncellendi",
+  "kcalGoalInfoActivityExplanation": "Kaydedilen aktivitelerle yakılan kaloriler hedefinize eklenir; böylece planlanan açık veya fazla, antrenman günlerinde de aynı kalır.",
+  "kcalGoalInfoActivitySection": "Adım 4 · Bugünkü egzersiz",
+  "kcalGoalInfoAdjustmentExplanationFlat": "Kilo hedefiniz sabit bir günlük düzeltme uygular: vermek için −500 kcal, almak için +500 kcal, korumak için 0.",
+  "kcalGoalInfoAdjustmentExplanationWeekly": "Haftalık hızınız günlük düzeltmeyi belirler. 1 kg vücut yağı yaklaşık 7.700 kcal depolar; bu yüzden haftada her kg, hedefi günde yaklaşık 1.100 kcal kaydırır.",
+  "kcalGoalInfoAdjustmentSection": "Adım 2 · Kilo hedefi düzeltmesi",
+  "kcalGoalInfoAppliedAdjustmentLabel": "Uygulanan düzeltme",
+  "kcalGoalInfoAveragedNote": "Ortalama referansta TDEE'niz, erkek ve kadın referans sonuçlarının orta noktasıdır.",
+  "kcalGoalInfoBaseAdjustmentLabel": "Hedef düzeltmesi",
+  "kcalGoalInfoEstimateNote": "Tüm formüller nüfus düzeyinde tahminlerdir — bireysel ihtiyaçlar değişir. Hedefiniz bir başlangıç noktasıdır, tıbbi tavsiye değildir.",
+  "kcalGoalInfoFemaleReferenceLabel": "Kadın referansı",
+  "kcalGoalInfoInputsSection": "Girdileriniz",
+  "kcalGoalInfoIntro": "Günlük kalori hedefiniz, yalnızca aşağıdaki değerler kullanılarak yayımlanmış bilimsel denklemlerle hesaplanır. Bu sayfa bugünkü hedefe giren her sayıyı gösterir.",
+  "kcalGoalInfoLearnMoreLabel": "Hesaplamanın tam dokümantasyonu",
+  "kcalGoalInfoMacroExplanation": "Kalori hedefiniz, makro dağılımınıza göre karbonhidrat, yağ ve proteine bölünür (varsayılan: %60 karbonhidrat, %25 yağ, %15 protein — Ayarlar'dan değiştirilebilir). Gram hedefleri enerji yoğunluklarından gelir: karbonhidrat ve protein gram başına 4 kcal, yağ 9 kcal sağlar.",
+  "kcalGoalInfoMacroSection": "Makro besin dağılımı",
+  "kcalGoalInfoMaleReferenceLabel": "Erkek referansı",
+  "kcalGoalInfoManualExplanation": "Ayarlar'da kendinizin belirlediği sabit bir kaydırma — ihtiyacınızın tahminden farklı olduğunu bildiğiniz durumlar için.",
+  "kcalGoalInfoManualSection": "Adım 3 · Manuel düzeltme",
+  "kcalGoalInfoPaRowLabel": "Aktivite katsayısı (PA)",
+  "kcalGoalInfoPalRowLabel": "Fiziksel aktivite düzeyi (PAL)",
+  "kcalGoalInfoResultSection": "Bugünkü kalori hedefi",
+  "kcalGoalInfoTaperNote": "Hedef kiloya yaklaşırken azaltma açık olduğundan, düzeltme hedefe yaklaştıkça küçülür (5 kg üzerinde tam etki, 1 kg içinde koruma).",
+  "kcalGoalInfoTdeeExplanation": "Toplam günlük enerji harcamanız (TDEE) — tipik bir günde kullandığınız enerji — yaş, kilo, boy ve aktivite düzeyinizden IOM 2005 denklemiyle tahmin edilir.",
+  "kcalGoalInfoTdeeResultLabel": "TDEE'niz",
+  "kcalGoalInfoTdeeSection": "Adım 1 · Koruma enerjisi (TDEE)",
   "kcalLabel": "kcal",
   "kjLabel": "kJ",
   "kcalLeftLabel": "kalan kcal",
   "kcalTooMuchLabel": "fazla kcal",
   "kgLabel": "kg",
   "lbsLabel": "lbs",
+  "stLabel": "st",
   "lunchExample": "ör. pizza, salata, pirinç ...",
   "lunchLabel": "Öğle Yemeği",
   "macroDistributionLabel": "Makro besin Dağılımı:",
@@ -381,6 +485,16 @@
   "mealNameLabel": "Yemek adı",
   "mealNameValidationError": "Yemek adı en az bir harf içermelidir",
   "mealNutrientsPerQtyLabel": "{qty} {unit} başına",
+  "@mealNutrientsPerQtyLabel": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
   "mealNutrientsTotalLabel": "Toplam miktar",
   "mealPatternFiveSmall": "Beş küçük",
   "mealPatternMediterranean": "Akdeniz",
@@ -389,8 +503,8 @@
   "mealPatternStandard": "Standart",
   "mealPatternTwoMeal": "İki öğün",
   "mealProteinLabel": "Protein",
-  "mealSizeLabel": "Yemek boyutu (g/ml)",
-  "mealSizeLabelImperial": "Yemek boyutu (oz/fl oz)",
+  "mealSizeLabel": "Paket boyutu",
+  "mealSizeLabelImperial": "Paket boyutu (oz/fl oz)",
   "mealUnitLabel": "Yemek birimi",
   "micronutrientsLabel": "Mikro besinler",
   "milliliterUnit": "ml",
@@ -401,6 +515,9 @@
   "noActivityRecentlyAddedLabel": "Son zamanlarda eklenen aktivite yok",
   "noMealsRecentlyAddedLabel": "Son zamanlarda eklenen yemek yok",
   "noResultsFound": "Sonuç bulunamadı",
+  "noResultsSubtitle": "Bu aramayla eşleşen yiyecek bulunamadı. Farklı bir ad deneyin, barkodu tarayın veya kendi yiyeceğinizi oluşturun.",
+  "noResultsScanBarcode": "Barkod tara",
+  "noResultsCreateCustomFood": "Özel yiyecek oluştur",
   "notAvailableLabel": "Mevcut Değil",
   "nothingAddedLabel": "Hiçbir şey eklenmedi",
   "notificationsDailyReminderBody": "Bugün öğünlerinizi kaydetmeyi unutmayın!",
@@ -428,16 +545,40 @@
   "nutritionalStatusUnderweight": "Düşük Kilolu",
   "offDisclaimer": "Bu uygulama tarafından size sağlanan veriler Open Food Facts veritabanından alınmaktadır. Sağlanan bilgilerin doğruluğu, eksiksizliği veya güvenilirliği konusunda hiçbir garanti verilmemektedir. Veriler \"olduğu gibi\" sağlanır ve verilerin kullanımıyla ilgili herhangi bir zarardan verilerin kaynağı (Open Food Facts) sorumlu tutulamaz.",
   "onboardingActivityQuestionSubtitle": "Ne kadar aktifsiz? (antrenmanlar hariç)",
+  "onboardingAdultEquationNotice": "Kalori hedefleri yetişkin referans denklemleriyle hesaplanır. 19 yaş altındaysanız sonucu bir doktora veya diyetisyene danışın.",
   "onboardingBirthdayHint": "Tarih Girin",
   "onboardingBirthdayQuestionSubtitle": "Doğum gününüz ne zaman?",
+  "onboardingBlockedActivitySnack": "Devam etmek için aktivite seviyenizi seçin",
+  "onboardingBlockedBodySnack": "Devam etmek için geçerli bir boy ve kilo girin",
+  "onboardingBlockedDemoPolicySnack": "Demoyu denemek için gizlilik politikasını kabul edin",
+  "onboardingBlockedGoalSnack": "Devam etmek için kilo hedefinizi seçin",
+  "onboardingBlockedOverviewSnack": "Bazı bilgiler eksik. Geri dönüp önceki adımları tamamlayın.",
+  "onboardingBlockedPolicySnack": "Devam etmek için gizlilik politikasını kabul edin",
+  "onboardingBlockedProfileSnack": "Devam etmek için cinsiyetinizi seçin ve doğum tarihinizi girin",
   "onboardingEnterBirthdayLabel": "Doğum Günü",
   "onboardingGenderQuestionSubtitle": "Cinsiyetiniz nedir?",
   "onboardingGoalQuestionSubtitle": "Mevcut kilo hedefiniz nedir?",
+  "onboardingFoodSourcesEnabledCount": "{total} kaynaktan {enabled} tanesi etkin",
+  "onboardingGoalSuggestedBadge": "Önerilen",
+  "onboardingGoalSuggestionBmi": "BKİ değeriniz {bmi} — DSÖ: {status}.",
+  "onboardingGoalSuggestionTarget": "Girdiğiniz hedef kiloya göre.",
   "onboardingHeightExampleHintCm": "ör. 170",
   "onboardingHeightExampleHintFt": "ör. 5.8",
   "onboardingHeightQuestionSubtitle": "Mevcut boyunuz nedir?",
+  "onboardingHealthyRangeApply": "{weight} kullan",
+  "onboardingHealthyRangeLabel": "{height} için sağlıklı aralık: {range}",
+  "onboardingHealthyRangeSource": "DSÖ, BKİ 18,5–24,9",
+  "onboardingImplausibleChange": "Değiştir",
+  "onboardingImplausibleHeightBody": "{value} alışılmadık bir boy. Korunsun mu?",
+  "onboardingImplausibleKeep": "Koru",
+  "onboardingImplausibleTitle": "Bu değeri kontrol edin",
+  "onboardingImplausibleWeightBody": "{value} alışılmadık bir kilo. Korunsun mu?",
   "onboardingIntroDescription": "Başlamak için, uygulamanın günlük kalori hedefinizi hesaplamak için hakkınızda bazı bilgilere ihtiyacı var.\nHakkınızdaki tüm bilgiler cihazınızda güvenli bir şekilde saklanır.",
   "onboardingIntroSourcesLinkLabel": "Tıbbi hesaplama kaynaklarımızı okuyun",
+  "onboardingTryDemoLabel": "Demoyu dene",
+  "onboardingTryDemoSubtitle": "Kurulumu atlayın ve uygulamayı örnek verilerle keşfedin. Önce gizlilik politikasını kabul edin.",
+  "onboardingTryDemoDisclaimer": "Yalnızca kurgusal örnek veriler kullanır. Çökme raporları siz daha sonra açana kadar kapalı kalır. Örnek fotoğraflar ve yiyecek araması ağı kullanabilir.",
+  "onboardingTryDemoError": "Demo ayarlanamadı. Lütfen tekrar dene.",
   "onboardingKcalPerDayLabel": "günlük kcal",
   "onboardingKjPerDayLabel": "günlük kJ",
   "onboardingNonBinaryDisclaimer": "Non-binary bireyler için yayımlanmış bir kalori temeli bulunmuyor, bu nedenle varsayılan olarak erkek ve kadın formüllerinin ortalamasını kullanıyoruz — bir başlangıç noktası, kesin bir tahmin değil. Ayarlar → Hesaplamalar bölümünden istediğin zaman ince ayar yapabilirsin.",
@@ -448,6 +589,7 @@
   "onboardingWeightExampleHintKg": "ör. 60",
   "onboardingWeightExampleHintLbs": "ör. 132",
   "onboardingWeightQuestionSubtitle": "Mevcut kilonuz nedir?",
+  "onboardingFoodUnitsSubtitle": "Yiyecek ve içecekleri nasıl kaydedersiniz",
   "onboardingWelcomeLabel": "Hoş geldiniz",
   "onboardingWrongHeightLabel": "Doğru boy girin",
   "onboardingWrongWeightLabel": "Doğru kilo girin",
@@ -643,7 +785,6 @@
   "paTaiChiQiGongGeneralDesc": "genel",
   "paTennisGeneral": "tenis",
   "paTennisGeneralDesc": "genel",
-  "paTrackField": "atletizm",
   "paTrackField1Desc": "(ör. gülle, disk, çekiç atma)",
   "paTrackField2Desc": "(ör. yüksek atlama, uzun atlama, üçlü atlama, cirit, sırıkla atlama)",
   "paTrackField3Desc": "(ör. engelli koşu, engelli yarış)",
@@ -693,6 +834,13 @@
   "profileTargetWeightNotSetLabel": "Ayarlanmadı",
   "profileTargetWeightReached": "Hedefine ulaştın",
   "profileTargetWeightToGo": "Hedefine {value} kaldı",
+  "@profileTargetWeightToGo": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightHistoryTitle": "Kilo geçmişi",
   "proteinLabel": "protein",
   "proteinLabelShort": "p",
@@ -721,6 +869,13 @@
   "recipeImageTakePhoto": "Fotoğraf çek",
   "recipeIngredientAmountLabel": "Miktar",
   "recipeIngredientCountLabel": "{count} malzeme",
+  "@recipeIngredientCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recipeIngredientUnitLabel": "Birim",
   "recipeIngredientsLabel": "Malzemeler",
   "recipeInvalidTotalWeightLabel": "Toplam ağırlık sıfırdan büyük olmalı",
@@ -739,7 +894,6 @@
   "recipeServingsCountLabel": "Porsiyonlar (isteğe bağlı)",
   "recipeTagsHelper": "Virgülle ayırın, örn. \"kahvaltı, vegan\"",
   "recipeTagsLabel": "Etiketler",
-  "recipeTotalWeightHelper": "Varsayılan olarak malzemelerin toplamı. Sıvılar yaklaşık 1 ml ≈ 1 g olarak hesaplanır.",
   "recipeTotalWeightLabel": "Toplam ağırlık (g)",
   "recipesEmptyHint": "Birden fazla malzemeden bir öğün oluşturun ve diğer yiyecekler gibi yeniden kullanın.",
   "recipesEmptyLabel": "Henüz tarif yok",
@@ -760,17 +914,23 @@
   "searchFoodPage": "Yiyecek",
   "searchLabel": "Ara",
   "searchProductsPage": "Ürünler",
-  "searchSwissFoodPage": "Swiss Food",
   "searchResultsLabel": "Arama sonuçları",
   "selectGenderDialogLabel": "Cinsiyet Seçin",
   "selectHeightDialogLabel": "Boy Seçin",
   "selectPalCategoryLabel": "Aktivite Seviyesini Seçin",
   "selectWeightDialogLabel": "Kilo Seçin",
   "selectionCountLabel": "{count} seçildi",
-  "sendAnonymousUserData": "Anonim kullanım verileri gönder",
+  "@selectionCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sendCrashReports": "Çökme raporları gönder",
   "servingLabel": "Porsiyon",
-  "servingSizeLabelImperial": "Porsiyon boyutu (oz/fl oz)",
-  "servingSizeLabelMetric": "Porsiyon boyutu (g/ml)",
+  "servingSizeLabelImperial": "Bir porsiyon (oz/fl oz)",
+  "servingSizeLabelMetric": "Bir porsiyon",
   "settingAboutLabel": "Hakkında",
   "settingFeedbackLabel": "Geri Bildirim",
   "settingsCalciumGoalDescription": "Günlük kalsiyum hedefi (miligram). Varsayılan referans 1000 mg.",
@@ -808,8 +968,15 @@
   "settingsFibreGoalLabel": "Lif hedefi",
   "settingsImperialLabel": "İmperial (lbs, ft, oz)",
   "settingsKcalAdjustmentLabel": "Günlük kcal ayarı",
+  "settingsKcalGoalInfoLabel": "Hedefiniz nasıl hesaplanır",
   "settingsIronGoalDescription": "Günlük demir hedefi (miligram). Varsayılan değer cinsiyete göre değişir (8 mg erkek, 18 mg kadın, diğerleri için 14 mg).",
   "settingsIronGoalLabel": "Demir hedefi",
+  "settingsCategoryAbout": "Hakkında",
+  "settingsCategoryAppearance": "Görünüm",
+  "settingsCategoryData": "Veriler",
+  "settingsCategoryDisplay": "Görüntüleme",
+  "settingsCategoryGoals": "Hedefler ve beslenme",
+  "settingsCategoryUnits": "Birimler ve enerji",
   "settingsLabel": "Ayarlar",
   "settingsLanguageLabel": "Dil",
   "settingsMaterialYouTitle": "Sistem renklerini kullan",
@@ -834,6 +1001,13 @@
   "settingsMetricLabel": "Metrik (kg, cm, ml)",
   "settingsNotificationsLabel": "Günlük Hatırlatıcı",
   "settingsNotificationsTimeLabel": "Hatırlatma zamanı: {time}",
+  "@settingsNotificationsTimeLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "settingsNutrientGoalsHint": "Günlük paneldeki her besin için kişisel hedefler. Bir hedef belirlediğinde günlük, varsayılan günlük referanslar yerine bu değerleri kullanır.",
   "settingsNutrientGoalsLabel": "Besin hedefleri",
   "settingsNutrientsHelp": "Günlük panelde hangi besinlerin görüneceğini seç. Gizlenenler istediğin zaman tekrar açılabilir.",
@@ -848,6 +1022,7 @@
   "settingsPotassiumGoalDescription": "Günlük potasyum hedefi (miligram). Varsayılan referans 3500 mg.",
   "settingsPotassiumGoalLabel": "Potasyum hedefi",
   "settingsPrivacySettings": "Gizlilik Ayarları",
+  "settingsDemoPrivacyNote": "Örnek verileri görüntülerken çökme raporları kullanılamaz. Önce kendi profilinizi oluşturun.",
   "settingsReportErrorLabel": "Hata Bildir",
   "settingsSaturatedFatGoalDescription": "Günlük doymuş yağ üst sınırı (gram). Varsayılan referans 20 g.",
   "settingsSaturatedFatGoalLabel": "Doymuş yağ hedefi",
@@ -866,6 +1041,13 @@
   "settingsThemeLightLabel": "Açık",
   "settingsThemeSystemDefaultLabel": "Sistem varsayılanı",
   "settingsUnitsLabel": "Birimler",
+  "settingsFoodUnitsLabel": "Besin birimleri",
+  "settingsHeightUnitsLabel": "Boy birimi",
+  "settingsBodyWeightUnitLabel": "Vücut ağırlığı birimi",
+  "settingsFoodUnitsMetric": "Metrik (g, kg, ml, l)",
+  "settingsFoodUnitsImperial": "İmperial (lbs, oz, fl oz)",
+  "settingsHeightUnitsMetric": "Metrik (mm, cm, m)",
+  "settingsHeightUnitsImperial": "İmperial (ft, in)",
   "settingsVitaminB12GoalDescription": "Günlük B12 vitamini hedefi (mikrogram). Varsayılan referans 2,4 µg.",
   "settingsVitaminB12GoalLabel": "B12 vitamini hedefi",
   "settingsVitaminDGoalDescription": "Günlük D vitamini hedefi (mikrogram). Varsayılan referans 15 µg.",
@@ -894,6 +1076,7 @@
   "sourcesOpenSourceLabel": "Kaynağı aç",
   "sourcesScreenIntro": "OpenNutriTracker, gösterdiği her hesaplama için yerleşik ve hakemli yöntemler kullanır. Aşağıdaki kaynaklar orijinal yayınlara bağlanır, böylece her değeri kendin doğrulayabilirsin.",
   "sugarLabel": "şeker",
+  "suggestedLabel": "Önerilen",
   "suppliedLabel": "tüketilen",
   "transFatLabel": "trans yağ",
   "unitLabel": "Birim",
@@ -904,8 +1087,22 @@
   "vitaminDLabel": "D vitamini",
   "warningLabel": "Uyarı",
   "weeklyWeightGoalKgPerWeek": "{rate} kg/hafta",
+  "@weeklyWeightGoalKgPerWeek": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "weeklyWeightGoalLabel": "Haftalık oran",
   "weeklyWeightGoalLbsPerWeek": "{rate} lbs/hafta",
+  "@weeklyWeightGoalLbsPerWeek": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "weeklyWeightGoalNoneLabel": "Ayarlanmadı",
   "weightHistoryAddEntry": "Kayıt ekle",
   "weightHistoryChartEmptyState": "Eğilimini görmek için en az iki gün kaydet.",
@@ -967,30 +1164,196 @@
   "customMealsMergeConfirmContent": "Bu işlem, {loser} ile kaydedilen tüm girdileri değiştirip {winner} olarak gösterir ve {loser} özel yiyeceklerinden kaldırılır. Bu işlem geri alınamaz.",
   "@customMealsMergeConfirmContent": {
     "placeholders": {
-      "loser": { "type": "String" },
-      "winner": { "type": "String" }
+      "loser": {
+        "type": "String"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "customMealsMergeConfirmAction": "Birleştir",
   "customMealsMergeSuccessSnackbarOne": "Birleştirildi — {winner} artık 1 kayda sahip.",
   "@customMealsMergeSuccessSnackbarOne": {
-    "placeholders": { "winner": { "type": "String" } }
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
   },
   "customMealsMergeSuccessSnackbarOther": "Birleştirildi — {winner} artık {count} kayda sahip.",
   "@customMealsMergeSuccessSnackbarOther": {
     "placeholders": {
-      "count": { "type": "int" },
-      "winner": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "fastingHomeChipBody": "Oruç · {remaining} kaldı",
   "@fastingHomeChipBody": {
     "placeholders": {
-      "remaining": { "type": "String" }
+      "remaining": {
+        "type": "String"
+      }
     }
   },
   "fastingNotificationChannelName": "Oruç zamanlayıcısı",
   "fastingNotificationChannelDescription": "Bir oruç hedefe ulaştığında tek seferlik bildirimler.",
   "fastingNotificationCompleteTitle": "Oruç süresi tamamlandı",
-  "fastingNotificationCompleteBody": "Hedef sürene ulaştın."
+  "fastingNotificationCompleteBody": "Hedef sürene ulaştın.",
+  "profileImageLabel": "Fotoğraf ekle",
+  "profileImageReplace": "Fotoğrafı değiştir",
+  "profileImageRemove": "Fotoğrafı kaldır",
+  "switchProfileLabel": "Profil değiştir",
+  "addProfileLabel": "Profil ekle",
+  "manageProfilesLabel": "Profilleri yönet",
+  "editProfileTitle": "Profili düzenle",
+  "profileNameLabel": "Ad",
+  "profileNameHint": "Profil adı",
+  "defaultProfileName": "Profil 1",
+  "profileActiveLabel": "Etkin",
+  "deleteProfileConfirmTitle": "Profil silinsin mi?",
+  "deleteProfileConfirmContent": "Bu işlem profili ve tüm verilerini kalıcı olarak siler. Bu geri alınamaz.",
+  "copyToProfileLabel": "Profile kopyala",
+  "copiedToProfileSnackbar": "Öğün profile kopyalandı",
+  "copyActionLabel": "Kopyala",
+  "quickAddActivityTitleLabel": "Hızlı aktivite ekle",
+  "quickAddActivityDurationLabel": "Süre (dk, isteğe bağlı)",
+  "quickAddActivityEnergyLabelKcal": "Yakılan enerji (kcal)",
+  "quickAddActivityEnergyLabelKj": "Yakılan enerji (kJ)",
+  "quickAddActivityAddedSnack": "Aktivite eklendi",
+  "quickAddActivityNameLabel": "Ad (isteğe bağlı)",
+  "scannerLockOrientationTooltip": "Dikey kilitle",
+  "scannerUnlockOrientationTooltip": "Döndürmeye izin ver",
+  "bulkAddTitle": "Birden fazla öğe ekle",
+  "bulkAddInputHint": "2 yumurta, 100g tost, sade kahve",
+  "bulkAddParseLabel": "Yiyecekleri bul",
+  "bulkAddSubmitLabel": "{count} öğeyi kaydet",
+  "bulkAddNoMatchLabel": "Bu öğe için eşleşme bulunamadı",
+  "bulkAddUncertainLabel": "Bu eşleşmeyi kontrol edin",
+  "bulkAddSkipLabel": "Atla",
+  "bulkAddIncludeLabel": "Dahil et",
+  "bulkAddChooseFoodLabel": "Başka bir yiyecek seç",
+  "bulkAddNothingToLogLabel": "Henüz kaydedilecek bir şey yok",
+  "bulkAddSearchFailedLabel": "Bu yiyecekler aranamadı",
+  "bulkAddCheckAmountLabel": "Bu miktarın birimini kontrol edin",
+  "bulkAddDefaultAmountLabel": "Miktar belirtilmedi",
+  "bulkAddErrorInvalidName": "{number}. öğe: geçerli bir besin adı değil",
+  "bulkAddErrorQuantityTooSmall": "{number}. öğe: miktar 0'dan büyük olmalı",
+  "bulkAddErrorQuantityTooLarge": "{number}. öğe: miktar en fazla {bound} olabilir",
+  "bulkAddRowQuantityInvalid": "En fazla iki ondalık basamaklı bir sayı girin",
+  "bulkAddRowQuantityTooSmall": "Miktar 0'dan büyük olmalı",
+  "bulkAddRowQuantityTooLarge": "Miktar en fazla {bound} olabilir",
+  "settingsAiAssistLabel": "Yapay zekâ desteği",
+  "settingsAiAssistNotConfiguredLabel": "Kapalı — kayıtlı anahtar yok",
+  "settingsAiAssistOnLabel": "Açık",
+  "settingsAiAssistPausedLabel": "Duraklatıldı — anahtar kayıtlı",
+  "settingsAiAssistEnabledLabel": "Yapay zekâ desteğini kullan",
+  "aiAssistExperimentalLabel": "Deneysel",
+  "aiAssistExperimentalNote": "Bu özellik değişebilir veya kaldırılabilir; sunulan sağlayıcılar ve modeller de onunla birlikte değişebilir.",
+  "aiConsentTitle": "Bunu açmadan önce",
+  "bulkAddModelHintLabel": "Bunu senin için bir model okuyabilir",
+  "bulkAddModelHintKeyLabel": "Kendi API anahtarınla",
+  "aiConsentChangeProviderNote": "Sağlayıcıyı daha sonra değiştirebilirsin. Her sağlayıcının koşulları ayarlarda yer alır ve yazdığın ya da fotoğrafladığın hiçbir şey, sen özelliği kullanana kadar gönderilmez.",
+  "aiConsentOwnServerCheckNote": "Sunucunuzun adresini kaydettiğinizde, ona hangi modelleri sunduğu da sorulur ve bir kurulum denetimi çalıştırılır — sabit bir örnek satır ve bize ait bir örnek fotoğraf gönderilir, size ait hiçbir şey gönderilmez.",
+  "aiConsentAgreeLabel": "ANLADIM",
+  "aiAssistDisclosureCommon": "Günlüğünüz ve profiliniz asla gönderilmez. Besin değerleri her zaman besin veritabanlarından gelir, modelden değil. Anahtar yalnızca bu cihazda saklanır: OpenNutriTracker onu asla görmez ve kullanımı için ödeme yapmaz.",
+  "aiAssistDisclosureAnthropic": "Anahtar kaydedildiğinde, çoklu ekleme ekranında yazdığınız metin — ve orada okutmayı seçtiğiniz her fotoğraf — Anthropic'e gönderilir. Fotoğraflar yalnızca o tek istek için gönderilir ve asla saklanmaz.",
+  "aiAssistDisclosureOpenRouter": "Anahtar kaydedildiğinde, çoklu ekleme ekranında yazdığınız metin — ve orada okutmayı seçtiğiniz her fotoğraf — OpenRouter'a gönderilir; OpenRouter da bunu seçtiğiniz modeli sunan sağlayıcıya iletir. OpenRouter ayrıca her istekte bu sağlayıcıya hesap düzeyinde bir kimlik iletir ve bu kapatılamaz. İçeriğiniz, isteğin yönlendirilmesi için gerekenin ötesinde saklanmaz; kötüye kullanım tespiti, güvenlik, faturalandırma veya yasal yükümlülükler için gerekli olan durumlar hariçtir. Modelinizi sunan sağlayıcı, aldıklarını kendi politikasına göre saklar.",
+  "aiAssistDisclosureOpenAI": "Anahtar kaydedildiğinde, çoklu ekleme ekranında yazdığınız metin — ve orada okutmayı seçtiğiniz her fotoğraf — OpenAI'ye gönderilir. OpenAI, gönderdiklerinizi kötüye kullanım tespiti için 30 güne kadar saklar; yasa gerektiriyorsa ya da kendi hizmetlerini veya üçüncü tarafları zarardan korumak için makul ölçüde gerekliyse daha uzun süre saklar.",
+  "aiAssistProviderOwnServerLabel": "Kendi sunucunuz",
+  "aiAssistEndpointFieldLabel": "Sunucu adresi",
+  "aiAssistModelFieldLabel": "Model adı",
+  "aiAssistDisclosureOwnServerSecure": "Adres kaydedildiğinde, çoklu ekleme ekranında yazdığınız metin ve orada okutmayı seçtiğiniz her fotoğraf {host} adresine — kendi işlettiğiniz bir sunucuya — gönderilir. Bunu hiçbir üçüncü taraf almaz; projenin o makineyle bir ilişkisi yoktur ve neyi sakladığı konusunda hiçbir söz veremez. Bağlantı şifrelidir.",
+  "@aiAssistDisclosureOwnServerSecure": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistDisclosureOwnServerPlaintext": "Adres kaydedildiğinde, çoklu ekleme ekranında yazdığınız metin ve orada okutmayı seçtiğiniz her fotoğraf {host} adresine — kendi işlettiğiniz bir sunucuya — gönderilir. Bunu hiçbir üçüncü taraf almaz; projenin o makineyle bir ilişkisi yoktur ve neyi sakladığı konusunda hiçbir söz veremez. Bu adres düz HTTP olduğundan bağlantı şifreli değildir: bu telefonla o sunucu arasındaki ağda bulunan her şey gönderilenleri okuyabilir.",
+  "@aiAssistDisclosureOwnServerPlaintext": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistEndpointInvalidLabel": "http:// veya https:// ile başlayan bir adres girin.",
+  "aiAssistModelRequiredLabel": "Bu sunucunun kullanacağı model adını girin.",
+  "aiAssistEndpointPublicPlaintextLabel": "Bu adres herkese açık ve şifresiz olduğundan oraya giden istekler reddedilir. https veya özel bir adres kullanın.",
+  "aiAssistProbeSectionLabel": "Kurulum denetimi",
+  "aiAssistProbeRunningLabel": "Sunucu denetleniyor. İki denetim art arda çalışır, bu yüzden en fazla {minutes, plural, other{{minutes} dakika}} sürebilir – burayı kapatabilirsiniz, döndüğünüzde yanıt burada olacak.",
+  "aiAssistProbeCheckLabel": "Sunucuyu denetle",
+  "aiAssistProbeTextLabel": "Öğün metni",
+  "aiAssistProbePhotoLabel": "Fotoğraflar",
+  "aiAssistProbePassedLabel": "Denetlendi – bu sunucu öğe döndürdü.",
+  "aiAssistProbeUnknownLabel": "Henüz denetlenmedi.",
+  "aiAssistProbeNoAnswerLabel": "Denetlendi – hiçbir yanıt gelmedi, bu yüzden bu sunucu hakkında bir şey öğrenilemedi. Sunucu açık ve erişilebilir olduğunda yeniden deneyin.",
+  "aiAssistProbeTextFailedLabel": "Denetlendi – bu model hiç öğe döndürmedi. Yazdığınız öğünleri çevrimdışı çözümleyici okumaya devam eder, yine de deneyebilirsiniz.",
+  "aiAssistProbePhotoFailedLabel": "Denetlendi – bu model bir fotoğraf için hiç öğe döndürmedi, bu yüzden bu sunucuda fotoğraf okuma sunulmaz.",
+  "aiAssistLoadModelsLabel": "Modelleri yükle",
+  "aiAssistPickModelLabel": "Bir model seçin",
+  "aiAssistModelsUnreachableLabel": "{host} adresine ulaşılamadı. Uykuda olabilir, başka bir ağda olabilir ya da kapalı bir VPN'in arkasında olabilir — bunun yerine model adını yazın.",
+  "aiAssistModelsEmptyLabel": "{host} yanıt verdi ve hiçbir model listelemiyor. Model adını yazın.",
+  "aiAssistModelsRejectedLabel": "{host} yanıt verdi, ancak model listesiyle değil. Adresi kontrol edin veya model adını yazın.",
+  "aiAssistModelsInsecureLabel": "Hiçbir şey gönderilmedi: bu adres herkese açık ve şifresiz. https kullanın veya model adını yazın.",
+  "aiAssistProviderLabel": "Sağlayıcı",
+  "aiAssistModelLabel": "Model",
+  "aiAssistServedByLabel": "{provider} tarafından sunulur",
+  "aiAssistModelRecommendedLabel": "Önerilen",
+  "aiAssistModelCheaperLabel": "Daha ucuz, ancak düşük kaliteli fotoğraflarda daha zayıf",
+  "aiAssistModelMoreItemsLabel": "Bir fotoğraftan daha fazla öğe listeler",
+  "aiAssistModelCheapestLabel": "Bu listedeki en ucuz",
+  "aiAssistNoKeyForProviderLabel": "Bu sağlayıcı için kayıtlı anahtar yok.",
+  "aiAssistKeyFieldLabel": "{provider} API anahtarı",
+  "aiAssistKeySavedLabel": "Anahtar kaydedildi",
+  "aiAssistRemoveKeyLabel": "Anahtarı kaldır",
+  "bulkAddReadByModelLabel": "Yapay zekâ okudu — her satırı kontrol edin",
+  "bulkAddModelKeyRejectedLabel": "Yapay zekâ çalışmadı: API anahtarınız reddedildi.",
+  "bulkAddModelUnsupportedLabel": "Yapay zekâ çalışmadı: seçilen model kullanılamadı.",
+  "bulkAddModelNoCreditLabel": "Yapay zekâ çalışmadı: sağlayıcı hesabınızda kredi kalmamış.",
+  "bulkAddModelInsecureServerLabel": "Yapay zekâ çalışmadı: adres herkese açık ve şifresiz.",
+  "bulkAddModelTimedOutLabel": "Yapay zekâ çalışmadı: sunucunuz zamanında yanıt vermedi.",
+  "bulkAddWaitElapsedLabel": "Sunucunuz bekleniyor · {seconds} sn",
+  "bulkAddWaitModelLoadingLabel": "Sunucunuz muhtemelen modelini yüklüyor. Uzun bir aradan sonraki ilk istek bir iki dakika sürebilir; bu normaldir.",
+  "bulkAddWaitCancelLabel": "İptal",
+  "bulkAddPhotoLabel": "Fotoğraf oku",
+  "bulkAddPhotoDisclosureCommon": "OpenNutriTracker kendi kopyasını saklamaz ve fotoğraf dışa aktarımlarınıza asla dahil edilmez.",
+  "bulkAddPhotoDisclosureAnthropic": "Fotoğraf, içindeki yiyecekleri tanımak için Anthropic'e gönderilir.",
+  "bulkAddPhotoDisclosureOpenRouter": "Fotoğraf OpenRouter'a gönderilir; OpenRouter da içindeki yiyecekleri tanımak için onu {provider} sağlayıcısına iletir.",
+  "bulkAddPhotoDisclosureOpenAI": "Fotoğraf, içindeki yiyecekleri tanımak için OpenAI'ye gönderilir. OpenAI fotoğrafı kötüye kullanım tespiti için 30 güne kadar saklar; yasa gerektiriyorsa ya da kendi hizmetlerini veya üçüncü tarafları zarardan korumak için makul ölçüde gerekliyse daha uzun süre saklar.",
+  "bulkAddPhotoDisclosureOwnServer": "Fotoğraf, içindeki yiyecekleri tanımak için {host} adresine gönderilir.",
+  "bulkAddReadFromPhotoLabel": "Fotoğraftan okundu — her yiyeceği ve miktarı kontrol edin",
+  "bulkAddPhotoUnavailableLabel": "Fotoğraf okumak için Ayarlar’dan yapay zekâ öğün yardımını açın",
+  "bulkAddPhotoKeyRejectedLabel": "API anahtarınız reddedildi. Ayarlar’dan kontrol edin.",
+  "bulkAddPhotoCameraFailedLabel": "Kamera açılamadı. Kamera iznini kontrol edip tekrar deneyin.",
+  "bulkAddPhotoFailedLabel": "Fotoğraf okunamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+  "bulkAddPhotoUnreadableLabel": "Bu görsel kullanılamadı. Başka bir fotoğraf deneyin.",
+  "bulkAddPhotoUnsupportedLabel": "Bu model fotoğrafları okuyamıyor. Ayarlar'dan başka bir model seçin veya öğeleri yazın.",
+  "bulkAddPhotoNoCreditLabel": "Bu istek ödenemedi: sağlayıcı hesabınızda kredi kalmamış. Sağlayıcınızdan kredi yükleyin veya öğeleri elle yazın.",
+  "bulkAddPhotoNoFoodLabel": "Bu fotoğrafta yiyecek bulunamadı. Başka bir fotoğraf deneyin veya öğeleri yazın.",
+  "settingsHealthSyncSubtitle": "Antrenmanları içe aktar",
+  "healthSyncAutoImportLabel": "Antrenmanları {platform} uygulamasından otomatik olarak içe aktar",
+  "healthSyncKcalMultiplierLabel": "Antrenman kalori payı",
+  "healthSyncKcalMultiplierSubtitle": "Vücut genellikle egzersizi, günün geri kalanında daha az kalori yakarak dengeler. %100 değeri, her antrenman kalorisini günlük hedefine ekler.",
+  "healthSyncKcalMultiplierValueLabel": "%{percent}",
+  "healthSyncSuggestedLabel": "Senin için önerilen: %{percent}",
+  "healthSyncImportNowLabel": "Şimdi içe aktar",
+  "healthSyncLastImportLabel": "Son içe aktarma: {time}",
+  "healthSyncNeverImportedLabel": "Henüz antrenman içe aktarılmadı",
+  "healthSyncImportedCountLabel": "{count, plural, =0{Yeni antrenman yok} other{{count} antrenman içe aktarıldı}}",
+  "healthSyncPermissionDeniedLabel": "{platform} erişimi verilmedi. Antrenmanları içe aktarmak için OpenNutriTracker’ın antrenman verilerini okumasına izin ver.",
+  "healthSyncDisclosureTitle": "Antrenmanlar {platform} uygulamasından içe aktarılsın mı?",
+  "healthSyncDisclosureBody": "OpenNutriTracker, tamamlanmış antrenmanlarını {platform} uygulamasından okuyacak — türlerini, ne zaman yapıldıklarını, ne kadar sürdüklerini ve bildirdikleri enerjiyi.\n\nAntrenmanlar günlüğüne, düzenleyebileceğin veya silebileceğin etkinlikler olarak eklenir; bildirilen enerji, o günün kalori hedefini senin belirlediğin oranda yükseltir.",
+  "healthSyncDisclosureBodyFatAddendum": "OpenNutriTracker ayrıca {platform} uygulamasında kayıtlı en güncel vücut yağ oranını da okuyacak. Vücut yağ oranı, bu oranı önermek için kullanılır.",
+  "healthSyncDisclosureFooter": "{platform} uygulamasına hiçbir şey geri yazılmaz ve hiçbir veri başka bir yere gönderilmez — hepsi bu cihazda kalır.\n\nBunu istediğin zaman kapatabilirsin; kapattığında okuma da durur.",
+  "healthSyncDisclosureContinueAction": "Devam",
+  "healthSyncUnavailableLabel": "Bu cihazda sağlık verileri kullanılamıyor. Antrenman içe aktarma, Android’de Health Connect veya iOS’ta Apple Health gerektirir.",
+  "sourcesEnergyCompensationTitle": "Antrenman kalori payı",
+  "sourcesEnergyCompensationDescription": "İçe aktarılan antrenmanlar, cihazın bildirdiği enerjinin tamamından daha azıyla sayılır. İnsanlar egzersizi, günün geri kalanında daha az kalori yakarak dengeler; ortalama olarak yaklaşık %28, vücut yağ oranı yüksek olanlarda daha fazla. Önerilen pay bu araştırmadan gelir ve Ayarlar → Sağlık senkronizasyonu bölümünden değiştirebilirsin. Enerjinin kendisi antrenmanı kaydeden uygulama veya cihaz tarafından bildirilir; uygulamadaki MET formülüyle hesaplanmaz."
 }

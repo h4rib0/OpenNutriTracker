@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
 
 import '../helpers/hive_test_setup.dart';
+import 'package:opennutritracker/core/utils/app_locale.dart';
 
 MealNutrimentsDBO _emptyNutriments() => MealNutrimentsDBO(
       energyKcal100: null,
@@ -20,6 +21,7 @@ MealDBO _meal({
   String? code,
   String? name,
   MealSourceDBO source = MealSourceDBO.off,
+  bool? detailed,
 }) {
   return MealDBO(
     code: code,
@@ -35,6 +37,7 @@ MealDBO _meal({
     servingSize: null,
     nutriments: _emptyNutriments(),
     source: source,
+    detailed: detailed,
   );
 }
 
@@ -105,7 +108,8 @@ void main() {
         () async {
       await ds.cache(_meal(code: null, name: null));
       expect(ds.count, equals(1));
-      expect(tsBox.length, equals(0));
+      // The only sidecar entry is the language stamp, never a timestamp.
+      expect(tsBox.keys.where((k) => k != '\u0000language'), isEmpty);
     });
 
     test('cacheAll touches every entry', () async {
@@ -200,6 +204,52 @@ void main() {
       expect(ds.getByBarcode('Z'), isNull);
     });
 
+    group('detailed flag (thin search vs full product)', () {
+      test('getDetailedByBarcode ignores thin entries, returns full ones',
+          () async {
+        await ds.cache(_meal(code: 'THIN', name: 'Thin', detailed: false));
+        await ds.cache(_meal(code: 'FULL', name: 'Full', detailed: true));
+
+        expect(ds.getDetailedByBarcode('THIN'), isNull,
+            reason: 'a thin search result must not satisfy a detailed lookup');
+        expect(ds.getDetailedByBarcode('FULL')?.name, equals('Full'));
+        // getByBarcode still returns either, for callers that accept thin data.
+        expect(ds.getByBarcode('THIN')?.name, equals('Thin'));
+      });
+
+      test('legacy entries with null detailed are treated as thin', () async {
+        await ds.cache(_meal(code: 'OLD', name: 'Legacy')); // detailed == null
+        expect(ds.getDetailedByBarcode('OLD'), isNull);
+      });
+
+      test(
+          'cacheFromSearch does not downgrade a full entry to a thin search '
+          'result', () async {
+        await ds.cache(_meal(code: 'A', name: 'Full', detailed: true));
+
+        await ds.cacheFromSearch([
+          _meal(code: 'A', name: 'Thin from search', detailed: false),
+        ]);
+
+        final entry = ds.getByBarcode('A')!;
+        expect(entry.name, equals('Full'),
+            reason: 'the hydrated full entry must survive a re-search');
+        expect(entry.detailed, isTrue);
+        expect(ds.getDetailedByBarcode('A')?.name, equals('Full'));
+      });
+
+      test('cacheFromSearch still refreshes a thin entry with newer thin data',
+          () async {
+        await ds.cache(_meal(code: 'B', name: 'Thin v1', detailed: false));
+
+        await ds.cacheFromSearch([
+          _meal(code: 'B', name: 'Thin v2', detailed: false),
+        ]);
+
+        expect(ds.getByBarcode('B')?.name, equals('Thin v2'));
+      });
+    });
+
     test('touch refreshes the timestamp without changing meal data', () async {
       await ds.cache(_meal(code: 'A', name: 'Apple v1'));
       final original = tsBox.get('A')!;
@@ -269,9 +319,11 @@ void main() {
     });
 
     test('pruneStale drops entries with no timestamp record', () async {
-      // Manually insert without a ts entry.
-      await cacheBox.add(_meal(code: 'NO_TS', name: 'Legacy'));
+      // Stamp the language first, then insert straight into the box so the
+      // entry has no timestamp; inserting before the stamp would exercise
+      // the pre-stamp reset below instead.
       await ds.cache(_meal(code: 'FRESH', name: 'Fresh'));
+      await cacheBox.add(_meal(code: 'NO_TS', name: 'Legacy'));
 
       final removed = await ds.pruneStale(const Duration(days: 90));
       expect(removed, equals(1));
@@ -303,6 +355,57 @@ void main() {
 
       expect(ds.count, equals(0));
       expect(tsBox.length, equals(0));
+    });
+
+    group('the language of the cached names', () {
+      tearDown(AppLocale.reset);
+
+      test('a cache written in another language is dropped on write',
+          () async {
+        AppLocale.select('de');
+        await ds.cache(_meal(code: 'A', name: 'Brot'));
+        expect(ds.count, equals(1));
+
+        AppLocale.select('it');
+        await ds.cache(_meal(code: 'B', name: 'Pane'));
+
+        expect(ds.getAll().map((m) => m.code), equals(['B']),
+            reason: 'the German entry cannot be re-localized');
+      });
+
+      test('a cache written in another language reads as empty', () async {
+        AppLocale.select('de');
+        await ds.cache(_meal(code: 'A', name: 'Brot'));
+
+        AppLocale.select('it');
+        expect(ds.getByBarcode('A'), isNull);
+        expect(ds.getDetailedByBarcode('A'), isNull);
+        expect(ds.getAllByMostRecentlyTouched(), isEmpty);
+        expect(ds.getAll(), isEmpty);
+        await ds.settle();
+        expect(cacheBox.isEmpty, isTrue, reason: 'cleared in the background');
+      });
+
+      test('a language with the same food-name language keeps the cache',
+          () async {
+        // Swedish has no SupportedLanguage value and reads English names,
+        // exactly like English itself.
+        AppLocale.select('en');
+        await ds.cache(_meal(code: 'A', name: 'Bread'));
+        AppLocale.select('sv');
+        expect(ds.getByBarcode('A'), isNotNull);
+      });
+
+      test('a cache from before the language stamp is dropped once',
+          () async {
+        await cacheBox.add(_meal(code: 'OLD', name: 'Unknown language'));
+        expect(ds.getAll(), isEmpty);
+        await ds.settle();
+        expect(cacheBox.isEmpty, isTrue);
+
+        await ds.cache(_meal(code: 'NEW', name: 'Known'));
+        expect(ds.getAll().single.code, equals('NEW'));
+      });
     });
 
     test('getStorageSizeBytes returns a non-negative number', () async {

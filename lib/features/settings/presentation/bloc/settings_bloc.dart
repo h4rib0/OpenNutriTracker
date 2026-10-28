@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -10,7 +11,10 @@ import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_tracked_day_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/set_day_boundary_usecase.dart';
 import 'package:opennutritracker/core/utils/app_const.dart';
+import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
+import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 
 part 'settings_event.dart';
 
@@ -29,6 +33,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   // fibre / sat-fat / sugar sliders with the user's existing per-day
   // overrides rather than always starting from defaults.
   final GetTrackedDayUsecase _getTrackedDayUsecase;
+  final SetDayBoundaryUsecase _setDayBoundaryUsecase;
 
   SettingsBloc(
     this._getConfigUsecase,
@@ -38,6 +43,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     this._getMacroGoalUsecase,
     this._cachedOffMealDataSource,
     this._getTrackedDayUsecase,
+    this._setDayBoundaryUsecase,
   ) : super(SettingsInitial()) {
     on<LoadSettingsEvent>((event, emit) async {
       emit(SettingsLoadingState());
@@ -55,6 +61,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           userConfig.hasAcceptedSendAnonymousData,
           userConfig.appTheme,
           usesImperialUnits,
+          usesImperialFoodUnits: userConfig.usesImperialFoodUnits,
+          usesImperialHeightUnits: userConfig.usesImperialHeightUnits,
+          bodyWeightUnit: userConfig.bodyWeightUnit,
           showActivityTracking: userConfig.showActivityTracking,
           showMealMacros: userConfig.showMealMacros,
           notificationsEnabled: userConfig.notificationsEnabled,
@@ -70,6 +79,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           dayStartOffsetMinutes: userConfig.dayStartOffsetMinutes,
           useMaterialYou: userConfig.useMaterialYou,
           accentColor: userConfig.accentColor,
+          isDemoData: userConfig.isDemoData,
+          healthImportEnabled: userConfig.healthImportEnabled,
+          healthWorkoutKcalMultiplier: userConfig.healthWorkoutKcalMultiplier,
+          defaultToRawFoodUnits: userConfig.defaultToRawFoodUnits,
         ),
       );
     });
@@ -80,8 +93,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     add(LoadSettingsEvent());
   }
 
-  void setHasAcceptedAnonymousData(bool hasAcceptedAnonymousData) {
-    _addConfigUsecase.setConfigHasAcceptedAnonymousData(
+  Future<void> setHasAcceptedAnonymousData(bool hasAcceptedAnonymousData) {
+    return _addConfigUsecase.setConfigHasAcceptedAnonymousData(
       hasAcceptedAnonymousData,
     );
   }
@@ -94,25 +107,39 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _addConfigUsecase.setConfigUsesImperialUnits(usesImperialUnits);
   }
 
+  void setUsesImperialFoodUnits(bool usesImperial) {
+    _addConfigUsecase.setConfigUsesImperialFoodUnits(usesImperial);
+  }
+
+  void setUsesImperialHeightUnits(bool usesImperial) {
+    _addConfigUsecase.setConfigUsesImperialHeightUnits(usesImperial);
+  }
+
+  void setBodyWeightUnit(BodyWeightUnit unit) {
+    _addConfigUsecase.setConfigBodyWeightUnit(unit);
+  }
+
   void setShowActivityTracking(bool showActivityTracking) {
     _addConfigUsecase.setConfigShowActivityTracking(showActivityTracking);
   }
 
-  void setShowMealMacros(bool showMealMacros) {
-    _addConfigUsecase.setConfigShowMealMacros(showMealMacros);
+  Future<void> setHealthImportEnabled(bool enabled) {
+    return _addConfigUsecase.setConfigHealthImportEnabled(enabled);
   }
 
-  void setNotificationsEnabled(bool enabled) {
-    _addConfigUsecase.setNotificationsEnabled(enabled);
+  /// Persists the share of an imported workout's reported energy that counts
+  /// toward the daily goal, as a fraction. Applies to future imports only —
+  /// activities already filed keep the calories they were written with.
+  Future<void> setHealthWorkoutKcalMultiplier(double multiplier) {
+    return _addConfigUsecase.setConfigHealthWorkoutKcalMultiplier(multiplier);
   }
 
-  void setNotificationTime(int hour, int minute) {
-    _addConfigUsecase.setNotificationTime(hour, minute);
+  Future<void> setShowMealMacros(bool showMealMacros) {
+    return _addConfigUsecase.setConfigShowMealMacros(showMealMacros);
   }
 
-  void setSelectedLocale(String? locale) {
-    _addConfigUsecase.setSelectedLocale(locale);
-  }
+  Future<void> setSelectedLocale(String? locale) =>
+      _addConfigUsecase.setSelectedLocale(locale);
 
   void setShowMicronutrients(bool show) {
     _addConfigUsecase.setConfigShowMicronutrients(show);
@@ -122,8 +149,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _addConfigUsecase.setConfigSyncNutrientsToSupabase(sync);
   }
 
+  Future<bool> getUseBodyWeightMacros() async {
+    final config = await _getConfigUsecase.getConfig();
+    return config.useBodyWeightMacros;
+  }
+
+  Future<void> setUseBodyWeightMacros(bool value) async {
+    await _addConfigUsecase.setConfigUseBodyWeightMacros(value);
+  }
+
   void setUsesKilojoules(bool usesKilojoules) {
     _addConfigUsecase.setConfigUsesKilojoules(usesKilojoules);
+  }
+
+  void setDefaultToRawFoodUnits(bool value) {
+    _addConfigUsecase.setConfigDefaultToRawFoodUnits(value);
   }
 
   void setUseMaterialYou(bool useMaterialYou) {
@@ -143,20 +183,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     await _addConfigUsecase.setDiarySortPreference(mealKey, sortIndex);
   }
 
-  // #139: persist the configurable diary day boundary (0-23).
-  Future<void> setDayStartOffsetHours(int hours) async {
-    await _addConfigUsecase.setConfigDayStartOffsetHours(hours);
+  // #139: persist the configurable diary day boundary — hours 0-23 and,
+  // since the follow-up, minutes 0-59 so shift workers on 04:30 (or
+  // 03:45) can be exact. One write that also moves the tracked-day rows
+  // onto the days their entries are now listed under (#1317).
+  Future<void> setDayStartOffset(int hours, int minutes) async {
+    await _setDayBoundaryUsecase.setDayBoundary(hours, minutes);
   }
 
   Future<int> getDayStartOffsetHours() async {
     final config = await _getConfigUsecase.getConfig();
     return config.dayStartOffsetHours;
-  }
-
-  // #139 follow-up: persist the minute component (0-59) of the diary
-  // day boundary so shift workers on 04:30 (or 03:45) can be exact.
-  Future<void> setDayStartOffsetMinutes(int minutes) async {
-    await _addConfigUsecase.setConfigDayStartOffsetMinutes(minutes);
   }
 
   Future<int> getDayStartOffsetMinutes() async {
@@ -219,6 +256,22 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     await _addConfigUsecase.setConfigMealKcalSharesPct(shares);
   }
 
+  /// The day a goal edit means by "today": the logical day under the
+  /// configured "Day starts at" boundary (#139), the one Home and the
+  /// Diary show, and the one an entry logged now is filed under. On a
+  /// 22:00 boundary at 20:40 that is yesterday's date; `DateTime.now()`
+  /// would put the goal on a day the user is not looking at (#1360).
+  ///
+  /// Resolve it once per save and pass the result to every call that
+  /// follows, so the row check, its creation and the per-nutrient writes
+  /// cannot land on two different days if the boundary passes mid-save.
+  Future<DateTime> getCurrentLogicalDay() async {
+    final config = await _getConfigUsecase.getConfig();
+    return DayBoundaryCalc.currentLogicalDayMinutes(
+      config.dayStartOffsetTotalMinutes,
+    );
+  }
+
   /// #173: read today's per-nutrient goal overrides from the stored
   /// TrackedDayDBO row. The dialog uses these to pre-fill the sliders
   /// so users see their previously-saved targets rather than defaults.
@@ -244,44 +297,67 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     double? vitaminDGoal,
     double? vitaminB12Goal,
     double? magnesiumGoal,
+    bool clearAll = false,
   }) async {
-    await _addTrackedDayUsecase.updateDayNutrientGoals(
-      day,
-      fibreGoal: fibreGoal,
-      satFatGoal: satFatGoal,
-      sugarsGoal: sugarsGoal,
-      sodiumGoal: sodiumGoal,
-      calciumGoal: calciumGoal,
-      ironGoal: ironGoal,
-      potassiumGoal: potassiumGoal,
-      vitaminDGoal: vitaminDGoal,
-      vitaminB12Goal: vitaminB12Goal,
-      magnesiumGoal: magnesiumGoal,
-    );
-  }
-
-  Future<void> updateTrackedDay(DateTime day) async {
-    final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal();
-    final totalCarbsGoal = await _getMacroGoalUsecase.getCarbsGoal(
-      totalKcalGoal,
-    );
-    final totalFatGoal = await _getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
-    final totalProteinGoal = await _getMacroGoalUsecase.getProteinsGoal(
-      totalKcalGoal,
-    );
-
-    final hasTrackedDay = await _addTrackedDayUsecase.hasTrackedDay(day);
-
-    if (hasTrackedDay) {
-      await _addTrackedDayUsecase.updateDayCalorieGoal(day, totalKcalGoal);
-      await _addTrackedDayUsecase.updateDayMacroGoals(
+    await withTrackedDayLockOnProfile(
+      () => _addTrackedDayUsecase.updateDayNutrientGoals(
         day,
-        carbsGoal: totalCarbsGoal,
-        fatGoal: totalFatGoal,
-        proteinGoal: totalProteinGoal,
-      );
-    }
+        fibreGoal: fibreGoal,
+        satFatGoal: satFatGoal,
+        sugarsGoal: sugarsGoal,
+        sodiumGoal: sodiumGoal,
+        calciumGoal: calciumGoal,
+        ironGoal: ironGoal,
+        potassiumGoal: potassiumGoal,
+        vitaminDGoal: vitaminDGoal,
+        vitaminB12Goal: vitaminB12Goal,
+        magnesiumGoal: magnesiumGoal,
+        clearAll: clearAll,
+      ),
+    );
   }
+
+  Future<void> updateTrackedDay(DateTime day) =>
+      // The goal counts the day's activities, so it is read and written
+      // with no boundary move between (#1317).
+      withTrackedDayLockOnProfile(() async {
+        final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal();
+        final totalCarbsGoal = await _getMacroGoalUsecase.getCarbsGoal(
+          totalKcalGoal,
+        );
+        final totalFatGoal = await _getMacroGoalUsecase.getFatsGoal(
+          totalKcalGoal,
+        );
+        final totalProteinGoal = await _getMacroGoalUsecase.getProteinsGoal(
+          totalKcalGoal,
+        );
+
+        final hasTrackedDay = await _addTrackedDayUsecase.hasTrackedDay(day);
+
+        if (hasTrackedDay) {
+          await _addTrackedDayUsecase.updateDayCalorieGoal(day, totalKcalGoal);
+          await _addTrackedDayUsecase.updateDayMacroGoals(
+            day,
+            carbsGoal: totalCarbsGoal,
+            fatGoal: totalFatGoal,
+            proteinGoal: totalProteinGoal,
+          );
+        } else {
+          // No diary entry yet for this day (e.g. first thing in the
+          // morning, or right after onboarding). Create the row from the
+          // current goals, as callers rely on: without it, follow-up
+          // writes like setTodayNutrientGoals find no row and are
+          // silently skipped (#1348). Same creation pattern as
+          // MealDetailBloc/ActivityDetailBloc.
+          await _addTrackedDayUsecase.addNewTrackedDay(
+            day,
+            totalKcalGoal,
+            totalCarbsGoal,
+            totalFatGoal,
+            totalProteinGoal,
+          );
+        }
+      });
 }
 
 enum SystemDropDownType { metric, imperial }

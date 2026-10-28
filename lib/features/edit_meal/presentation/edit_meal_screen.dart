@@ -11,7 +11,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/user_image_picker_tile.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/barcode_validator.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
@@ -21,6 +24,7 @@ import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/food_name_validator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/core/utils/navigation_predicates.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/bloc/edit_meal_bloc.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/widgets/default_meal_image.dart';
@@ -92,7 +96,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
   bool _initialised = false;
 
   String baseQuantity = "100";
-  String baseQuantityUnit = " g/ml";
 
   /// Tracks the unit the energy field was last rendered in, so that when
   /// the user flips between kcal and kJ in Settings mid-edit we can
@@ -204,16 +207,33 @@ class _EditMealScreenState extends State<EditMealScreen> {
     // flips between kcal and kJ in Settings while this screen is open.
     final usesKj = context.watch<EnergyUnitProvider>().usesKilojoules;
     _maybeReinterpretKcalField(usesKj);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
     return SafeArea(
       child: Scaffold(
+        backgroundColor: palette.canvas,
         appBar: AppBar(
-          title: Text(S.of(context).editMealLabel),
+          backgroundColor: palette.canvas,
+          surfaceTintColor: Colors.transparent,
+          toolbarHeight: MediaQuery.textScalerOf(context).scale(kToolbarHeight),
+          title: Text(
+            S.of(context).editMealLabel,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
           actions: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: FilledButton(
-                onPressed: () => _onSavePressed(_usesImperialUnits),
-                child: Text(S.of(context).buttonSaveLabel),
+              padding: const EdgeInsets.fromLTRB(Dimens.spacing16, 0, Dimens.spacing16, 0),
+              child: Semantics(
+                identifier: 'edit-meal-save',
+                child: FilledButton(
+                  onPressed: () => _onSavePressed(_usesImperialUnits),
+                  style: FilledButton.styleFrom(
+                    shape: const RoundedRectangleBorder(borderRadius: Dimens.borderRadiusM),
+                  ),
+                  child: Text(S.of(context).buttonSaveLabel),
+                ),
               ),
             ),
           ],
@@ -270,10 +290,15 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
   Widget _getLoadedContent(bool usesImperialUnits, bool usesKj) {
     final isSimple = _formMode == CustomMealFormMode.simple;
-    final energyUnitSuffix = usesKj ? S.of(context).kjLabel : S.of(context).kcalLabel;
+    final energyUnitSuffix =
+        usesKj ? S.of(context).kjLabel : S.of(context).kcalLabel;
+    // The mass unit every Advanced field is read in, following the unit
+    // selector (now the first Advanced field) so the labels and the per-100
+    // helper all track the user's choice (#495).
+    final unitSuffix = _massUnitSuffix(context);
     final String advancedHelper = _isTotal
         ? S.of(context).mealNutrientsTotalLabel
-        : S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), baseQuantityUnit.trim());
+        : S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), unitSuffix);
     final String energyHelper = isSimple
         ? S.of(context).customMealFormSimpleFieldHelper(energyUnitSuffix)
         : advancedHelper;
@@ -335,13 +360,19 @@ class _EditMealScreenState extends State<EditMealScreen> {
         ],
         TextFormField(
           controller: _nameTextController,
-          decoration: InputDecoration(labelText: S.of(context).mealNameLabel, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+            labelText: S.of(context).mealNameLabel,
+            border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+          ),
           keyboardType: TextInputType.text,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _brandsTextController,
-          decoration: InputDecoration(labelText: S.of(context).mealBrandsLabel, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+            labelText: S.of(context).mealBrandsLabel,
+            border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+          ),
           keyboardType: TextInputType.text,
         ),
         const SizedBox(height: 16),
@@ -355,7 +386,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
             decoration: InputDecoration(
               labelText: S.of(context).customMealBarcodeLabel,
               hintText: S.of(context).customMealBarcodeHint,
-              border: const OutlineInputBorder(),
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
               suffixIcon: Semantics(
                 identifier: 'edit-meal-barcode-scan',
                 child: IconButton(
@@ -373,27 +404,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
         // and the scaffolding is hidden to reduce cognitive load (#232).
         if (!isSimple) ...[
           const SizedBox(height: 32),
-          TextFormField(
-            controller: _mealQuantityTextController,
-            decoration: InputDecoration(
-              labelText: _usesImperialUnits ? S.of(context).mealSizeLabelImperial : S.of(context).mealSizeLabel,
-              border: const OutlineInputBorder(),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _servingQuantityTextController,
-            inputFormatters: CustomTextInputFormatter.doubleOnly(),
-            decoration: InputDecoration(
-              labelText: _usesImperialUnits
-                  ? S.of(context).servingSizeLabelImperial
-                  : S.of(context).servingSizeLabelMetric,
-              border: const OutlineInputBorder(),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 16),
+          // Unit first: every quantity and nutrition value below is entered
+          // in this unit, so choosing it up front keeps the form consistent
+          // and lets the labels and per-100 helper reflect it (#495).
           Semantics(
             identifier: 'edit-meal-unit-selector',
             child: SegmentedButton<String>(
@@ -406,11 +419,33 @@ class _EditMealScreenState extends State<EditMealScreen> {
               },
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _mealQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+              labelText: '${S.of(context).mealSizeLabel} ($unitSuffix)',
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _servingQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+              labelText: '${S.of(context).servingSizeLabelMetric} ($unitSuffix)',
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _baseQuantityTextController,
             inputFormatters: CustomTextInputFormatter.doubleOnly(),
-            decoration: InputDecoration(labelText: S.of(context).baseQuantityLabel, border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: '${S.of(context).baseQuantityLabel} ($unitSuffix)',
+                border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 48),
@@ -420,7 +455,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
               segments: [
                 ButtonSegment(
                   value: false,
-                  label: Text(S.of(context).mealNutrientsPerQtyLabel(_getDisplayQuantity(), baseQuantityUnit.trim())),
+                  label: Text(S.of(context).mealNutrientsPerQtyLabel(
+                      _getDisplayQuantity(), unitSuffix)),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text(S.of(context).mealNutrientsTotalLabel),
                 ),
                 ButtonSegment(value: true, label: Text(S.of(context).mealNutrientsTotalLabel)),
               ],
@@ -438,10 +478,10 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _kcalTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: '${S.of(context).mealEnergyLabel} ($energyUnitSuffix)',
-            helperText: energyHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText:
+                  '${S.of(context).mealEnergyLabel} ($energyUnitSuffix)',
+              helperText: energyHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -449,10 +489,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _carbsTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealCarbsLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealCarbsLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -460,10 +499,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _fatTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealFatLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealFatLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
@@ -471,15 +509,17 @@ class _EditMealScreenState extends State<EditMealScreen> {
           controller: _proteinTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
           decoration: InputDecoration(
-            labelText: S.of(context).mealProteinLabel,
-            helperText: macroHelper,
-            border: const OutlineInputBorder(),
-          ),
+              labelText: S.of(context).mealProteinLabel,
+              helperText: macroHelper,
+              border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         if (!isSimple) ...[
           const SizedBox(height: 32),
-          Text(S.of(context).micronutrientsLabel, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            S.of(context).micronutrientsLabel,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           _buildMicroField(_fiberTextController, S.of(context).fiberLabel, 'g', perQtyHelper),
           const SizedBox(height: 16),
@@ -524,7 +564,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
         labelText: label,
         suffixText: unit,
         helperText: helperText,
-        border: const OutlineInputBorder(),
+        border: const OutlineInputBorder(borderRadius: Dimens.borderRadiusM),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
     );
@@ -543,7 +583,50 @@ class _EditMealScreenState extends State<EditMealScreen> {
     return text.isEmpty ? baseQuantity : text;
   }
 
+  /// The unit shown in the Advanced-mode field labels and the per-100
+  /// helper. It follows the unit selector (the first Advanced field) and the
+  /// user's metric/imperial setting, built from the existing localized unit
+  /// tokens so locales like uk/zh keep their own notation (#495).
+  String _massUnitSuffix(BuildContext context) {
+    final s = S.of(context);
+    final unit = selectedUnit ?? _units[2];
+    if (_usesImperialUnits) {
+      switch (unit) {
+        case 'g':
+          return s.ozUnit;
+        case 'ml':
+          return s.flOzUnit;
+        default:
+          return '${s.ozUnit}/${s.flOzUnit}';
+      }
+    }
+    switch (unit) {
+      case 'g':
+        return s.gramUnit;
+      case 'ml':
+        return s.milliliterUnit;
+      default:
+        return s.gramMilliliterUnit;
+    }
+  }
+
+  /// Set while a save runs, so a second tap on Save before the first one has
+  /// navigated away does nothing. A second run would build the meal again
+  /// from the same pre-edit [_mealEntity]: after a barcode clear that is a
+  /// fresh internal id matching no entry, and the library got a copy.
+  bool _saving = false;
+
   Future<void> _onSavePressed(bool usesImperialUnits) async {
+    if (_saving) return;
+    _saving = true;
+    try {
+      await _save(usesImperialUnits);
+    } finally {
+      _saving = false;
+    }
+  }
+
+  Future<void> _save(bool usesImperialUnits) async {
     try {
       // Validate meal name: non-empty and contains at least one letter (#211, #214)
       if (!FoodNameValidator.isValid(_nameTextController.text)) {
@@ -603,7 +686,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
           _simpleFieldOrZero(_carbsTextController.text),
           _simpleFieldOrZero(_fatTextController.text),
           _simpleFieldOrZero(_proteinTextController.text),
-          barcodeOverride: rawBarcode.isEmpty ? null : rawBarcode,
+          barcodeOverride: rawBarcode,
           localImagePathOverride: _localImagePath,
           clearLocalImagePath: _localImageCleared && _localImagePath == null,
         );
@@ -673,6 +756,15 @@ class _EditMealScreenState extends State<EditMealScreen> {
         final mealQuantity = usesImperialUnits
             ? _convertToMetric(_mealQuantityTextController.text, mealUnitForConversion)
             : _mealQuantityTextController.text;
+        // The serving quantity is loaded and edited in imperial too (see the
+        // initial _convertToImperial above), so it has to fold back to metric
+        // on save the same way the meal size does — otherwise an imperial
+        // serving value is stored raw into a metric field and drifts further
+        // on every reopen (#495).
+        final servingQuantity = usesImperialUnits
+            ? _convertToMetric(
+                _servingQuantityTextController.text, mealUnitForConversion)
+            : _servingQuantityTextController.text;
 
         // Convert total → per-base-qty if in total input mode. kcalText
         // uses the already-kcal-folded value so kJ entries are persisted
@@ -723,7 +815,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
           _nameTextController.text,
           _brandsTextController.text,
           mealQuantity,
-          _servingQuantityTextController.text,
+          servingQuantity,
           _baseQuantityTextController.text,
           selectedUnit,
           kcalText,
@@ -740,7 +832,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
           magnesiumText: magnesiumText,
           vitaminDText: vitaminDText,
           vitaminB12Text: vitaminB12Text,
-          barcodeOverride: rawBarcode.isEmpty ? null : rawBarcode,
+          barcodeOverride: rawBarcode,
           localImagePathOverride: _localImagePath,
           clearLocalImagePath: _localImageCleared && _localImagePath == null,
         );
@@ -750,8 +842,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
       // (#249) when the user has turned off "Save for next time" — the
       // intake itself is still logged below, but no template is kept.
       final shouldPersistTemplate = _editOnly || _saveForLater;
-      if (newMealEntity.source == MealSourceEntity.custom && shouldPersistTemplate) {
-        await _editMealBloc.saveCustomMeal(newMealEntity);
+      if (newMealEntity.source == MealSourceEntity.custom &&
+          shouldPersistTemplate) {
+        await _editMealBloc.saveCustomMeal(
+          newMealEntity,
+          previous: _mealEntity,
+        );
       } else if (newMealEntity.source == MealSourceEntity.off ||
           newMealEntity.source == MealSourceEntity.fdc) {
         // Write enriched nutrient data back to the local cache so the next
@@ -765,8 +861,13 @@ class _EditMealScreenState extends State<EditMealScreen> {
       } else {
         Navigator.of(context).pushNamedAndRemoveUntil(
           NavigationOptions.mealDetailRoute,
-          ModalRoute.withName(NavigationOptions.addMealRoute),
-          arguments: MealDetailScreenArguments(newMealEntity, _intakeTypeEntity, _day, usesImperialUnits),
+          namedRouteOrFirst(NavigationOptions.addMealRoute),
+          arguments: MealDetailScreenArguments(
+            newMealEntity,
+            _intakeTypeEntity,
+            _day,
+            usesImperialUnits,
+          ),
         );
       }
     } catch (exception, stacktrace) {
@@ -939,39 +1040,54 @@ class _SaveForLaterField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return InkWell(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    return AppCard(
+      color: palette.surfaceMuted,
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(
-              identifier: 'edit-meal-save-for-later',
-              child: Checkbox(value: value, onChanged: (newValue) => onChanged(newValue ?? false)),
+      padding: const EdgeInsets.fromLTRB(
+        Dimens.spacing8,
+        Dimens.spacing12,
+        Dimens.spacing16,
+        Dimens.spacing12,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            identifier: 'edit-meal-save-for-later',
+            child: Checkbox(
+              value: value,
+              onChanged: (newValue) => onChanged(newValue ?? false),
             ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(s.recipeSaveForLaterLabel, style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 4),
-                    Text(
-                      s.recipeSaveForLaterDescription,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.outline),
-                    ),
-                  ],
-                ),
+          ),
+          const SizedBox(width: Dimens.spacing4),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: Dimens.spacing12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    s.recipeSaveForLaterLabel,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: Dimens.spacing4),
+                  Text(
+                    s.recipeSaveForLaterDescription,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: palette.textMuted),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

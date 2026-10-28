@@ -27,11 +27,11 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
         emit(
           ScannerLoadedState(
             product: meal,
-            usesImperialUnits: config.usesImperialUnits,
+            usesImperialUnits: config.usesImperialFoodUnits,
           ),
         );
       } catch (exception) {
-        if (exception == ProductNotFoundException) {
+        if (exception is ProductNotFoundException) {
           emit(
             const ScannerFailedState(ScannerFailedStateType.productNotFound),
           );

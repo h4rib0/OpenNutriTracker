@@ -1,0 +1,480 @@
+# Releasing
+
+A release is **a merge of `develop` into `main`** — directly when the two merge cleanly, through a
+`release/*` branch when they do not; [The release PR](#the-release-pr) says how to tell. There is
+no release script, and no tag to push by hand: pushing to `main` starts the pipeline, and the
+pipeline does the packaging, the store uploads and the GitHub release itself.
+
+A **hotfix merged straight to `main`** starts the same pipeline, which is why it is a legitimate
+thing to do — and why it needs [its own step afterwards](#hotfixes-and-the-way-back-to-develop),
+because nothing carries it back.
+
+That is worth stating first because most of this page is about the parts the pipeline *cannot* do —
+the ones that are otherwise remembered, or not.
+
+## What happens on its own
+
+Everything below fires from `push` on `main`. **It does not run to completion unattended** — the
+jobs holding store credentials pause for an approval, see [Environments](#environments-and-the-approval-pause).
+
+| Job | What it does |
+|---|---|
+| `linux-checks`, `*-build`, `*-integration-tests` | the same gates every PR runs |
+| `ios-package` / `android-package` | build the IPA, AAB and APK |
+| `ios-deploy` / `android-deploy` | upload to **TestFlight**, and *attempt* the Play **`internal`** track — build 65 is the first attempt that landed, and the job still finishes green when one does not ([#942](https://github.com/simonoppowa/OpenNutriTracker/issues/942)); see [the Android upload](#the-android-upload-and-when-it-still-needs-a-hand) |
+| `github-release` | tag, attach the IPA/AAB/APK, and generate release notes from merged PRs |
+| `release-summary` | last job; asserts the run produced what `release-gate` promised, and says so on the run page |
+
+Two properties are deliberate and worth knowing:
+
+- **Both deploys wait for both packages.** `android-deploy` needs `ios-package` and vice versa, so
+  a one-sided failure never publishes half a release or burns a Play `versionCode`.
+- **Store metadata is not uploaded.** `skip_upload_metadata: true` on the Play lane, and the
+  TestFlight `changelog` is commented out. Listing text and "what's new" are edited in the
+  consoles, by a person.
+
+### Environments and the approval pause
+
+Three deployment environments, split by which **credentials** a job holds rather than by what it
+is called. All three are pinned to `main` by a deployment branch policy, which is a guard
+independent of the `if:` expressions — the expression is the mechanism that has already failed
+here once, when a `workflow_dispatch` from a topic branch cut a real tag.
+
+| Environment | Jobs | Protection |
+| :-- | :-- | :-- |
+| `release-build` | `android-package` | branch policy |
+| `release-ship` | `ios-package`, `ios-deploy`, `android-deploy` | branch policy **and an approval** |
+| `release-publish` | `github-release` | branch policy |
+
+**A release stops and waits for you.** The `release-ship` jobs sit in *Review pending deployments*
+until approved, so a merge to `main` does not finish on its own. Approving is the decision point:
+those jobs can consume a Play `versionCode` and a TestFlight build number, and neither is
+refundable.
+
+Declining is a real option and behaves sanely — a rejected job reports `failure`, so
+`github-release` (which needs both deploys green) never runs, and no build number is spent.
+`release-summary` will fail the run and say the build can be retried as it stands, which it can.
+
+`ios-package` is on `release-ship` and `android-package` is not, though both only package:
+`fastlane ios build` runs `match`, which authenticates to App Store Connect, so iOS packaging
+holds store credentials where Android packaging holds only a local keystore.
+
+### The Android upload, and when it still needs a hand
+
+**Build 65 uploaded through the API, on 2026-09-10.** `fastlane` logged *"Successfully finished the
+upload to Google Play"*, `android-deploy` emitted no `::warning::`, and its only annotation was the
+ledger notice. That is the first time this step has actually shipped a bundle; every release since
+2.1.0 needed the hand-upload below.
+
+**Do not read that as fixed.** Two things changed at once, and nothing in this repo says which
+mattered:
+
+- Google may have fixed the Publishing API. The defect
+  ([#942](https://github.com/simonoppowa/OpenNutriTracker/issues/942),
+  [fastlane#22204](https://github.com/fastlane/fastlane/issues/22204) closed unfixed,
+  [fastlane#27960](https://github.com/fastlane/fastlane/issues/27960) reopened, and reproduced from
+  a different toolchain in [expo/eas-cli#3275](https://github.com/expo/eas-cli/issues/3275)) was
+  that the API rejected health-permission bundles with *"You must let us know whether your app
+  includes any health features"* regardless of the declaration.
+- Or the bundle stopped provoking it. Build 65 is the first to declare **two**
+  `android.permission.health.*` permissions rather than five: Play's Health Connect permissions
+  policy refused `READ_BODY_FAT`, `READ_DISTANCE` and `READ_STEPS` as excessive on 2026-09-08, and
+  [#1122](https://github.com/simonoppowa/OpenNutriTracker/pull/1122) removed them.
+
+Nobody has run the experiment that separates those. Until a release with an unchanged permission
+set uploads cleanly, treat a working API upload as welcome rather than expected.
+
+The tolerance therefore stays. It costs nothing when the upload works, and the failure it guards
+against is silent. The step tolerates that one error and nothing else: it emits a `::warning::` and
+writes the recovery steps into the run's **step summary**. So the job going green is still not the
+signal — read the summary, or read the annotations: a successful upload leaves a `notice` and
+nothing else, a tolerated rejection leaves a `warning`. `release-summary` repeats it at the end of
+the run in its own words, and does so whatever colour `android-deploy` ended up, because the ledger
+step after the upload can fail on its own.
+
+When either says the upload needs doing by hand:
+
+1. Download the `android-aab` artifact from the run. (A full release also attaches the AAB to the
+   GitHub release; a build-only bump creates no release, so the run artifact is the only copy —
+   and it expires after 90 days.)
+2. Play Console → Internal testing → **Create new release**, and drop the AAB in.
+3. **Read the warnings on the review step before publishing.** That is the only place Play reports
+   them, and a failing API upload never gets far enough to return them — which is how the minSdk
+   regression in [#959](https://github.com/simonoppowa/OpenNutriTracker/issues/959) went unnoticed
+   for eight days.
+
+Build 65 needed none of the three steps above. Keep them until a release proves the API upload
+repeatable — see the caveat at the top of this section.
+
+## Before opening the release PR
+
+- [ ] **Bump `version:` in `pubspec.yaml`.** The build number (`+63`) must increase or the
+      pipeline refuses to deploy — `release-gate` reads it and Play rejects a reused versionCode.
+      Nothing bumps it for you.
+
+      **Bumping the build number alone is a supported release.** `2.2.0+63` → `2.2.0+64` ships to
+      TestFlight and Play under the same version name. On that path `github-release` is **skipped
+      on purpose**, because `v2.2.0` already exists and re-running it would delete the published
+      release's assets and replace them with binaries from another commit. A skipped
+      `github-release` there is expected, not the #1008 skip bug — the run is green and
+      `release-gate`'s step summary says which of the two happened. The consequence: a build-only
+      bump publishes no GitHub release, so its IPA and AAB exist only as run artifacts, for 90
+      days. Bump the name as well when the build should have a durable public download.
+
+      **Bumping the name without the build fails the gate**, by design: `2.3.0+63` is refused with
+      an error naming both fixes. So does a build number that goes backwards — this repo's history
+      contains `1.3.1+51` and `1.4.0+51`, the same versionCode twice.
+- [ ] **Write the store "what's new" text** into
+      `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` — `63.txt` for build 63. The
+      directory also holds a stale `12.txt` from the F-Droid era; ignore that one. The pipeline does
+      **not** upload it (`skip_upload_metadata: true`), so this file is the record, and the text
+      still has to be pasted into the consoles by hand.
+
+      **Keep it within 500 characters** — characters, not words. Play refuses anything longer, but
+      only when the text is pasted, so `test/unit_test/store_declarations_test.dart` checks every
+      file in the directory and fails `linux-checks` first. It measures after `trimRight()`, so a
+      trailing newline is free and a leading one is not. `63.txt` was once 628 characters and would
+      have been refused; `66.txt` came in at 795 on its first draft. For scale, `65.txt` is 497.
+- [ ] **Check the Play data-safety declaration still matches what the app does.** Any release that
+      adds or changes a network destination changes this answer. It is the one item here whose
+      failure mode is the app being pulled rather than a bad release.
+- [ ] **Confirm no unreleased-feature documentation is public** — see the doc steps below.
+
+## The release PR
+
+- [ ] **Fetch, then run the gap check** ([Hotfixes](#hotfixes-and-the-way-back-to-develop)) — on
+      both paths below. Fetch first (`git fetch origin`): with stale refs a recent hotfix is simply
+      not there to find. A hotfix that never came back is invisible from here on, and shipping
+      without it is the whole cost. The clean path needs it as much as the other: a missed hotfix
+      on lines `develop` never touched merges without a conflict, survives on `main`, and still
+      never reaches `develop`, where later work can undo it.
+
+      That section's loop counts `+` lines only, so it cannot see a hotfix that only *deletes*.
+      Also list the files `main` has changed since the merge base that still differ from
+      `develop` — deletions included, and without the noise of a squashed release, whose content
+      `develop` already has:
+
+      ```bash
+      base=$(git merge-base origin/main origin/develop)
+      git diff --name-only "$base" origin/main | while read -r f; do
+        git diff --quiet origin/develop origin/main -- "$f" || echo "$f"
+      done
+      ```
+
+      Every file it prints needs a reason. After 2.4.0 it printed none.
+
+      Both listings compare *paths*, so a file `develop` has renamed escapes them: a hotfix that
+      deleted it on `main` leaves the old path absent from both tips. List the files `main`
+      changed that `develop` has since renamed, and read each by hand:
+
+      ```bash
+      export LC_ALL=C
+      comm -12 <(git diff --name-only "$base" origin/main | sort) \
+               <(git diff --name-status -M "$base" origin/develop | awk '$1 ~ /^R/ {print $2}' | sort)
+      ```
+
+**Then check whether `develop` merges into `main` cleanly.** It decides which of the two paths
+below applies, and it is cheaper than finding out from a PR:
+
+```bash
+git merge-tree --write-tree origin/main origin/develop >/dev/null && echo clean || echo conflicts
+```
+
+It conflicts when `main` holds a version of some lines that `develop` has since changed — a
+hotfix, a fix made separately on a release branch, or a previous release that was **squashed**
+rather than merged. A squash leaves `merge-base(main, develop)` where it was, so every hunk
+`develop` edits again after that release conflicts with `main`'s copy of it; the conflict grows
+with churn rather than appearing at once. 2.4.0 was squashed, which left the base at `2789fa9f`.
+
+A conflicting PR is worse than it looks: GitHub runs no `pull_request` workflow on one, because it
+cannot build the PR's merge ref, so the PR reports **no checks at all**
+([#1269](https://github.com/simonoppowa/OpenNutriTracker/pull/1269)). Resolve before opening it.
+
+**If it is clean:**
+
+- [ ] Open **one** `develop → main` PR. `main` takes release merges only
+      ([CONTRIBUTING.md](../CONTRIBUTING.md)).
+
+**If it conflicts**, reconcile on a release branch — never on `develop`, where merging `main` in is
+what [the hotfix section](#hotfixes-and-the-way-back-to-develop) forbids:
+
+- [ ] **Cut the branch and start the merge**, without letting git resolve anything:
+
+      ```bash
+      git switch -c release/X.Y.Z origin/develop
+      git merge --no-commit origin/main
+      git diff --name-only --diff-filter=U        # the conflicted files
+      ```
+
+      For a build-only release (`2.2.0+63` → `2.2.0+64`) the name is already taken, because
+      release branches are kept: use `release/X.Y.Z-N`, with the new build number.
+- [ ] **Look at each conflicted file before resolving it.** Read what `main` did to it since the
+      merge base — deletions as well as additions:
+
+      ```bash
+      git diff "$(git merge-base origin/main origin/develop)" origin/main -- <file>
+      ```
+
+      If any of it is not already on `develop`, it is a hotfix gap: stop and bring it back first.
+      If all of it is — the previous release's own content, or a fix made on both branches — take
+      `develop`'s side, which depends on the kind of conflict `git status --short` shows:
+
+      | Status | What happened | Take `develop`'s side with |
+      | :-- | :-- | :-- |
+      | `UU`, `AA`, `UD` | both edited it; or `main` deleted it | `git checkout --ours -- <file> && git add <file>` |
+      | `DU` | `develop` deleted it, `main` changed it | `git rm -- <file>` — there is no "ours" to check out |
+      | anything else — `AU`, `UA`, `DD`, or a conflict on a file the rename check above listed | a rename is involved | resolve by hand: follow it with `git log --follow -- <path>` and read both sides |
+
+      The table covers the common cases; it is not a merge algorithm. When a conflict does not fit
+      it, or its history cannot be read at a glance, stop and resolve it by hand.
+
+      A `DU` deserves the closest look: `main`'s change to a file `develop` has deleted is exactly
+      where a hotfix goes missing, and if it is one, the fix needs a new home on `develop`.
+
+      **Do not reach for `git merge -X ours`.** It resolves every conflicted hunk without a look,
+      and a hotfix that only *deletes* lines never shows up in the gap check, which counts `+`
+      lines — so it would vanish, and the check below would still pass.
+- [ ] **Commit, and prove nothing came down:**
+
+      ```bash
+      git commit -m "Merge main into release/X.Y.Z"
+      git diff --stat origin/develop HEAD         # must print nothing
+      ```
+
+      Empty means the merge only gave `main` an ancestry link. If it prints anything, a
+      non-conflicting `main`-only change merged in: find out why the gap check missed it.
+      `5a582111` (2.3.0) and `31165d48` (2.4.0) are the precedent.
+- [ ] Push it and open **one** `release/X.Y.Z → main` PR. Keep the branch afterwards —
+      `release/2.2.0`, `release/2.3.0` and `release/2.4.0` all still exist.
+
+**Either way:**
+
+- [ ] Confirm the checks are **registered**, not just absent. A PR that gets no checks still reports
+      mergeable, and silence looks exactly like success. A conflict is the usual cause.
+- [ ] **Merge with "Create a merge commit" — never squash.** All three buttons are enabled and
+      squash is the habit. A merge commit moves the merge base up to this release, which is what
+      lets the next release take the clean path; a squash leaves it behind. Check afterwards —
+      GitHub merged it, so fetch first, or the local ref still shows the pre-merge commit:
+
+      ```bash
+      git fetch origin main && git log -1 --format=%P origin/main    # two parents
+      ```
+- [ ] From here the pipeline runs; do not tag by hand.
+
+## After the pipeline finishes
+
+- [ ] **Watch the run to a terminal state.** A run can fail *before creating any job* — GitHub
+      reports `startup_failure`, and the check-runs read `cancelled` for jobs that never existed.
+      Re-running is the fix; it is not a fault in the branch.
+- [ ] **If you have to re-run after a deploy job failed, use "Re-run failed jobs" — never "Re-run
+      all jobs".** The former reuses `release-gate`'s cached answer. The latter recomputes it, and
+      by then the deploy jobs have recorded the build as spent, so the gate correctly answers "do
+      not deploy" and the release is stranded mid-flight with no way forward but a build bump.
+- [ ] **Know what the pipeline records.** Each deploy job pushes a `deployed/<build-number>` tag on
+      success — that is the ledger `release-gate` reads, and the one thing this workflow pushes
+      besides a release tag. It records what a store **consumed**, not what it **published**: with
+      the #942 tolerance `android-deploy` exits 0 on a rejected upload and still marks the build
+      spent. So a build you never hand-uploaded still needs a bump before you can retry it.
+- [ ] **Confirm the Android build reached `internal`.** Check the run's step summary, or
+      `android-deploy`'s annotations: a `notice` alone means the API upload went through and the
+      track has the build; a `warning` means it hit
+      [#942](https://github.com/simonoppowa/OpenNutriTracker/issues/942), the track is still empty
+      and the AAB needs uploading by hand. Build 65 was the first to need neither. Production
+      promotion is manual either way.
+- [ ] **Submit the iOS build.** The lane uploads to TestFlight; App Store submission is not
+      automated.
+- [ ] **Update the store listings** with the "what's new" text, since the pipeline uploads none.
+- [ ] **Read `release-summary`.** It is the last job, it runs whatever happened upstream, and it
+      asserts the artifact rather than the colour: that every deploy job the gate promised actually
+      succeeded, and that the tag the gate promised is on the remote. A run where it is green and
+      says *"Nothing was due to ship from this push"* shipped nothing **on purpose**; a run where it
+      is red shipped less than it promised, whatever the jobs above it say. It exists because two
+      consecutive releases were lost behind a green run
+      ([#1012](https://github.com/simonoppowa/OpenNutriTracker/issues/1012)).
+
+## Store declarations
+
+These declarations sit in three different places, which is the whole reason they drift apart:
+
+- **In the app bundle.** The iOS purpose strings in `Info.plist`, and the privacy manifest. They
+  ship with a build and are entered nowhere — they are right when the code is right, and App
+  Review reads them straight out of the bundle.
+- **Repo text that a human copies into a console.** The Play listing, and only that.
+- **Console only, with no repo copy at all.** Play's Health apps declaration, and the App Store
+  Connect App Privacy record — which has to agree with the privacy manifest, with nothing
+  anywhere checking that it does.
+
+All of them were corrected for 2.2.0 in
+[#990](https://github.com/simonoppowa/OpenNutriTracker/issues/990).
+[`test/unit_test/store_declarations_test.dart`](../test/unit_test/store_declarations_test.dart)
+pins the repo half so a later edit cannot quietly undo one; the console half is the checklist
+below, and nothing but this page will remind you.
+
+- [ ] **Paste `fastlane/metadata/android/en-US/full_description.txt` into the Play listing.**
+      `upload_to_play_store` runs with `skip_upload_metadata: true`, so the pipeline never touches
+      the listing and the file and the live description agree only if someone copies it across.
+      The file is held under Play's 4000-character cap by a test; the Console gives no warning
+      until it refuses the text.
+- [ ] **Keep the "not a medical device" sentence in the listing.** Google's
+      [Health Content and Services](https://support.google.com/googleplay/android-developer/answer/12261419)
+      policy requires that exact wording *in the app description* for a health-and-fitness app that
+      is not a declared medical device, plus a reminder to consult a healthcare professional. Both
+      are the last line of `full_description.txt`.
+- [ ] **Correct Play's Data safety record**, which is the one item here that genuinely blocks
+      promoting the Android build to production. The record omits the meal photo and the typed
+      meal line, and
+      [#1050](https://github.com/simonoppowa/OpenNutriTracker/issues/1050) carries the answer
+      sheet field by field — two types, both collected and shared, both optional, purpose App
+      functionality, ephemeral **No**. It is entered in *App content*, independently of a release.
+
+      This step was missing from the first version of this list, which named the three cosmetic
+      declarations and not the blocking one. The public result is visible only at
+      `play.google.com/store/apps/datasafety?id=…`, and that page renders type-level rows rather
+      than the categories the Console groups them under.
+- [ ] **Answer Play's Health apps declaration.** Required for all developers under the same policy,
+      with nutrition tracking as a declarable feature.
+- [ ] **Make the App Store Connect App Privacy record agree with
+      [`ios/Runner/PrivacyInfo.xcprivacy`](../ios/Runner/PrivacyInfo.xcprivacy).** They are two
+      separate artifacts with no link between them, so they agree only by hand — and Apple
+      validates the manifest on the way in: *"App Store Connect rejects app submissions that
+      include invalid privacy manifest files."* What the manifest declares today, and what the
+      questionnaire therefore has to say:
+
+      | Data type | Linked to user | Tracking | Purpose |
+      | :-- | :-- | :-- | :-- |
+      | Photos or Videos | No | No | App Functionality |
+      | Other User Content | No | No | App Functionality |
+      | Crash Data, Performance Data, Other Diagnostic Data | No | No | App Functionality |
+
+      The first two exist only because of AI meal assistance. Food search terms, HealthKit
+      workouts and locally-attached meal photos are deliberately absent; the manifest says why,
+      beside each one.
+- [ ] **Answer Apple's regulated-medical-device question**
+      ([#1081](https://github.com/simonoppowa/OpenNutriTracker/issues/1081)). It gates Health &
+      Fitness submissions. Existing apps have until early 2027, so it does not block a release
+      today — it is here because a deadline nobody has written down is a deadline nobody meets.
+
+The table is what the AI path made necessary, not a statement that the record is complete. Three
+things behind it are open rather than answered, and none blocks a release:
+[#816](https://github.com/simonoppowa/OpenNutriTracker/issues/816) on whether a server the user
+runs counts as collection for Play's Data safety form; the Apple twin of it noted in the privacy
+manifest; and [#938](https://github.com/simonoppowa/OpenNutriTracker/issues/938) on the coarse
+location the Supabase gateway derives from the caller's IP, whose research concludes both stores
+want it declared and which no manifest entry covers yet. That research sits on the unmerged
+`research/store-declarations` branch; `docs/ai-legal-constraints.md` carries the rest.
+
+## Hotfixes, and the way back to `develop`
+
+A fix urgent enough to skip the batch can go straight to `main`. Nothing brings it back down, so
+the next release — cut from `develop` — quietly ships without it.
+
+This has already happened once. [#879](https://github.com/simonoppowa/OpenNutriTracker/pull/879)
+landed on `main` and left `develop` without the setting that keeps the application log, food search
+terms included, out of Sentry breadcrumbs; it was backported in
+[#893](https://github.com/simonoppowa/OpenNutriTracker/pull/893) only because someone went looking.
+The failure mode is silence: no check fails, and the fix simply is not there.
+
+- [ ] **After merging anything directly to `main`, open a backport PR into `develop`** in the same
+      sitting. It is not done until that PR is merged too.
+
+**Cherry-pick the commits. Do not merge `main` into `develop`.** With a squash-merge flow the two
+branches share only an old merge base — the previous release — and `main` carries each release as a
+single squashed commit of everything `develop` had at the time. A merge weighs that against
+`develop`'s individual commits plus everything added since, which conflicts across the whole
+release and can revert newer work where git cannot tell the two apart. `git cherry-pick -x <sha>`
+keeps authorship and records where it came from.
+
+```bash
+git log --oneline origin/develop..origin/main    # what main has that develop does not
+```
+
+**Most of what that command prints is expected and must not be backported.** Release commits are
+absent from `develop` *by construction* under squash merging, so they accumulate there forever.
+Before backporting anything, check whether its content is already present — a file that exists on
+both branches, or a paragraph already corrected — rather than trusting the commit list. Only two of
+the four entries it printed in August 2026 were real gaps.
+
+**Ask which lines, not which commits.** The command above answers "which commits", which is the
+wrong question under squash merging — `main` carries a release as one commit that `develop` will
+never contain. The useful question is which *lines* `main` has that `develop` does not:
+
+```bash
+git diff --name-only origin/develop origin/main | while read -r f; do
+  n=$(git diff origin/develop origin/main -- "$f" | grep -cE '^\+[^+]')
+  if [ "$n" -gt 0 ]; then printf '%4d  %s\n' "$n" "$f"; fi
+done
+```
+
+Then judge each file it prints. A line is a gap only if `develop` has no newer version of it. Most
+will be neither: text `develop` has since rewritten, or a file it deleted deliberately, both of
+which look identical to a gap in a commit listing.
+
+Run on **2026-09-04**, with `main` at 2.2.0 and `develop` seventeen commits past it, eleven files
+had `main`-only lines and **not one was a gap**:
+
+| `main`-only lines | Why it was not a gap |
+| --: | :-- |
+| 31 in `default_workflow.yml` | superseded by the `changes` job in #1043, which gates more than the inline version it replaced |
+| 25 in `docs/export-format.md` | superseded by #999 |
+| 15 in `full_description.txt`, 5 in `ai-legal-constraints.md`, 1 in `Info.plist` | superseded by #1049 and #1051 |
+| 4 in `docs/supabase-self-hosting.md` | superseded by #1000 |
+| 4 in `docs/supabase-fdc-self-hosting.md` | `develop` deleted the file on purpose in #997 |
+| 1 each in `README.md`, `ai-architecture.md`, `AGENTS.md`, `CONTRIBUTING.md` | superseded by #1003, #996 and #1047 |
+| 0 in `docs/RELEASING.md` | `develop` is a strict superset |
+
+The specific answer expires; the shape of it does not. `develop` is uniformly newer wherever the
+two differ, so the conflicts a release PR raises resolve to `develop`'s side — they are not a debt
+that grows between releases, and there is nothing to bring down in the meantime. If a run of the
+command above ever *does* print a real gap, cherry-pick it; do not reach for a merge, for the
+reason in the paragraph above.
+
+## Documentation
+
+The step this page exists for. These have no automation at all, and nothing fails if they are
+skipped — which is exactly why they get skipped.
+
+- [ ] **Publish [`docs/ai-architecture.md`](ai-architecture.md) to the wiki**, if this is the first
+      release shipping AI meal assistance. It was written as a wiki page and staged in the repo
+      deliberately: until a build ships the feature, a public page describing the app sending food
+      photos to a model reads as an undeclared transfer rather than as documentation that ran ahead.
+
+      The conversion is a copy and one `sed`:
+
+      ```bash
+      sed -E 's#\]\(\.\./#](https://github.com/simonoppowa/OpenNutriTracker/blob/main/#g' docs/ai-architecture.md > /path/to/wiki/AI-Meal-Assistance.md
+      ```
+
+      Then add its row to the wiki's `Home.md` page table, and check the Mermaid blocks render —
+      they are certain in repo Markdown and unverified on this wiki.
+
+- [ ] **Reduce the repo copy to a pointer** once the page is live, so there is one authoritative
+      copy rather than two that agree today.
+- [ ] **Check the README's privacy section still describes the shipped build.** It holds the
+      falsifiable claims — destinations, retention, the Experimental exit criteria — and it is the
+      first thing an auditor reads.
+
+## Notes
+
+Store credentials, signing keys and the Play service account live in repository secrets and are
+consumed by the workflow; none of them need touching for an ordinary release.
+
+`main` and `develop` carry the same six workflow files — `default_workflow.yml`,
+`add-issues-to-projects.yml`, `ios-integration-attempt.yml`, `merge-weblate-prs.yml`,
+`play-screenshots.yml` and `policy-snapshot.yml` — and as of 2.4.0 all six are byte-identical.
+Between releases they drift: `default_workflow.yml` was newer on `develop` until 2.4.0 landed.
+When they differ, do not decide from the file list — a changed file says nothing about which side
+moved. Read the patch the way [the hotfix section](#hotfixes-and-the-way-back-to-develop) reads
+everything else, oriented so that a `+` line is one `main` has and `develop` does not:
+
+```bash
+git diff origin/develop origin/main -- .github/workflows/
+```
+
+A `+` line is a gap only if `develop` has no newer version of it. Most will be `develop` having
+moved on since the last release. One that is not is exactly what a workflow hotfix leaves behind
+([#1226](https://github.com/simonoppowa/OpenNutriTracker/pull/1226)), and it needs its way back.
+
+There is no site-publishing or signing-fingerprint workflow any more. `deploy-site.yml`,
+`update-release-fingerprint.yml` and the whole `docs/site/` tree were removed with the project
+website in [#786](https://github.com/simonoppowa/OpenNutriTracker/pull/786); nothing extracts a
+signing fingerprint and nothing opens a PR after a release.

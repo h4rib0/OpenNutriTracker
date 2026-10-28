@@ -1,142 +1,4 @@
 {
-  "@clearOffCacheSubtitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "size": {
-        "type": "String"
-      }
-    }
-  },
-  "@csvImportPartialLabel": {
-    "placeholders": {
-      "imported": {
-        "type": "int"
-      },
-      "skipped": {
-        "type": "int"
-      }
-    }
-  },
-  "@csvImportSuccessLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@deleteSelectedRecipesConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@driPanelReferenceLabel": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@diaryMealKcalConsumedOfTarget": {
-    "placeholders": {
-      "consumed": {
-        "type": "String"
-      },
-      "target": {
-        "type": "String"
-      }
-    }
-  },
-  "@importActivityConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importMealConfirmContent": {
-    "placeholders": {
-      "mealType": {
-        "type": "String"
-      }
-    }
-  },
-  "@importMealConfirmTitle": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importOffFetchFailedLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@importRecipeConfirmContent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@mealNutrientsPerQtyLabel": {
-    "placeholders": {
-      "qty": {
-        "type": "String"
-      },
-      "unit": {
-        "type": "String"
-      }
-    }
-  },
-  "@profileTargetWeightToGo": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
-  "@recipeIngredientCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@selectionCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@settingsNotificationsTimeLabel": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "@weeklyWeightGoalKgPerWeek": {
-    "placeholders": {
-      "rate": {
-        "type": "String"
-      }
-    }
-  },
-  "@weeklyWeightGoalLbsPerWeek": {
-    "placeholders": {
-      "rate": {
-        "type": "String"
-      }
-    }
-  },
   "activityExample": "z. B. Laufen, Radfahren, Yoga ...",
   "activityLabel": "Aktivität",
   "addItemLabel": "Neuen Eintrag hinzufügen:",
@@ -144,6 +6,110 @@
   "additionalInfoLabelCompendium2011": "Informationen bereitgestellt von\n'2024 Compendium\n of Physical Activities'",
   "additionalInfoLabelCustom": "Benutzerdefinierte Mahlzeit",
   "additionalInfoLabelFDC": "Weitere Informationen unter\nFoodData Central",
+  "additionalInfoLabelSource": "Weitere Informationen unter\n{sourceName}",
+  "foodSourcesAlwaysEnabledLabel": "Immer aktiviert",
+  "foodSourcesHelpText": "Suchergebnisse stammen aus diesen Lebensmitteldatenbanken. Open Food Facts liefert die Produkt- und Barcode-Suche und ist immer aktiviert.",
+  "machineTranslatedNameHint": "Name automatisch übersetzt",
+  "measureUnitBar": "{count, plural, one{Riegel} other{Riegel}}",
+  "@measureUnitBar": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitBottle": "{count, plural, one{Flasche} other{Flaschen}}",
+  "@measureUnitBottle": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCan": "{count, plural, one{Dose} other{Dosen}}",
+  "@measureUnitCan": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitCup": "{count, plural, one{Tasse} other{Tassen}}",
+  "@measureUnitCup": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitEgg": "{count, plural, one{Ei} other{Eier}}",
+  "@measureUnitEgg": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPackage": "{count, plural, one{Packung} other{Packungen}}",
+  "@measureUnitPackage": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPiece": "{count, plural, one{Stück} other{Stück}}",
+  "@measureUnitPiece": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitPortion": "{count, plural, one{Portion} other{Portionen}}",
+  "@measureUnitPortion": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitServing": "{count, plural, one{Portion} other{Portionen}}",
+  "@measureUnitServing": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitSlice": "{count, plural, one{Scheibe} other{Scheiben}}",
+  "@measureUnitSlice": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTablespoon": "{count, plural, one{Esslöffel} other{Esslöffel}}",
+  "@measureUnitTablespoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "measureUnitTeaspoon": "{count, plural, one{Teelöffel} other{Teelöffel}}",
+  "@measureUnitTeaspoon": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "settingsFoodSourcesLabel": "Lebensmitteldatenbanken",
+  "settingsFoodSourcesSubtitle": "Wähle, woher die Suchergebnisse stammen",
+  "onboardingOtherOptionsLabel": "Weitere Optionen",
+  "onboardingOtherOptionsSubtitle": "Personalisiere die App — alles lässt sich später in den Einstellungen ändern",
   "additionalInfoLabelOFF": "Weitere Informationen unter\nOpenFoodFacts",
   "additionalInfoLabelRecipe": "Benutzerdefiniertes Rezept",
   "additionalInfoLabelUnknown": "Unbekannte Mahlzeit",
@@ -155,9 +121,11 @@
   "appTitle": "OpenNutriTracker",
   "appVersionName": "Version {versionNumber}",
   "barcodeInvalidEan13CheckDigit": "Dieser 13-stellige Barcode scheint einen Tippfehler zu haben: die letzte Ziffer passt nicht zu den übrigen",
-  "baseQuantityLabel": "Grundmenge (g/ml)",
-  "betaVersionName": "[Beta]",
+  "baseQuantityLabel": "Nährwerte pro",
   "bmiInfo": "Der Body-Mass-Index (BMI) ist ein Index zur Klassifizierung von Übergewicht und Fettleibigkeit bei Erwachsenen. Er wird berechnet, indem das Gewicht in Kilogramm durch das Quadrat der Körpergröße in Metern (kg/m²) geteilt wird.\n\nDer BMI unterscheidet nicht zwischen Fett- und Muskelmasse und kann für einige Personen irreführend sein.",
+  "bmiInfoClassificationSection": "WHO-Klassifikation",
+  "bmiInfoFormulaSection": "Formel",
+  "bmiInfoScreenTitle": "So wird dein BMI berechnet",
   "bmiLabel": "BMI",
   "breakfastExample": "z. B. Müsli, Milch, Kaffee ...",
   "breakfastLabel": "Frühstück",
@@ -188,6 +156,16 @@
   "clearOffCacheConfirmTitle": "Cache leeren?",
   "clearOffCacheLabel": "Cache leeren",
   "clearOffCacheSubtitle": "{count} Eintrag/Einträge · {size}",
+  "@clearOffCacheSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "cmLabel": "cm",
   "codeCopiedLabel": "Code kopiert",
   "copyCodeLabel": "Code kopieren",
@@ -202,7 +180,24 @@
   "csvImportContributeOffPrefix": "Barcode dabei? Trag das Produkt zu Open Food Facts bei:",
   "csvImportErrorLabel": "CSV-Datei konnte nicht gelesen werden. Format prüfen und erneut versuchen.",
   "csvImportPartialLabel": "{imported} Mahlzeit(en) importiert; {skipped} Zeile(n) wegen ungültiger Daten übersprungen.",
+  "@csvImportPartialLabel": {
+    "placeholders": {
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
   "csvImportSuccessLabel": "{count} Mahlzeit(en) importiert.",
+  "@csvImportSuccessLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "customActivityDescription": "Trage verbrannte Kalorien direkt ein – für Trainings, die nicht in der Liste sind, oder Werte aus einem Fitnesstracker",
   "customActivityDescriptionKj": "Trage verbrannte Kilojoule direkt ein – für Trainings, die nicht in der Liste sind, oder Werte aus einem Fitnesstracker",
   "customActivityKcalHint": "z. B. 250",
@@ -218,7 +213,7 @@
   "customMealBarcodeLabel": "Barcode",
   "customMealBarcodeScanButton": "Barcode scannen",
   "customMealFormAdvanced": "Erweitert",
-  "customMealFormAdvancedHelp": "Grundmenge und Werte pro 100 für genaue Skalierung festlegen.",
+  "customMealFormAdvancedHelp": "Größen und Werte pro 100 für genaue Skalierung festlegen.",
   "customMealFormModeLabel": "Formularansicht",
   "customMealFormSimple": "Einfach",
   "customMealFormSimpleHelp": "Gib die Gesamtwerte für eine Portion ein.",
@@ -235,13 +230,17 @@
   "customMealsEmptyLabel": "Noch keine eigenen Mahlzeiten gespeichert.",
   "dailyKcalAdjustmentLabel": "Tägliche kcal-Anpassung:",
   "dailyKjAdjustmentLabel": "Tägliche kJ-Anpassung:",
-  "dataCollectionLabel": "Anonyme Absturzberichte senden, um bei der Fehlerbehebung zu helfen. Es werden keine Ernährungsdaten, Gewichtsdaten oder persönlichen Daten übermittelt.",
+  "dataCollectionLabel": "Absturzberichte senden, um bei der Fehlerbehebung zu helfen. Es werden keine Ernährungsdaten oder Gewichtsdaten übermittelt.",
   "deleteAllLabel": "Alle löschen",
-  "settingsDeleteAllDataLabel": "Alle meine Daten löschen",
-  "settingsDeleteAllDataSubtitle": "Profil, Mahlzeiten, Aktivitäten und Gewichtsverlauf",
-  "settingsDeleteAllDataConfirmTitle": "Alle Daten löschen?",
-  "settingsDeleteAllDataConfirmContent": "Hierdurch werden dein Profil, deine Mahlzeiten, Aktivitäten, dein Gewichtsverlauf und alle eigenen Rezepte dauerhaft von diesem Gerät entfernt. Die Datenbanken von Open Food Facts und USDA Food Data Central sind davon nicht betroffen. Dies kann nicht rückgängig gemacht werden.",
-  "settingsDeleteAllDataConfirmAction": "Alles löschen",
+  "settingsDeleteAllDataLabel": "Profildaten zurücksetzen",
+  "settingsDeleteAllDataSubtitle": "Profil, Mahlzeiten, Aktivitäten, Gewichtsverlauf und Fastenzeiten",
+  "settingsDeleteAllDataConfirmTitle": "Profildaten zurücksetzen?",
+  "settingsDeleteAllDataConfirmContent": "Dies entfernt dein Profil, deine Mahlzeiten, Aktivitäten, deinen Gewichtsverlauf und deine Fastenzeiten – nur für das aktuelle Profil. Außerdem werden der API-Schlüssel und die Serveradresse für die KI-Funktionen entfernt, die alle Profile auf diesem Gerät gemeinsam nutzen. Geteilte Inhalte (eigene Mahlzeiten, Rezepte, Aktivitätsvorlagen) sowie die Kataloge von Open Food Facts und USDA Food Data Central sind nicht betroffen. Dies kann nicht rückgängig gemacht werden.",
+  "policyChangeNoticeTitle": "Wir haben die Datenschutzerklärung aktualisiert",
+  "policyChangeNoticeBody": "An dem, was die App tut, hat sich nichts geändert. Geändert hat sich, wie viel wir dir davon sagen.\n\nDienste, die deine Suchanfragen schon immer erhalten haben, werden jetzt namentlich genannt. Es gibt einen neuen Abschnitt zu Gesundheitsdaten für den Trainingsimport, den du aktivieren kannst. Und wir legen jetzt den ungefähren Standort offen, den unser Backend für die Lebensmittelsuche zu einer Anfrage speichert und 24 Stunden aufbewahrt.\n\nDein Tagebuch bleibt auf deinem Gerät, so wie immer.",
+  "policyChangeNoticeReadAction": "Erklärung lesen",
+  "policyChangeNoticeDismissAction": "Verstanden",
+  "settingsDeleteAllDataConfirmAction": "Profil zurücksetzen",
   "lowKcalWarningTitle": "Dieses Tagesziel ist eher niedrig",
   "lowKcalWarningBody": "Erwachsene sollten ohne ärztliche Begleitung dauerhaft nicht weniger als {threshold} kcal pro Tag zu sich nehmen. Bitte überlege, ob du vor einem so niedrigen Ziel mit einer medizinischen Fachperson sprichst.",
   "@lowKcalWarningBody": {
@@ -253,6 +252,13 @@
   },
   "lowKcalWarningViewDisclaimer": "Hinweis anzeigen",
   "deleteSelectedRecipesConfirmTitle": "{count} Rezept(e) löschen?",
+  "@deleteSelectedRecipesConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteTimeDialogContent": "Möchten Sie den ausgewählten Eintrag löschen?",
   "deleteTimeDialogPluralContent": "Möchten Sie alle Einträge dieser Mahlzeit löschen?",
   "deleteTimeDialogPluralTitle": "Einträge löschen?",
@@ -264,12 +270,29 @@
   "diaryFutureDateWarning": "Du bearbeitest ein zukünftiges Datum",
   "diaryLabel": "Tagebuch",
   "diaryMealKcalConsumedOfTarget": "{consumed} / {target} kcal",
+  "@diaryMealKcalConsumedOfTarget": {
+    "placeholders": {
+      "consumed": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
   "diaryNutrientPanelDataDisclaimer": "Hier werden nur Nährstoffe summiert, die auf deinen protokollierten Mahlzeiten erfasst sind. Eine Mahlzeit ohne einen Wert trägt nichts zu diesem Nährstoff bei — die Summen können also zu niedrig sein.",
   "diaryNutrientPanelTitle": "Heutige Nährstoffe",
   "driPanelInfoTitle": "Referenzzufuhr",
   "driPanelInfoBody": "Diese Referenzwerte stammen aus den IOM-Empfehlungen zur Nährstoffzufuhr für Erwachsene und hängen von Alter und Geschlecht ab. Sie dienen als Orientierung, nicht als Vorgabe — dein eigener Bedarf kann abweichen.",
   "driPanelInfoLinkLabel": "Quelle: IOM Dietary Reference Intakes",
   "driPanelReferenceLabel": "Ref. {value}",
+  "@driPanelReferenceLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "diarySortByCarbs": "Kohlenhydrate (absteigend)",
   "diarySortByFat": "Fett (absteigend)",
   "diarySortByKcal": "Kalorien (absteigend)",
@@ -281,6 +304,7 @@
   "discardChangesConfirmLabel": "Verwerfen",
   "discardChangesContent": "Deine ungespeicherten Änderungen gehen verloren.",
   "discardChangesTitle": "Änderungen verwerfen?",
+  "disclaimerAcknowledgeLabel": "Ich habe verstanden",
   "disclaimerText": "OpenNutriTracker ist keine medizinische Anwendung. Alle bereitgestellten Daten sind nicht validiert und sollten mit Vorsicht verwendet werden. Bitte pflegen Sie einen gesunden Lebensstil und konsultieren Sie einen Fachmann, wenn Sie Probleme haben. Die Verwendung während einer Krankheit, Schwangerschaft oder Stillzeit wird nicht empfohlen.\n\n\nDie Anwendung befindet sich noch in der Entwicklung. Fehler, Bugs und Abstürze können auftreten.\n\nDie peer-reviewed Quellen zu jeder Berechnung findest du über das Info-Symbol auf der Start- oder Profilseite.",
   "downloadSampleCsvAction": "Beispiel-Mahlzeiten (csv)",
   "downloadSampleJsonAction": "Beispiel-Mahlzeiten (json)",
@@ -308,12 +332,15 @@
   "exportImportCsvRecipesNote": "CSV speichert Aktivitäten, das Essensprotokoll und protokollierte Tage. Rezepte und angehängte Fotos werden nur in JSON gesichert — wähle JSON, wenn du sie im Backup behalten möchtest.",
   "exportImportDescription": "Sie können die App-Daten in eine Zip-Datei exportieren und später importieren. Dies ist nützlich, wenn Sie Ihre Daten sichern oder auf ein anderes Gerät übertragen möchten.\n\nDie App nutzt keinen Cloud-Dienst, um Ihre Daten zu speichern.",
   "exportImportErrorLabel": "Fehler beim Export/Import",
+  "exportImportErrorUnreadableLabel": "Die ausgewählte Datei konnte nicht gelesen werden. Wählen Sie die von OpenNutriTracker exportierte .zip-Sicherung.",
+  "exportImportErrorWriteFailedLabel": "Die Datei konnte nicht am gewählten Ort gespeichert werden. Versuchen Sie einen anderen Ordner.",
   "exportImportSuccessLabel": "Export / Import erfolgreich",
   "fatLabel": "Fett",
   "fatLabelShort": "f",
   "fiberLabel": "Ballaststoffe",
   "flOzUnit": "fl.oz",
   "ftLabel": "ft",
+  "inLabel": "in",
   "genderFemaleLabel": "weiblich",
   "genderLabel": "Geschlecht",
   "genderMaleLabel": "männlich",
@@ -326,22 +353,73 @@
   "gramUnit": "g",
   "heightLabel": "Größe",
   "homeLabel": "Startseite",
+  "homeFirstMealHint": "Tippe auf +, um deine erste Mahlzeit oder Aktivität zu erfassen",
+  "homeDemoBannerLabel": "Du siehst Beispieldaten",
+  "homeDemoBannerAction": "Eigenes Profil einrichten",
+  "homeDemoBannerConfirmTitle": "Eigenes Profil einrichten?",
+  "homeDemoBannerConfirmContent": "Die Beispieldaten werden gelöscht und du richtest dein eigenes Profil ein. Das kann nicht rückgängig gemacht werden.",
+  "homeDemoBannerConfirmAction": "Weiter",
+  "trendsDailyAverageLabel": "Tagesdurchschnitt",
+  "trendsLabel": "Trends",
+  "youLabel": "Du",
+  "trendsCaloriesLabel": "Kalorien",
+  "trendsDaysOnTrack": "Tage im Plan diese Woche",
+  "trendsDayStreakLabel": "Tage in Folge",
+  "trendsBestStreakLabel": "Rekord",
+  "trendsPerWeekSuffix": "/Woche",
+  "trendsWeeksToGoalLabel": "Wochen bis zum Ziel",
+  "trendsWaterLabel": "Wasser",
   "importAction": "Importieren",
   "importActivityConfirmContent": "Diese Aktivitäten werden zu heute hinzugefügt.",
   "importActivityConfirmTitle": "{count} Aktivitäten importieren?",
+  "@importActivityConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importActivityLabel": "Geteiltes Training importieren",
   "importActivitySuccessLabel": "Training importiert",
   "importCustomFoodDataDescription": "Importiere eigene Mahlzeiten aus einer CSV-Datei oder durch Einfügen von JSON. Lade eine Beispieldatei herunter, um die erwartete Form und Pflichtfelder zu sehen.",
   "importCustomFoodDataLabel": "Eigene Lebensmittel-Daten importieren",
   "importMealConfirmContent": "Diese Einträge werden zu {mealType} hinzugefügt.",
+  "@importMealConfirmContent": {
+    "placeholders": {
+      "mealType": {
+        "type": "String"
+      }
+    }
+  },
   "importMealConfirmTitle": "{count} Einträge importieren?",
+  "@importMealConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importMealErrorLabel": "Ungültiger QR-Code",
   "importMealLabel": "Geteilte Mahlzeit importieren",
   "importMealSuccessLabel": "Mahlzeit importiert",
   "importMealsCsvAction": "Mahlzeiten importieren (csv)",
   "importMealsJsonAction": "Mahlzeiten importieren (json)",
   "importOffFetchFailedLabel": "{count} Einträge konnten nicht von OpenFoodFacts abgerufen werden.",
+  "@importOffFetchFailedLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeConfirmContent": "Dieses Rezept mit {count} Zutat(en) importieren?",
+  "@importRecipeConfirmContent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importRecipeErrorLabel": "Rezept-Code konnte nicht gelesen werden",
   "importRecipeLabel": "Rezept importieren",
   "importRecipeSuccessLabel": "Rezept importiert",
@@ -356,12 +434,38 @@
   "ironLabel": "Eisen",
   "itemDeletedSnackbar": "Eintrag gelöscht",
   "itemUpdatedSnackbar": "Eintrag aktualisiert",
+  "kcalGoalInfoActivityExplanation": "Durch erfasste Aktivitäten verbrannte Kalorien werden auf dein Ziel aufgeschlagen, damit dein geplantes Defizit oder Plus auch an Trainingstagen gleich bleibt.",
+  "kcalGoalInfoActivitySection": "Schritt 4 · Heutige Aktivitäten",
+  "kcalGoalInfoAdjustmentExplanationFlat": "Dein Gewichtsziel bewirkt eine feste tägliche Anpassung: −500 kcal beim Abnehmen, +500 kcal beim Zunehmen, 0 beim Halten.",
+  "kcalGoalInfoAdjustmentExplanationWeekly": "Deine wöchentliche Rate bestimmt die tägliche Anpassung. 1 kg Körperfett speichert etwa 7.700 kcal, jedes kg pro Woche verschiebt das Ziel also um etwa 1.100 kcal pro Tag.",
+  "kcalGoalInfoAdjustmentSection": "Schritt 2 · Anpassung für dein Gewichtsziel",
+  "kcalGoalInfoAppliedAdjustmentLabel": "Angewendete Anpassung",
+  "kcalGoalInfoAveragedNote": "Mit der gemittelten Referenz ist dein TDEE der Mittelwert aus männlichem und weiblichem Referenzergebnis.",
+  "kcalGoalInfoBaseAdjustmentLabel": "Ziel-Anpassung",
+  "kcalGoalInfoEstimateNote": "Alle Formeln sind Schätzungen auf Bevölkerungsebene — individuelle Bedürfnisse variieren. Dein Ziel ist ein Ausgangspunkt, keine medizinische Empfehlung.",
+  "kcalGoalInfoFemaleReferenceLabel": "Weibliche Referenz",
+  "kcalGoalInfoInputsSection": "Deine Angaben",
+  "kcalGoalInfoIntro": "Dein tägliches Kalorienziel wird mit veröffentlichten wissenschaftlichen Formeln ausschließlich aus den unten stehenden Werten berechnet. Diese Seite zeigt jede Zahl, die in dein heutiges Ziel einfließt.",
+  "kcalGoalInfoLearnMoreLabel": "Vollständige Dokumentation der Berechnung",
+  "kcalGoalInfoMacroExplanation": "Dein Kalorienziel wird anhand deiner Makro-Verteilung auf Kohlenhydrate, Fett und Protein aufgeteilt (Standard: 60 % Kohlenhydrate, 25 % Fett, 15 % Protein — anpassbar in den Einstellungen). Die Grammziele ergeben sich aus den Energiedichten: Kohlenhydrate und Protein liefern 4 kcal pro Gramm, Fett 9 kcal pro Gramm.",
+  "kcalGoalInfoMacroSection": "Verteilung der Makronährstoffe",
+  "kcalGoalInfoMaleReferenceLabel": "Männliche Referenz",
+  "kcalGoalInfoManualExplanation": "Ein fester Wert, den du selbst in den Einstellungen festlegst — falls du weißt, dass dein Bedarf von der Schätzung abweicht.",
+  "kcalGoalInfoManualSection": "Schritt 3 · Manuelle Anpassung",
+  "kcalGoalInfoPaRowLabel": "Aktivitätskoeffizient (PA)",
+  "kcalGoalInfoPalRowLabel": "Aktivitätslevel (PAL)",
+  "kcalGoalInfoResultSection": "Heutiges Kalorienziel",
+  "kcalGoalInfoTaperNote": "Da das Ausschleichen zum Zielgewicht aktiv ist, wird die Anpassung in Zielnähe reduziert (volle Wirkung ab 5 kg Abstand, Erhaltung innerhalb von 1 kg).",
+  "kcalGoalInfoTdeeExplanation": "Dein Gesamtenergieverbrauch (TDEE) — die Energie, die du an einem typischen Tag verbrauchst — wird mit der IOM-Formel von 2005 aus Alter, Gewicht, Größe und Aktivitätslevel geschätzt.",
+  "kcalGoalInfoTdeeResultLabel": "Dein TDEE",
+  "kcalGoalInfoTdeeSection": "Schritt 1 · Erhaltungsbedarf (TDEE)",
   "kcalLabel": "kcal",
   "kjLabel": "kJ",
   "kcalLeftLabel": "kcal übrig",
   "kcalTooMuchLabel": "kcal zu viel",
   "kgLabel": "kg",
   "lbsLabel": "lbs",
+  "stLabel": "st",
   "lunchExample": "z. B. Pizza, Salat, Reis ...",
   "lunchLabel": "Mittagessen",
   "macroDistributionLabel": "Makronährstoff-Verteilung:",
@@ -381,6 +485,16 @@
   "mealNameLabel": "Mahlzeitenname",
   "mealNameValidationError": "Mahlzeitenname muss mindestens einen Buchstaben enthalten",
   "mealNutrientsPerQtyLabel": "Pro {qty} {unit}",
+  "@mealNutrientsPerQtyLabel": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
   "mealNutrientsTotalLabel": "Gesamtmenge",
   "mealPatternFiveSmall": "5 kleine",
   "mealPatternMediterranean": "Mediterran",
@@ -389,8 +503,8 @@
   "mealPatternStandard": "Standard",
   "mealPatternTwoMeal": "2 Mahlzeiten",
   "mealProteinLabel": "Protein",
-  "mealSizeLabel": "Mahlzeitsgröße (g/ml)",
-  "mealSizeLabelImperial": "Mahlzeitsgröße (oz/fl oz)",
+  "mealSizeLabel": "Packungsgröße",
+  "mealSizeLabelImperial": "Packungsgröße (oz/fl oz)",
   "mealUnitLabel": "Mahlzeiteinheit",
   "micronutrientsLabel": "Mikronährstoffe",
   "milliliterUnit": "ml",
@@ -401,6 +515,9 @@
   "noActivityRecentlyAddedLabel": "Keine kürzlich hinzugefügten Aktivitäten",
   "noMealsRecentlyAddedLabel": "Keine kürzlich hinzugefügten Mahlzeiten",
   "noResultsFound": "Keine Ergebnisse gefunden",
+  "noResultsSubtitle": "Zu dieser Suche passt kein Lebensmittel. Versuche einen anderen Namen, scanne den Barcode oder lege ein eigenes an.",
+  "noResultsScanBarcode": "Barcode scannen",
+  "noResultsCreateCustomFood": "Eigenes Lebensmittel erstellen",
   "notAvailableLabel": "N/A",
   "nothingAddedLabel": "Nichts hinzugefügt",
   "notificationsDailyReminderBody": "Vergiss nicht, heute deine Mahlzeiten zu protokollieren!",
@@ -428,16 +545,40 @@
   "nutritionalStatusUnderweight": "Untergewicht",
   "offDisclaimer": "Die Daten, die Ihnen mit dieser App zur Verfügung gestellt werden, stammen aus der Open Food Facts-Datenbank. Es kann keine Garantie für die Richtigkeit, Vollständigkeit oder Zuverlässigkeit der bereitgestellten Informationen übernommen werden. Die Daten werden ohne Mängelgewähr zur Verfügung gestellt, und die Ursprungsquelle der Daten (Open Food Facts) haftet nicht für Schäden, die aus der Verwendung der Daten entstehen.",
   "onboardingActivityQuestionSubtitle": "Wie aktiv sind Sie? (Ohne Trainingseinheiten)",
+  "onboardingAdultEquationNotice": "Kalorienziele werden mit Referenzgleichungen für Erwachsene berechnet. Unter 19 Jahren sollten Sie das Ergebnis ärztlich oder von einer Ernährungsfachkraft prüfen lassen.",
   "onboardingBirthdayHint": "Datum eingeben",
   "onboardingBirthdayQuestionSubtitle": "Wann haben Sie Geburtstag?",
+  "onboardingBlockedActivitySnack": "Wählen Sie Ihr Aktivitätsniveau, um fortzufahren",
+  "onboardingBlockedBodySnack": "Geben Sie eine gültige Größe und ein gültiges Gewicht ein, um fortzufahren",
+  "onboardingBlockedDemoPolicySnack": "Akzeptieren Sie die Datenschutzrichtlinie, um die Demo zu testen",
+  "onboardingBlockedGoalSnack": "Wählen Sie Ihr Gewichtsziel, um fortzufahren",
+  "onboardingBlockedOverviewSnack": "Es fehlen noch Angaben. Gehen Sie zurück und vervollständigen Sie die vorherigen Schritte.",
+  "onboardingBlockedPolicySnack": "Akzeptieren Sie die Datenschutzrichtlinie, um fortzufahren",
+  "onboardingBlockedProfileSnack": "Wählen Sie Ihr Geschlecht und geben Sie Ihren Geburtstag ein, um fortzufahren",
   "onboardingEnterBirthdayLabel": "Geburtstag",
   "onboardingGenderQuestionSubtitle": "Was ist Ihr Geschlecht?",
   "onboardingGoalQuestionSubtitle": "Was ist Ihr aktuelles Gewichtsziel?",
+  "onboardingFoodSourcesEnabledCount": "{enabled} von {total} aktiviert",
+  "onboardingGoalSuggestedBadge": "Vorschlag",
+  "onboardingGoalSuggestionBmi": "Ihr BMI beträgt {bmi} — WHO: {status}.",
+  "onboardingGoalSuggestionTarget": "Basierend auf Ihrem eingegebenen Zielgewicht.",
   "onboardingHeightExampleHintCm": "z. B. 170",
   "onboardingHeightExampleHintFt": "z. B. 5.8",
   "onboardingHeightQuestionSubtitle": "Wie groß sind Sie derzeit?",
+  "onboardingHealthyRangeApply": "{weight} übernehmen",
+  "onboardingHealthyRangeLabel": "Gesunder Bereich für {height}: {range}",
+  "onboardingHealthyRangeSource": "WHO, BMI 18,5–24,9",
+  "onboardingImplausibleChange": "Ändern",
+  "onboardingImplausibleHeightBody": "{value} ist eine ungewöhnliche Größe. Beibehalten?",
+  "onboardingImplausibleKeep": "Beibehalten",
+  "onboardingImplausibleTitle": "Wert bitte prüfen",
+  "onboardingImplausibleWeightBody": "{value} ist ein ungewöhnliches Gewicht. Beibehalten?",
   "onboardingIntroDescription": "Um loszulegen, benötigt die App einige Informationen über Sie, um Ihr tägliches Kalorienziel zu berechnen. Alle Informationen über Sie werden sicher auf Ihrem Gerät gespeichert.",
   "onboardingIntroSourcesLinkLabel": "Quellen unserer medizinischen Berechnungen ansehen",
+  "onboardingTryDemoLabel": "Demo ausprobieren",
+  "onboardingTryDemoSubtitle": "Einrichtung überspringen und die App mit Beispieldaten erkunden. Zuerst die Datenschutzrichtlinie akzeptieren.",
+  "onboardingTryDemoDisclaimer": "Verwendet nur fiktive Beispieldaten. Absturzberichte bleiben aus, bis du sie später aktivierst. Beispielbilder und Lebensmittelsuche können das Netzwerk nutzen.",
+  "onboardingTryDemoError": "Demo konnte nicht eingerichtet werden. Bitte versuche es erneut.",
   "onboardingKcalPerDayLabel": "kcal pro Tag",
   "onboardingKjPerDayLabel": "kJ pro Tag",
   "onboardingNonBinaryDisclaimer": "Es gibt keine veröffentlichte Kalorien-Grundlage für nicht-binäre Personen. Wir verwenden standardmäßig einen Mittelwert der männlichen und weiblichen Formeln — ein Ausgangspunkt, keine genaue Schätzung. Du kannst dies jederzeit unter Einstellungen → Berechnungen anpassen.",
@@ -448,6 +589,7 @@
   "onboardingWeightExampleHintKg": "z. B. 60",
   "onboardingWeightExampleHintLbs": "z. B. 132",
   "onboardingWeightQuestionSubtitle": "Wie viel wiegen Sie derzeit?",
+  "onboardingFoodUnitsSubtitle": "Wie du Essen und Getränke erfasst",
   "onboardingWelcomeLabel": "Willkommen bei",
   "onboardingWrongHeightLabel": "Geben Sie eine korrekte Größe ein",
   "onboardingWrongWeightLabel": "Geben Sie ein korrekte Gewicht ein",
@@ -643,7 +785,6 @@
   "paTaiChiQiGongGeneralDesc": "allgemein",
   "paTennisGeneral": "Tennis",
   "paTennisGeneralDesc": "allgemein",
-  "paTrackField": "Leichtathletik",
   "paTrackField1Desc": "(z. B. Kugelstoßen, Diskuswurf, Hammerwurf)",
   "paTrackField2Desc": "(z. B. Hochsprung, Weitsprung, Dreisprung, Speerwurf, Stabhochsprung)",
   "paTrackField3Desc": "(z. B. Hindernislauf, Hürdenlauf)",
@@ -693,6 +834,13 @@
   "profileTargetWeightNotSetLabel": "Nicht festgelegt",
   "profileTargetWeightReached": "Du hast dein Ziel erreicht",
   "profileTargetWeightToGo": "Noch {value} bis zum Ziel",
+  "@profileTargetWeightToGo": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightHistoryTitle": "Gewichtsverlauf",
   "proteinLabel": "Protein",
   "proteinLabelShort": "p",
@@ -721,6 +869,13 @@
   "recipeImageTakePhoto": "Foto aufnehmen",
   "recipeIngredientAmountLabel": "Menge",
   "recipeIngredientCountLabel": "{count} Zutat(en)",
+  "@recipeIngredientCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recipeIngredientUnitLabel": "Einheit",
   "recipeIngredientsLabel": "Zutaten",
   "recipeInvalidTotalWeightLabel": "Gesamtgewicht muss größer als null sein",
@@ -739,7 +894,6 @@
   "recipeServingsCountLabel": "Portionen (optional)",
   "recipeTagsHelper": "Kommagetrennt, z. B. \"Frühstück, vegan\"",
   "recipeTagsLabel": "Tags",
-  "recipeTotalWeightHelper": "Standardmäßig die Summe der Zutaten. Flüssigkeiten werden mit 1 ml ≈ 1 g angenähert.",
   "recipeTotalWeightLabel": "Gesamtgewicht (g)",
   "recipesEmptyHint": "Erstelle ein Gericht aus mehreren Zutaten und verwende es wie jedes andere Lebensmittel.",
   "recipesEmptyLabel": "Noch keine Rezepte",
@@ -760,17 +914,23 @@
   "searchFoodPage": "Lebensmittel",
   "searchLabel": "Suchen",
   "searchProductsPage": "Produkte",
-  "searchSwissFoodPage": "CH Lebensmittel",
   "searchResultsLabel": "Suchergebnisse",
   "selectGenderDialogLabel": "Geschlecht auswählen",
   "selectHeightDialogLabel": "Größe auswählen",
   "selectPalCategoryLabel": "Aktivitätslevel auswählen",
   "selectWeightDialogLabel": "Gewicht auswählen",
   "selectionCountLabel": "{count} ausgewählt",
-  "sendAnonymousUserData": "Anonyme Nutzungsdaten senden?",
+  "@selectionCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sendCrashReports": "Absturzberichte senden",
   "servingLabel": "Portion",
-  "servingSizeLabelImperial": "Portionsgröße (oz/fl oz)",
-  "servingSizeLabelMetric": "Portionsgröße (g/ml)",
+  "servingSizeLabelImperial": "Eine Portion (oz/fl oz)",
+  "servingSizeLabelMetric": "Eine Portion",
   "settingAboutLabel": "Über",
   "settingFeedbackLabel": "Feedback",
   "settingsCalciumGoalDescription": "Tägliches Calciumziel in Milligramm. Standardreferenz: 1000 mg.",
@@ -808,8 +968,15 @@
   "settingsFibreGoalLabel": "Ballaststoffziel",
   "settingsImperialLabel": "Imperial (lbs, ft, oz)",
   "settingsKcalAdjustmentLabel": "Tägliche kcal-Anpassung",
+  "settingsKcalGoalInfoLabel": "So wird dein Ziel berechnet",
   "settingsIronGoalDescription": "Tägliches Eisenziel in Milligramm. Standard nach Geschlecht (8 mg männlich, 18 mg weiblich, 14 mg sonst).",
   "settingsIronGoalLabel": "Eisenziel",
+  "settingsCategoryAbout": "Über",
+  "settingsCategoryAppearance": "Darstellung",
+  "settingsCategoryData": "Daten",
+  "settingsCategoryDisplay": "Anzeige",
+  "settingsCategoryGoals": "Ziele & Ernährung",
+  "settingsCategoryUnits": "Einheiten & Energie",
   "settingsLabel": "Einstellungen",
   "settingsLanguageLabel": "Sprache",
   "settingsMaterialYouTitle": "Systemfarben verwenden",
@@ -834,6 +1001,13 @@
   "settingsMetricLabel": "Metrisch (kg, cm, ml)",
   "settingsNotificationsLabel": "Tägliche Erinnerung",
   "settingsNotificationsTimeLabel": "Erinnerungszeit: {time}",
+  "@settingsNotificationsTimeLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "settingsNutrientGoalsHint": "Persönliche Zielwerte für jeden Nährstoff im täglichen Panel. Das Tagebuch verwendet diese Werte anstelle der Standardreferenzen, sobald du einen festlegst.",
   "settingsNutrientGoalsLabel": "Nährstoffziele",
   "settingsNutrientsHelp": "Wähle, welche Nährstoffe im Tagespanel sichtbar sind. Ausgeblendete kannst du jederzeit wieder einschalten.",
@@ -848,6 +1022,7 @@
   "settingsPotassiumGoalDescription": "Tägliches Kaliumziel in Milligramm. Standardreferenz: 3500 mg.",
   "settingsPotassiumGoalLabel": "Kaliumziel",
   "settingsPrivacySettings": "Datenschutzeinstellungen",
+  "settingsDemoPrivacyNote": "Absturzberichte sind nicht verfügbar, solange Beispieldaten angezeigt werden. Richte zuerst dein eigenes Profil ein.",
   "settingsReportErrorLabel": "Fehler melden",
   "settingsSaturatedFatGoalDescription": "Tägliche Obergrenze für gesättigte Fette in Gramm. Standardreferenz: 20 g.",
   "settingsSaturatedFatGoalLabel": "Ziel für gesättigte Fette",
@@ -866,6 +1041,13 @@
   "settingsThemeLightLabel": "Hell",
   "settingsThemeSystemDefaultLabel": "Systemstandard",
   "settingsUnitsLabel": "Einheiten",
+  "settingsFoodUnitsLabel": "Lebensmitteleinheiten",
+  "settingsHeightUnitsLabel": "Größeneinheit",
+  "settingsBodyWeightUnitLabel": "Einheit für Körpergewicht",
+  "settingsFoodUnitsMetric": "Metrisch (g, kg, ml, l)",
+  "settingsFoodUnitsImperial": "Imperial (lbs, oz, fl oz)",
+  "settingsHeightUnitsMetric": "Metrisch (mm, cm, m)",
+  "settingsHeightUnitsImperial": "Imperial (ft, in)",
   "settingsVitaminB12GoalDescription": "Tägliches Vitamin-B12-Ziel in Mikrogramm. Standardreferenz: 2,4 µg.",
   "settingsVitaminB12GoalLabel": "Vitamin-B12-Ziel",
   "settingsVitaminDGoalDescription": "Tägliches Vitamin-D-Ziel in Mikrogramm. Standardreferenz: 15 µg.",
@@ -894,6 +1076,7 @@
   "sourcesOpenSourceLabel": "Quelle öffnen",
   "sourcesScreenIntro": "OpenNutriTracker verwendet für alle Berechnungen etablierte, peer-reviewed Methoden. Die folgenden Quellenangaben verlinken auf die Originaltexte, damit du jede Zahl selbst überprüfen kannst.",
   "sugarLabel": "Zucker",
+  "suggestedLabel": "Vorschlag",
   "suppliedLabel": "zugeführt",
   "transFatLabel": "Transfettsäuren",
   "unitLabel": "Einheit",
@@ -904,8 +1087,22 @@
   "vitaminDLabel": "Vitamin D",
   "warningLabel": "Warnung",
   "weeklyWeightGoalKgPerWeek": "{rate} kg/Woche",
+  "@weeklyWeightGoalKgPerWeek": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "weeklyWeightGoalLabel": "Wöchentliche Rate",
   "weeklyWeightGoalLbsPerWeek": "{rate} lbs/Woche",
+  "@weeklyWeightGoalLbsPerWeek": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "weeklyWeightGoalNoneLabel": "Nicht festgelegt",
   "weightHistoryAddEntry": "Eintrag hinzufügen",
   "weightHistoryChartEmptyState": "Trage mindestens zwei Tage ein, um deinen Verlauf zu sehen.",
@@ -967,30 +1164,196 @@
   "customMealsMergeConfirmContent": "Dadurch werden alle Einträge, die mit {loser} protokolliert wurden, ersetzt, sodass sie {winner} anzeigen. Außerdem wird {loser} aus deinen eigenen Mahlzeiten entfernt. Das kann nicht rückgängig gemacht werden.",
   "@customMealsMergeConfirmContent": {
     "placeholders": {
-      "loser": { "type": "String" },
-      "winner": { "type": "String" }
+      "loser": {
+        "type": "String"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "customMealsMergeConfirmAction": "Zusammenführen",
   "customMealsMergeSuccessSnackbarOne": "Zusammengeführt — {winner} hat jetzt 1 Eintrag.",
   "@customMealsMergeSuccessSnackbarOne": {
-    "placeholders": { "winner": { "type": "String" } }
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
   },
   "customMealsMergeSuccessSnackbarOther": "Zusammengeführt — {winner} hat jetzt {count} Einträge.",
   "@customMealsMergeSuccessSnackbarOther": {
     "placeholders": {
-      "count": { "type": "int" },
-      "winner": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "winner": {
+        "type": "String"
+      }
     }
   },
   "fastingHomeChipBody": "Fasten · noch {remaining}",
   "@fastingHomeChipBody": {
     "placeholders": {
-      "remaining": { "type": "String" }
+      "remaining": {
+        "type": "String"
+      }
     }
   },
   "fastingNotificationChannelName": "Fasten-Timer",
   "fastingNotificationChannelDescription": "Einmalige Hinweise, wenn eine Fastenphase ihr Ziel erreicht.",
   "fastingNotificationCompleteTitle": "Fastenzeit abgeschlossen",
-  "fastingNotificationCompleteBody": "Deine Zielzeit wurde erreicht."
+  "fastingNotificationCompleteBody": "Deine Zielzeit wurde erreicht.",
+  "profileImageLabel": "Foto hinzufügen",
+  "profileImageReplace": "Foto ändern",
+  "profileImageRemove": "Foto entfernen",
+  "switchProfileLabel": "Profil wechseln",
+  "addProfileLabel": "Profil hinzufügen",
+  "manageProfilesLabel": "Profile verwalten",
+  "editProfileTitle": "Profil bearbeiten",
+  "profileNameLabel": "Name",
+  "profileNameHint": "Profilname",
+  "defaultProfileName": "Profil 1",
+  "profileActiveLabel": "Aktiv",
+  "deleteProfileConfirmTitle": "Profil löschen?",
+  "deleteProfileConfirmContent": "Dadurch werden das Profil und alle seine Daten dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
+  "copyToProfileLabel": "In Profil kopieren",
+  "copiedToProfileSnackbar": "Mahlzeit ins Profil kopiert",
+  "copyActionLabel": "Kopieren",
+  "quickAddActivityTitleLabel": "Aktivität schnell hinzufügen",
+  "quickAddActivityDurationLabel": "Dauer (Min., optional)",
+  "quickAddActivityEnergyLabelKcal": "Verbrannte Energie (kcal)",
+  "quickAddActivityEnergyLabelKj": "Verbrannte Energie (kJ)",
+  "quickAddActivityAddedSnack": "Aktivität hinzugefügt",
+  "quickAddActivityNameLabel": "Name (optional)",
+  "scannerLockOrientationTooltip": "Auf Hochformat sperren",
+  "scannerUnlockOrientationTooltip": "Drehung erlauben",
+  "bulkAddTitle": "Mehrere Einträge hinzufügen",
+  "bulkAddInputHint": "2 Eier, 100g Toast, schwarzer Kaffee",
+  "bulkAddParseLabel": "Lebensmittel suchen",
+  "bulkAddSubmitLabel": "{count} Einträge speichern",
+  "bulkAddNoMatchLabel": "Kein Treffer für diesen Eintrag",
+  "bulkAddUncertainLabel": "Treffer prüfen",
+  "bulkAddSkipLabel": "Überspringen",
+  "bulkAddIncludeLabel": "Einschließen",
+  "bulkAddChooseFoodLabel": "Anderes Lebensmittel wählen",
+  "bulkAddNothingToLogLabel": "Noch nichts zu speichern",
+  "bulkAddSearchFailedLabel": "Suche nach diesen Lebensmitteln fehlgeschlagen",
+  "bulkAddCheckAmountLabel": "Einheit für diese Menge prüfen",
+  "bulkAddDefaultAmountLabel": "Menge nicht angegeben",
+  "bulkAddErrorInvalidName": "Eintrag {number}: kein gültiger Lebensmittelname",
+  "bulkAddErrorQuantityTooSmall": "Eintrag {number}: Menge muss größer als 0 sein",
+  "bulkAddErrorQuantityTooLarge": "Eintrag {number}: Menge darf höchstens {bound} betragen",
+  "bulkAddRowQuantityInvalid": "Zahl mit höchstens zwei Nachkommastellen eingeben",
+  "bulkAddRowQuantityTooSmall": "Menge muss größer als 0 sein",
+  "bulkAddRowQuantityTooLarge": "Menge darf höchstens {bound} betragen",
+  "settingsAiAssistLabel": "KI-Unterstützung",
+  "settingsAiAssistNotConfiguredLabel": "Aus — kein Schlüssel gespeichert",
+  "settingsAiAssistOnLabel": "An",
+  "settingsAiAssistPausedLabel": "Pausiert — Schlüssel gespeichert",
+  "settingsAiAssistEnabledLabel": "KI-Unterstützung verwenden",
+  "aiAssistExperimentalLabel": "Experimentell",
+  "aiAssistExperimentalNote": "Diese Funktion kann sich ändern oder entfernt werden, und das Angebot an Anbietern und Modellen kann sich mit ihr ändern.",
+  "aiConsentTitle": "Bevor du das einschaltest",
+  "bulkAddModelHintLabel": "Ein Modell kann das für dich lesen",
+  "bulkAddModelHintKeyLabel": "Mit deinem eigenen API-Schlüssel",
+  "aiConsentChangeProviderNote": "Du kannst den Anbieter später wechseln. Die Bedingungen des jeweiligen Anbieters stehen in den Einstellungen, und nichts, was du eingibst oder fotografierst, wird gesendet, bevor du die Funktion nutzt.",
+  "aiConsentOwnServerCheckNote": "Wenn du die Adresse deines Servers speicherst, wird er auch gefragt, welche Modelle er anbietet, und es läuft eine Einrichtungsprüfung — eine feste Beispielzeile und ein Beispielfoto von uns, nie etwas von dir.",
+  "aiConsentAgreeLabel": "VERSTANDEN",
+  "aiAssistDisclosureCommon": "Dein Tagebuch und dein Profil werden nie gesendet. Nährwerte stammen immer aus den Lebensmitteldatenbanken, nie vom Modell. Der Schlüssel wird nur auf diesem Gerät gespeichert: OpenNutriTracker sieht ihn nie und zahlt nicht für seine Nutzung.",
+  "aiAssistDisclosureAnthropic": "Mit gespeichertem Schlüssel wird der Text, den du auf dem Mehrfach-Hinzufügen-Bildschirm eingibst — und jedes Foto, das du dort auslesen lässt — an Anthropic gesendet. Fotos werden nur für diese eine Anfrage gesendet und nie gespeichert.",
+  "aiAssistDisclosureOpenRouter": "Mit gespeichertem Schlüssel wird der Text, den du auf dem Mehrfach-Hinzufügen-Bildschirm eingibst — und jedes Foto, das du dort auslesen lässt — an OpenRouter gesendet, das ihn an den Anbieter des gewählten Modells weiterleitet. OpenRouter übermittelt diesem Anbieter bei jeder Anfrage außerdem eine kontobezogene Kennung, und das lässt sich nicht abschalten. Deine Inhalte werden über das Weiterleiten der Anfrage hinaus nicht aufbewahrt, außer soweit dies zur Missbrauchserkennung, Sicherheit, Abrechnung oder Erfüllung rechtlicher Pflichten erforderlich ist. Der Anbieter, der dein Modell bereitstellt, bewahrt das Erhaltene nach seinen eigenen Richtlinien auf.",
+  "aiAssistDisclosureOpenAI": "Mit gespeichertem Schlüssel wird der Text, den du auf dem Mehrfach-Hinzufügen-Bildschirm eingibst — und jedes Foto, das du dort auslesen lässt — an OpenAI gesendet. OpenAI bewahrt das Gesendete bis zu 30 Tage zur Missbrauchserkennung auf, und länger, wenn das Gesetz es verlangt oder es vernünftigerweise erforderlich ist, um die eigenen Dienste oder Dritte vor Schaden zu bewahren.",
+  "aiAssistProviderOwnServerLabel": "Dein eigener Server",
+  "aiAssistEndpointFieldLabel": "Serveradresse",
+  "aiAssistModelFieldLabel": "Modellname",
+  "aiAssistDisclosureOwnServerSecure": "Mit gespeicherter Adresse wird der Text, den du auf dem Mehrfach-Hinzufügen-Bildschirm eingibst, und jedes Foto, das du dort auslesen lässt, an {host} gesendet — einen Server, den du selbst betreibst. Niemand Drittes erhält ihn, und das Projekt hat keine Beziehung zu dieser Maschine und kann nichts darüber zusagen, was sie aufbewahrt. Die Verbindung ist verschlüsselt.",
+  "@aiAssistDisclosureOwnServerSecure": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistDisclosureOwnServerPlaintext": "Mit gespeicherter Adresse wird der Text, den du auf dem Mehrfach-Hinzufügen-Bildschirm eingibst, und jedes Foto, das du dort auslesen lässt, an {host} gesendet — einen Server, den du selbst betreibst. Niemand Drittes erhält ihn, und das Projekt hat keine Beziehung zu dieser Maschine und kann nichts darüber zusagen, was sie aufbewahrt. Diese Adresse ist einfaches HTTP, die Verbindung ist also nicht verschlüsselt: Alles im Netzwerk zwischen diesem Telefon und dem Server kann mitlesen, was gesendet wird.",
+  "@aiAssistDisclosureOwnServerPlaintext": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistEndpointInvalidLabel": "Gib eine Adresse ein, die mit http:// oder https:// beginnt.",
+  "aiAssistModelRequiredLabel": "Gib den Namen des Modells an, das dieser Server verwenden soll.",
+  "aiAssistEndpointPublicPlaintextLabel": "Diese Adresse ist öffentlich und unverschlüsselt, deshalb werden Anfragen dorthin abgelehnt. Nimm https oder eine private Adresse.",
+  "aiAssistProbeSectionLabel": "Einrichtungsprüfung",
+  "aiAssistProbeRunningLabel": "Der Server wird geprüft. Die beiden Prüfungen laufen nacheinander, plan also bis zu {minutes, plural, one{eine Minute} other{{minutes} Minuten}} ein – du kannst das hier schließen, die Antwort ist da, wenn du zurückkommst.",
+  "aiAssistProbeCheckLabel": "Server prüfen",
+  "aiAssistProbeTextLabel": "Mahlzeitentext",
+  "aiAssistProbePhotoLabel": "Fotos",
+  "aiAssistProbePassedLabel": "Geprüft – dieser Server hat Einträge geliefert.",
+  "aiAssistProbeUnknownLabel": "Noch nicht geprüft.",
+  "aiAssistProbeNoAnswerLabel": "Geprüft – es kam keine Antwort, über diesen Server wurde also nichts herausgefunden. Versuch es erneut, wenn er wach und erreichbar ist.",
+  "aiAssistProbeTextFailedLabel": "Geprüft – dieses Modell hat keine Einträge geliefert. Getippte Mahlzeiten liest weiterhin die Offline-Erkennung, und du kannst es trotzdem versuchen.",
+  "aiAssistProbePhotoFailedLabel": "Geprüft – dieses Modell hat für ein Foto keine Einträge geliefert, deshalb wird das Lesen von Fotos für diesen Server nicht angeboten.",
+  "aiAssistLoadModelsLabel": "Modelle laden",
+  "aiAssistPickModelLabel": "Modell auswählen",
+  "aiAssistModelsUnreachableLabel": "{host} war nicht erreichbar. Der Server schläft vielleicht, hängt in einem anderen Netz oder hinter einem ausgeschalteten VPN – tipp stattdessen den Modellnamen ein.",
+  "aiAssistModelsEmptyLabel": "{host} hat geantwortet und listet keine Modelle auf. Tipp den Modellnamen ein.",
+  "aiAssistModelsRejectedLabel": "{host} hat geantwortet, aber nicht mit einer Modellliste. Prüf die Adresse, oder tipp den Modellnamen ein.",
+  "aiAssistModelsInsecureLabel": "Es wurde nichts gesendet: Diese Adresse ist öffentlich und unverschlüsselt. Nutz https, oder tipp den Modellnamen ein.",
+  "aiAssistProviderLabel": "Anbieter",
+  "aiAssistModelLabel": "Modell",
+  "aiAssistServedByLabel": "Bereitgestellt von {provider}",
+  "aiAssistModelRecommendedLabel": "Empfohlen",
+  "aiAssistModelCheaperLabel": "Günstiger, aber schwächer bei Fotos mit schlechter Qualität",
+  "aiAssistModelMoreItemsLabel": "Listet mehr Einträge aus einem Foto auf",
+  "aiAssistModelCheapestLabel": "Am günstigsten in dieser Liste",
+  "aiAssistNoKeyForProviderLabel": "Für diesen Anbieter ist kein Schlüssel gespeichert.",
+  "aiAssistKeyFieldLabel": "{provider} API-Schlüssel",
+  "aiAssistKeySavedLabel": "Schlüssel gespeichert",
+  "aiAssistRemoveKeyLabel": "Schlüssel entfernen",
+  "bulkAddReadByModelLabel": "Von KI gelesen — prüfe jede Zeile",
+  "bulkAddModelKeyRejectedLabel": "KI nicht verwendet: Dein API-Schlüssel wurde abgelehnt.",
+  "bulkAddModelUnsupportedLabel": "KI nicht verwendet: Das gewählte Modell konnte nicht genutzt werden.",
+  "bulkAddModelNoCreditLabel": "KI nicht ausgeführt: Das Guthaben deines Anbieterkontos ist aufgebraucht.",
+  "bulkAddModelInsecureServerLabel": "KI nicht ausgeführt: Adresse öffentlich, unverschlüsselt.",
+  "bulkAddModelTimedOutLabel": "KI nicht ausgeführt: Dein Server hat nicht rechtzeitig geantwortet.",
+  "bulkAddWaitElapsedLabel": "Warte auf deinen Server · {seconds} s",
+  "bulkAddWaitModelLoadingLabel": "Dein Server lädt vermutlich gerade sein Modell. Die erste Anfrage nach längerer Pause kann ein bis zwei Minuten dauern – das ist normal.",
+  "bulkAddWaitCancelLabel": "Abbrechen",
+  "bulkAddPhotoLabel": "Foto auslesen",
+  "bulkAddPhotoDisclosureCommon": "OpenNutriTracker behält keine eigene Kopie davon, und es landet nie in deinen Exporten.",
+  "bulkAddPhotoDisclosureAnthropic": "Das Foto wird an Anthropic gesendet, um die darauf abgebildeten Lebensmittel zu erkennen.",
+  "bulkAddPhotoDisclosureOpenRouter": "Das Foto wird an OpenRouter gesendet und von dort an {provider} weitergeleitet, um die darauf abgebildeten Lebensmittel zu erkennen.",
+  "bulkAddPhotoDisclosureOpenAI": "Das Foto wird an OpenAI gesendet, um die darauf abgebildeten Lebensmittel zu erkennen. OpenAI bewahrt es bis zu 30 Tage zur Missbrauchserkennung auf, und länger, wenn das Gesetz es verlangt oder es vernünftigerweise erforderlich ist, um die eigenen Dienste oder Dritte vor Schaden zu bewahren.",
+  "bulkAddPhotoDisclosureOwnServer": "Das Foto wird an {host} gesendet, um die darauf abgebildeten Lebensmittel zu erkennen.",
+  "bulkAddReadFromPhotoLabel": "Aus einem Foto gelesen — prüfe jedes Lebensmittel und jede Menge",
+  "bulkAddPhotoUnavailableLabel": "Aktiviere die KI-Mahlzeitenhilfe in den Einstellungen, um Fotos auszulesen",
+  "bulkAddPhotoKeyRejectedLabel": "Dein API-Schlüssel wurde abgelehnt. Prüfe ihn in den Einstellungen.",
+  "bulkAddPhotoCameraFailedLabel": "Die Kamera konnte nicht geöffnet werden. Prüfe die Kameraberechtigung und versuche es erneut.",
+  "bulkAddPhotoFailedLabel": "Das Foto konnte nicht gelesen werden. Prüfe deine Verbindung und versuche es erneut.",
+  "bulkAddPhotoUnreadableLabel": "Dieses Bild konnte nicht verwendet werden. Versuche ein anderes Foto.",
+  "bulkAddPhotoUnsupportedLabel": "Dieses Modell kann keine Fotos lesen. Wähle in den Einstellungen ein anderes aus oder tippe die Einträge ein.",
+  "bulkAddPhotoNoCreditLabel": "Diese Anfrage konnte nicht bezahlt werden: Das Guthaben deines Anbieterkontos ist aufgebraucht. Lade es beim Anbieter auf oder gib die Einträge selbst ein.",
+  "bulkAddPhotoNoFoodLabel": "Auf diesem Foto wurden keine Lebensmittel erkannt. Versuche ein anderes Foto oder tippe die Einträge ein.",
+  "settingsHealthSyncSubtitle": "Trainings importieren",
+  "healthSyncAutoImportLabel": "Trainings automatisch aus {platform} importieren",
+  "healthSyncKcalMultiplierLabel": "Anrechnung von Trainingskalorien",
+  "healthSyncKcalMultiplierSubtitle": "Dein Körper gleicht Sport meist aus, indem er den Rest des Tages weniger Kalorien verbrennt. 100 % rechnet jede Trainingskalorie voll auf dein Tagesziel an.",
+  "healthSyncKcalMultiplierValueLabel": "{percent} %",
+  "healthSyncSuggestedLabel": "Für dich empfohlen: {percent} %",
+  "healthSyncImportNowLabel": "Jetzt importieren",
+  "healthSyncLastImportLabel": "Letzter Import: {time}",
+  "healthSyncNeverImportedLabel": "Noch keine Trainings importiert",
+  "healthSyncImportedCountLabel": "{count, plural, =0{Keine neuen Trainings} one{1 Training importiert} other{{count} Trainings importiert}}",
+  "healthSyncPermissionDeniedLabel": "Kein Zugriff auf {platform} erteilt. Erlaube OpenNutriTracker, Trainings zu lesen, um sie zu importieren.",
+  "healthSyncDisclosureTitle": "Trainings aus {platform} importieren?",
+  "healthSyncDisclosureBody": "OpenNutriTracker liest deine abgeschlossenen Trainings aus {platform} — Art, Zeitpunkt, Dauer und die dabei angegebene Energie.\n\nTrainings werden als Aktivitäten in deinem Tagebuch abgelegt, die du bearbeiten oder löschen kannst; die angegebene Energie erhöht das Kalorienziel dieses Tages um einen Anteil, den du festlegst.",
+  "healthSyncDisclosureBodyFatAddendum": "OpenNutriTracker liest außerdem den zuletzt in {platform} gespeicherten Körperfettanteil. Der Körperfettwert dient dazu, dir diesen Anteil vorzuschlagen.",
+  "healthSyncDisclosureFooter": "Es wird nichts an {platform} zurückgeschrieben, und nichts davon wird irgendwohin gesendet — es bleibt auf diesem Gerät.\n\nDu kannst das jederzeit ausschalten; danach wird nichts mehr gelesen.",
+  "healthSyncDisclosureContinueAction": "Weiter",
+  "healthSyncUnavailableLabel": "Gesundheitsdaten sind auf diesem Gerät nicht verfügbar. Der Trainingsimport benötigt Health Connect unter Android oder Apple Health unter iOS.",
+  "sourcesEnergyCompensationTitle": "Anrechnung von Trainingskalorien",
+  "sourcesEnergyCompensationDescription": "Importierte Trainings werden mit weniger Energie angerechnet, als dein Gerät meldet. Menschen gleichen Sport aus, indem sie den Rest des Tages weniger Kalorien verbrennen – im Mittel etwa 28 %, bei höherem Körperfettanteil mehr. Der Vorschlag stammt aus dieser Forschung und lässt sich unter Einstellungen → Gesundheitsdaten-Sync ändern. Die Energie selbst meldet die App oder das Gerät, das das Training aufgezeichnet hat; sie wird nicht mit der MET-Formel der App berechnet."
 }

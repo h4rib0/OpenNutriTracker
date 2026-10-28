@@ -31,13 +31,17 @@ class MealDBOAdapter extends TypeAdapter<MealDBO> {
       nutriments: fields[11] as MealNutrimentsDBO,
       source: fields[10] as MealSourceDBO,
       localImagePath: fields[13] as String?,
+      detailed: fields[14] as bool?,
+      backendSource: fields[15] as String?,
+      machineTranslatedName: fields[16] as bool?,
+      dataVersion: (fields[17] as num?)?.toInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MealDBO obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.code)
       ..writeByte(1)
@@ -65,7 +69,15 @@ class MealDBOAdapter extends TypeAdapter<MealDBO> {
       ..writeByte(12)
       ..write(obj.servingSize)
       ..writeByte(13)
-      ..write(obj.localImagePath);
+      ..write(obj.localImagePath)
+      ..writeByte(14)
+      ..write(obj.detailed)
+      ..writeByte(15)
+      ..write(obj.backendSource)
+      ..writeByte(16)
+      ..write(obj.machineTranslatedName)
+      ..writeByte(17)
+      ..write(obj.dataVersion);
   }
 
   @override
@@ -96,6 +108,8 @@ class MealSourceDBOAdapter extends TypeAdapter<MealSourceDBO> {
         return MealSourceDBO.fdc;
       case 4:
         return MealSourceDBO.recipe;
+      case 5:
+        return MealSourceDBO.sfcd;
       default:
         return MealSourceDBO.unknown;
     }
@@ -151,6 +165,10 @@ MealDBO _$MealDBOFromJson(Map<String, dynamic> json) => MealDBO(
   ),
   source: $enumDecode(_$MealSourceDBOEnumMap, json['source']),
   localImagePath: json['localImagePath'] as String?,
+  detailed: json['detailed'] as bool?,
+  backendSource: json['backendSource'] as String?,
+  machineTranslatedName: json['machineTranslatedName'] as bool?,
+  dataVersion: (json['dataVersion'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$MealDBOToJson(MealDBO instance) => <String, dynamic>{
@@ -168,6 +186,10 @@ Map<String, dynamic> _$MealDBOToJson(MealDBO instance) => <String, dynamic>{
   'source': _$MealSourceDBOEnumMap[instance.source]!,
   'nutriments': instance.nutriments,
   'localImagePath': instance.localImagePath,
+  'detailed': instance.detailed,
+  'backendSource': instance.backendSource,
+  'machineTranslatedName': instance.machineTranslatedName,
+  'dataVersion': instance.dataVersion,
 };
 
 const _$MealSourceDBOEnumMap = {

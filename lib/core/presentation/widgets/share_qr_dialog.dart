@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -12,12 +13,22 @@ class ShareQrDialog extends StatefulWidget {
   final String title;
   final String code;
   final String fileBaseName;
+  final SharePlus? sharePlus;
+  final Future<List<int>> Function(String data)? qrImageRenderer;
+
+  /// Optional "Copy to profile" action shown beneath the share buttons.
+  /// Only the meal-share flow supplies it (and only when more than one
+  /// profile exists); the dialog dismisses itself before invoking it.
+  final VoidCallback? onCopyToProfile;
 
   const ShareQrDialog({
     super.key,
     required this.title,
     required this.code,
     required this.fileBaseName,
+    this.sharePlus,
+    this.qrImageRenderer,
+    this.onCopyToProfile,
   });
 
   @override
@@ -29,6 +40,10 @@ class _ShareQrDialogState extends State<ShareQrDialog> {
   static const int _quietZoneModules = 3;
 
   final GlobalKey _shareButtonKey = GlobalKey();
+
+  static final ButtonStyle _pillStyle = OutlinedButton.styleFrom(
+    shape: const StadiumBorder(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +64,15 @@ class _ShareQrDialogState extends State<ShareQrDialog> {
                 padding: const EdgeInsets.all(16.0),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Dimens.spacing12),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: Dimens.spacing8,
+              runSpacing: Dimens.spacing8,
               alignment: WrapAlignment.center,
               children: [
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.copy, size: 18),
+                  style: _pillStyle,
+                  icon: const Icon(Icons.copy_rounded, size: 18),
                   label: Text(S.of(context).copyCodeLabel),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: widget.code));
@@ -67,12 +83,28 @@ class _ShareQrDialogState extends State<ShareQrDialog> {
                 ),
                 OutlinedButton.icon(
                   key: _shareButtonKey,
-                  icon: const Icon(Icons.share, size: 18),
+                  style: _pillStyle,
+                  icon: const Icon(Icons.share_rounded, size: 18),
                   label: Text(S.of(context).shareCodeLabel),
                   onPressed: _share,
                 ),
               ],
             ),
+            if (widget.onCopyToProfile != null) ...[
+              const SizedBox(height: Dimens.spacing8),
+              Semantics(
+                identifier: 'share-copy-to-profile',
+                child: OutlinedButton.icon(
+                  style: _pillStyle,
+                  icon: const Icon(Icons.people_alt_rounded, size: 18),
+                  label: Text(S.of(context).copyToProfileLabel),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    widget.onCopyToProfile!();
+                  },
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -88,17 +120,23 @@ class _ShareQrDialogState extends State<ShareQrDialog> {
   Future<void> _share() async {
     final origin = _shareButtonOrigin();
     try {
-      final qrBytes = await _renderQrToImage(widget.code);
+      final qrBytes = await (widget.qrImageRenderer ?? _renderQrToImage)(
+        widget.code,
+      );
       final tempDir = await getTemporaryDirectory();
       final file = File('${tempDir.path}/${widget.fileBaseName}.png');
       await file.writeAsBytes(qrBytes);
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: widget.code,
-        sharePositionOrigin: origin,
+      await (widget.sharePlus ?? SharePlus.instance).share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: widget.code,
+          sharePositionOrigin: origin,
+        ),
       );
     } catch (_) {
-      await Share.share(widget.code, sharePositionOrigin: origin);
+      await (widget.sharePlus ?? SharePlus.instance).share(
+        ShareParams(text: widget.code, sharePositionOrigin: origin),
+      );
     }
   }
 
@@ -122,9 +160,13 @@ class _ShareQrDialogState extends State<ShareQrDialog> {
     final painter = QrPainter.withQr(
       qr: qrCode,
       eyeStyle: const QrEyeStyle(
-          color: Color(0xFF000000), eyeShape: QrEyeShape.square),
+        color: Color(0xFF000000),
+        eyeShape: QrEyeShape.square,
+      ),
       dataModuleStyle: const QrDataModuleStyle(
-          color: Color(0xFF000000), dataModuleShape: QrDataModuleShape.square),
+        color: Color(0xFF000000),
+        dataModuleShape: QrDataModuleShape.square,
+      ),
     );
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);

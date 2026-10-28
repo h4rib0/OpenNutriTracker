@@ -13,10 +13,12 @@ import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dar
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_tracked_day_usecase.dart';
-import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
+import 'package:opennutritracker/core/domain/usecase/toggle_favourite_meal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
+import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/features/add_meal/data/repository/products_repository.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/features/meal_detail/util/meal_quantity_converter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 part 'meal_detail_event.dart';
@@ -33,6 +35,10 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
   final ProductsRepository _productsRepository;
   final RemoteSearchCacheDataSource _remoteSearchCacheDataSource;
 
+  /// Takes the background refresh's fresh record onto a favourite of the
+  /// food (#1307). Left out where a test does not log a starred food.
+  final ToggleFavouriteMealUsecase? _favourites;
+
   MealDetailBloc(
     this._addIntakeUseCase,
     this._addTrackedDayUsecase,
@@ -40,8 +46,10 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
     this._getMacroGoalUsecase,
     this._getTrackedDayUsecase,
     this._productsRepository,
-    this._remoteSearchCacheDataSource,
-  ) : super(
+    this._remoteSearchCacheDataSource, {
+    ToggleFavouriteMealUsecase? favourites,
+  }) : _favourites = favourites,
+       super(
           MealDetailInitial(
             totalQuantityConverted: '100',
             selectedUnit: UnitDropdownItem.gml.toString(),
@@ -66,18 +74,12 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
           selectedTotalQuantity.replaceAll(',', '.'),
         );
 
-        // Convert quantity based on selected unit
-        double convertedQuantity = quantity;
-        if (selectedUnit == UnitDropdownItem.serving.toString()) {
-          // For serving size, multiply by the product's serving quantity
-          if (event.meal.servingQuantity != null) {
-            convertedQuantity = quantity * event.meal.servingQuantity!;
-          }
-        } else if (selectedUnit == UnitDropdownItem.oz.toString()) {
-          convertedQuantity = UnitCalc.ozToG(quantity);
-        } else if (selectedUnit == UnitDropdownItem.flOz.toString()) {
-          convertedQuantity = UnitCalc.flOzToMl(quantity);
-        }
+        // Shared with the bulk-add screen so the two paths cannot drift.
+        final convertedQuantity = convertQuantityToBaseUnit(
+          quantity,
+          selectedUnit,
+          event.meal,
+        );
 
         emit(
           state.copyWith(
@@ -119,9 +121,46 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
         Sentry.captureException(e);
       }
     });
+
+    on<HydrateMealEvent>((event, emit) async {
+      final meal = event.meal;
+      final code = meal.code;
+      if (meal.source != MealSourceEntity.off ||
+          meal.detailed ||
+          code == null ||
+          code.isEmpty) {
+        return;
+      }
+
+      emit(state.copyWith(isHydrating: true));
+      try {
+        // A full cache entry (from an earlier scan/hydration) lets us skip the
+        // network entirely and works offline; otherwise fetch and cache it.
+        final cached = _remoteSearchCacheDataSource.getDetailedByBarcode(code);
+        final full = cached != null
+            ? MealEntity.fromMealDBO(cached)
+            : await _productsRepository.getOFFProductByBarcode(code);
+        if (cached == null) {
+          await _remoteSearchCacheDataSource.cache(
+            MealDBO.fromMealEntity(full),
+          );
+        }
+        emit(state.copyWith(hydratedMeal: full, isHydrating: false));
+      } catch (e, st) {
+        // Soft failure: keep the thin result so the user can still log
+        // macros-only. The Add button is never blocked on hydration.
+        log.warning('OFF hydration failed for $code', e, st);
+        emit(state.copyWith(isHydrating: false));
+      }
+    });
   }
 
-  void addIntake(
+  /// Returns a future so callers writing more than one intake can await
+  /// each in turn. The tracked-day totals are accumulated with a
+  /// read-modify-write (`TrackedDayDataSource.addDayCaloriesTracked`), so
+  /// overlapping calls interleave their reads and silently lose updates —
+  /// a batch logged concurrently under-counts the day.
+  Future<void> addIntake(
     BuildContext context,
     String unit,
     String amountText,
@@ -145,8 +184,12 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
     // (up to 60 s timeout) before seeing their item logged. Stale meal
     // data in the intake is fine; nutrition values rarely change, and
     // the cache update means the next search shows the freshest data.
-    await _addIntakeUseCase.addIntake(intakeEntity);
-    _updateTrackedDay(intakeEntity, day);
+    // The entry and its row together, so no reconciliation counts the
+    // entry before the row has it (#1317).
+    await withTrackedDayLockOnProfile(() async {
+      await _addIntakeUseCase.addIntake(intakeEntity);
+      await _updateTrackedDay(intakeEntity, day);
+    });
     unawaited(_refreshCacheForSelectedMeal(meal));
   }
 
@@ -163,10 +206,10 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
       await _remoteSearchCacheDataSource.touch(code);
       return;
     }
+    final MealEntity fresh;
     try {
-      final fresh = await _productsRepository.getOFFProductByBarcode(code);
-      await _remoteSearchCacheDataSource
-          .cache(MealDBO.fromMealEntity(fresh));
+      fresh = await _productsRepository.getOFFProductByBarcode(code);
+      await _remoteSearchCacheDataSource.cache(MealDBO.fromMealEntity(fresh));
     } catch (e, st) {
       log.warning(
         'Background OFF refresh failed for $code; touching cache instead',
@@ -174,6 +217,15 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
         st,
       );
       await _remoteSearchCacheDataSource.touch(code);
+      return;
+    }
+    // A favourite on the food would otherwise keep logging and exporting
+    // the figures it was starred with, when the app has just fetched newer
+    // ones — as the scanner's live lookup does.
+    try {
+      await _favourites?.refreshDetailedSnapshot(fresh);
+    } catch (e, st) {
+      log.warning('Could not refresh a favourite on $code', e, st);
     }
   }
 
@@ -194,7 +246,7 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
         totalKcalGoal,
       );
 
-      await _addTrackedDayUsecase.addNewTrackedDay(
+      await _addTrackedDayUsecase.addNewTrackedDayIfAbsent(
         day,
         totalKcalGoal,
         totalCarbsGoal,
@@ -203,8 +255,11 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
       );
     }
 
-    _addTrackedDayUsecase.addDayCaloriesTracked(day, intakeEntity.totalKcal);
-    _addTrackedDayUsecase.addDayMacrosTracked(
+    await _addTrackedDayUsecase.addDayCaloriesTracked(
+      day,
+      intakeEntity.totalKcal,
+    );
+    await _addTrackedDayUsecase.addDayMacrosTracked(
       day,
       carbsTracked: intakeEntity.totalCarbsGram,
       fatTracked: intakeEntity.totalFatsGram,

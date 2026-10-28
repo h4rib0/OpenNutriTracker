@@ -6,11 +6,15 @@ import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/presentation/widgets/image_full_screen.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/utils/energy_display.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/demo/unsplash_attribution.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/features/add_meal/presentation/widgets/favourite_toggle_button.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/edit_meal_screen.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/daily_kcal_overview.dart';
@@ -48,98 +52,236 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   final quantityTextController = TextEditingController();
   late bool _usesImperialUnits;
   bool _showMicronutrients = false;
+  // #1126: preloaded from `ConfigEntity.defaultToRawFoodUnits`. False keeps
+  // the pre-existing "serving wins whenever one exists" default; true
+  // steers `_applyInitialSelection` to grams/oz (or ml/fl oz) instead.
+  bool _defaultToRawFoodUnits = false;
 
   String _initialUnit = "";
   String _initialQuantity = "";
 
+  // Set on the first didChangeDependencies pass, which is the only one that
+  // reads the route arguments and requests hydration (see there).
+  bool _argumentsRead = false;
+  bool _userChangedSelection = false;
+
+  /// True while `_applyInitialSelection` is running. The bottom sheet's
+  /// text-change listener echoes every write to `quantityTextController`
+  /// back through [onQuantityOrUnitChanged], including the ones this
+  /// method makes itself, and its `widget.selectedUnit` is the last
+  /// rendered value — not the unit we're currently switching to. Without
+  /// this guard the echo would (a) dispatch a stale-unit UpdateKcalEvent
+  /// on top of the explicit one below, (b) flip [_userChangedSelection]
+  /// to true although nobody touched anything, and (c) call
+  /// `_scrollToCalorieText` on open — enough scroll to collapse the app
+  /// bar and push the product image out of view.
+  bool _applyingInitialSelection = false;
+
+  // Scroll distance from expandedHeight down to the collapsed SliverAppBar
+  // (toolbar + bottom bar): 268-124 with the DailyKcalOverview bottom bar,
+  // 200-56 without it — always 144 either way, so no need to key it off
+  // dayKcalGoal.
+  static const double _collapseScrollThreshold = 144.0;
+  bool _showAppBarTitle = false;
+
   @override
   void initState() {
     _mealDetailBloc = locator<MealDetailBloc>();
-    _loadMicronutrientSetting();
+    _loadDetailPreferences();
+    _scrollController.addListener(_handleScroll);
     super.initState();
   }
 
-  Future<void> _loadMicronutrientSetting() async {
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    quantityTextController.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    final show = _scrollController.offset >= _collapseScrollThreshold - 4;
+    if (show != _showAppBarTitle) {
+      setState(() => _showAppBarTitle = show);
+    }
+  }
+
+  Future<void> _loadDetailPreferences() async {
     final config = await locator<GetConfigUsecase>().getConfig();
-    if (mounted) {
-      setState(() => _showMicronutrients = config.showMicronutrients);
+    if (!mounted) return;
+    final wasSelectionInitialised = _initialUnit != "";
+    setState(() {
+      _showMicronutrients = config.showMicronutrients;
+      _defaultToRawFoodUnits = config.defaultToRawFoodUnits;
+    });
+    // #1126: the config read is async, so `_applyInitialSelection` may have
+    // already run with the fallback default of "prefer serving". Re-pick
+    // if the user hasn't touched selection yet, so opting into raw units
+    // still switches the very first render's dropdown to grams/oz.
+    if (wasSelectionInitialised &&
+        _defaultToRawFoodUnits &&
+        !_userChangedSelection) {
+      _initialUnit = "";
+      _initialQuantity = "";
+      _applyInitialSelection();
     }
   }
 
   @override
   void didChangeDependencies() {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as MealDetailScreenArguments;
-    meal = args.mealEntity;
-    _day = args.day;
-    intakeTypeEntity = args.intakeTypeEntity;
-    _usesImperialUnits = args.usesImperialUnits;
+    // `ModalRoute.of` re-runs this whenever a route is pushed over or popped
+    // off this screen — the unit dropdown's own menu included — so the
+    // arguments are read once. Re-reading `meal` on every pass handed the
+    // thin search hit back to the sheet the moment the dropdown opened,
+    // after hydration had already swapped in the full record: the serving
+    // entry the user then tapped was no longer in the rebuilt list and the
+    // button went blank (#1216).
+    if (!_argumentsRead) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments
+              as MealDetailScreenArguments;
+      meal = args.mealEntity;
+      _day = args.day;
+      intakeTypeEntity = args.intakeTypeEntity;
+      _usesImperialUnits = args.usesImperialUnits;
+      _argumentsRead = true;
+
+      // Thin OFF search results get hydrated to the full product record
+      // (serving fields + micronutrients) once, in the background; the
+      // listener in build() swaps the displayed meal in when it arrives.
+      _mealDetailBloc.add(HydrateMealEvent(meal));
+    }
 
     _mealDetailBloc.add(LoadDailyTotalsEvent(_day));
 
-    // Set initial unit
-    if (_initialUnit == "") {
-      if (meal.hasServingValues) {
-        _initialUnit = UnitDropdownItem.serving.toString();
-      } else if (meal.isLiquid) {
-        _initialUnit = _usesImperialUnits
-            ? UnitDropdownItem.flOz.toString()
-            : UnitDropdownItem.ml.toString();
-      } else if (meal.isSolid) {
-        _initialUnit = _usesImperialUnits
-            ? UnitDropdownItem.oz.toString()
-            : UnitDropdownItem.g.toString();
-      } else {
-        _initialUnit = UnitDropdownItem.gml.toString();
-      }
-      _mealDetailBloc.add(
-        UpdateKcalEvent(meal: meal, selectedUnit: _initialUnit),
-      );
-    }
-
-    // Set initial quantity
-    if (_initialQuantity == "") {
-      if (meal.hasServingValues) {
-        _initialQuantity = "1";
-        quantityTextController.text = "1";
-      } else if (_usesImperialUnits) {
-        _initialQuantity = _initialQuantityImperial;
-        quantityTextController.text = _initialQuantityImperial;
-      } else {
-        _initialQuantity = _initialQuantityMetric;
-        quantityTextController.text = _initialQuantityMetric;
-      }
-      _mealDetailBloc.add(
-        UpdateKcalEvent(meal: meal, totalQuantity: quantityTextController.text),
-      );
-    }
+    _applyInitialSelection();
 
     super.didChangeDependencies();
   }
 
+  /// Pick the default unit and quantity from the meal's shape. Serving-based
+  /// meals default to 1 serving; otherwise to 100 g/ml (or 1 oz/fl oz in
+  /// imperial). Guarded so it only runs while the user hasn't chosen yet, and
+  /// re-run after hydration reveals serving values.
+  void _applyInitialSelection() {
+    // #1126: when the user has opted into raw units in Settings, the
+    // scalable-serving branch is skipped so grams/oz (or ml/fl oz)
+    // becomes the very first render's default. `hasScalableServing`
+    // stays the classifier — a record with no parseable serving still
+    // falls through to weight/volume the same way it always did.
+    final preferServing =
+        meal.scalableServingQuantity != null && !_defaultToRawFoodUnits;
+
+    _applyingInitialSelection = true;
+    try {
+      if (_initialUnit == "") {
+        // `scalableServingQuantity`, not `hasServingValues` (#629): the latter
+        // is true for a record whose serving is unparseable text, and nothing
+        // can scale those — they defaulted to "1 serving" and logged 1 g.
+        if (preferServing) {
+          _initialUnit = UnitDropdownItem.serving.toString();
+        } else if (meal.isLiquid) {
+          _initialUnit = _usesImperialUnits
+              ? UnitDropdownItem.flOz.toString()
+              : UnitDropdownItem.ml.toString();
+        } else if (meal.isSolid) {
+          _initialUnit = _usesImperialUnits
+              ? UnitDropdownItem.oz.toString()
+              : UnitDropdownItem.g.toString();
+        } else {
+          _initialUnit = UnitDropdownItem.gml.toString();
+        }
+        _mealDetailBloc.add(
+          UpdateKcalEvent(meal: meal, selectedUnit: _initialUnit),
+        );
+      }
+
+      if (_initialQuantity == "") {
+        // Gated the same way as the unit above, so a bare "1" can never end
+        // up beside a weight unit.
+        if (preferServing) {
+          _initialQuantity = "1";
+          quantityTextController.text = "1";
+        } else if (_usesImperialUnits) {
+          _initialQuantity = _initialQuantityImperial;
+          quantityTextController.text = _initialQuantityImperial;
+        } else {
+          _initialQuantity = _initialQuantityMetric;
+          quantityTextController.text = _initialQuantityMetric;
+        }
+        // The unit rides along, not just the quantity: on the re-pick after
+        // hydration the bottom sheet is already listening to the controller,
+        // and the write above echoes back through onQuantityOrUnitChanged
+        // with the unit the sheet last rendered (#1216). That echo is also
+        // what `_applyingInitialSelection` makes `onQuantityOrUnitChanged`
+        // ignore, so neither the stale unit nor the phantom
+        // `_userChangedSelection` flip nor the scroll reaches the screen.
+        _mealDetailBloc.add(
+          UpdateKcalEvent(
+            meal: meal,
+            totalQuantity: quantityTextController.text,
+            selectedUnit: _initialUnit,
+          ),
+        );
+      }
+    } finally {
+      _applyingInitialSelection = false;
+    }
+  }
+
+  /// Apply the hydrated full product to the screen. If the user hasn't touched
+  /// the quantity/unit yet, re-pick the defaults (so serving becomes the
+  /// default now that serving data exists); otherwise just recompute totals
+  /// against the fuller nutriments while keeping the user's selection.
+  void _onMealHydrated(MealEntity full) {
+    setState(() => meal = full);
+    if (_userChangedSelection) {
+      _mealDetailBloc.add(
+        UpdateKcalEvent(
+          meal: meal,
+          totalQuantity: quantityTextController.text,
+          selectedUnit: _mealDetailBloc.state.selectedUnit,
+        ),
+      );
+    } else {
+      _initialUnit = "";
+      _initialQuantity = "";
+      _applyInitialSelection();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: BlocBuilder<MealDetailBloc, MealDetailState>(
-          bloc: _mealDetailBloc,
-          builder: (context, state) {
-            if (state is MealDetailInitial) {
-              return _getLoadedContent(
-                context,
-                state.totalQuantityConverted,
-                state.totalKcal,
-                state.totalCarbs,
-                state.totalFat,
-                state.totalProtein,
-                state.selectedUnit,
-                state.dayKcalConsumed,
-                state.dayKcalGoal,
-              );
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ),
+    return BlocListener<MealDetailBloc, MealDetailState>(
+      bloc: _mealDetailBloc,
+      listenWhen: (prev, curr) =>
+          curr.hydratedMeal != null && curr.hydratedMeal != prev.hydratedMeal,
+      listener: (context, state) => _onMealHydrated(state.hydratedMeal!),
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor:
+              (Theme.of(context).brightness == Brightness.dark ? AppPalette.dark : AppPalette.light).canvas,
+          body: BlocBuilder<MealDetailBloc, MealDetailState>(
+            bloc: _mealDetailBloc,
+            builder: (context, state) {
+              if (state is MealDetailInitial) {
+                return _getLoadedContent(
+                  context,
+                  state.totalQuantityConverted,
+                  state.totalKcal,
+                  state.totalCarbs,
+                  state.totalFat,
+                  state.totalProtein,
+                  state.selectedUnit,
+                  state.dayKcalConsumed,
+                  state.dayKcalGoal,
+                  state.isHydrating,
+                );
+              }
+              return const Center(child: CircularProgressIndicator());
+            },
+          ),
         bottomSheet: BlocSelector<MealDetailBloc, MealDetailState, String>(
           bloc: _mealDetailBloc,
           selector: (state) => state.selectedUnit,
@@ -149,11 +291,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               day: _day,
               intakeTypeEntity: intakeTypeEntity,
               selectedUnit: selectedUnit,
+              usesImperialUnits: _usesImperialUnits,
               mealDetailBloc: _mealDetailBloc,
               quantityTextController: quantityTextController,
               onQuantityOrUnitChanged: onQuantityOrUnitChanged,
             );
           },
+          ),
         ),
       ),
     );
@@ -169,13 +313,35 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     String selectedUnit,
     double dayKcalConsumed,
     double dayKcalGoal,
+    bool isHydrating,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
         SliverAppBar(
           pinned: true,
+          backgroundColor: palette.surface,
+          surfaceTintColor: Colors.transparent,
           expandedHeight: dayKcalGoal > 0 ? 268 : 200,
+          // The real toolbar title slot, not FlexibleSpaceBar.title: that
+          // widget bottom-anchors itself within the whole flexible-space
+          // stack (which includes the `bottom` bar's height), so with the
+          // DailyKcalOverview bottom bar present it renders underneath that
+          // bar instead of in the visible toolbar row.
+          title: AnimatedOpacity(
+            opacity: _showAppBarTitle ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              meal.name ?? '',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(dayKcalGoal > 0 ? 68 : 0),
             child: DailyKcalOverview(
@@ -184,51 +350,38 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               currentSelectionKcal: totalKcal,
             ),
           ),
-          flexibleSpace: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final top = constraints.biggest.height;
-              final barsHeight =
-                  MediaQuery.of(context).padding.top + kToolbarHeight;
-              const offset = 10;
-              return FlexibleSpaceBar(
-                expandedTitleScale: 1, // don't scale title
-                background: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: dayKcalGoal > 0 ? 68 : 0,
-                  ),
-                  child: MealTitleExpanded(
-                    meal: meal,
-                    usesImperialUnits: _usesImperialUnits,
-                  ),
-                ),
-                title: AnimatedOpacity(
-                  opacity: 1.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: top > barsHeight - offset && top < barsHeight + offset
-                      ? Text(
-                          meal.name ?? '',
-                          style: Theme.of(context).textTheme.titleLarge,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : const SizedBox(),
-                ),
-              );
-            },
+          flexibleSpace: FlexibleSpaceBar(
+            background: Padding(
+              padding: EdgeInsets.only(
+                bottom: dayKcalGoal > 0 ? 68 : 0,
+              ),
+              child: MealTitleExpanded(
+                meal: meal,
+                usesImperialUnits: _usesImperialUnits,
+              ),
+            ),
           ),
           actions: [
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed(
-                  NavigationOptions.editMealRoute,
-                  arguments: EditMealScreenArguments(
-                    _day,
-                    meal,
-                    intakeTypeEntity,
-                    _usesImperialUnits,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.edit_outlined),
+            FavouriteToggleButton(
+              meal: meal,
+              semanticsIdentifier: 'meal-detail-favourite',
+            ),
+            Semantics(
+              identifier: 'meal-detail-edit',
+              child: IconButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(
+                    NavigationOptions.editMealRoute,
+                    arguments: EditMealScreenArguments(
+                      _day,
+                      meal,
+                      intakeTypeEntity,
+                      _usesImperialUnits,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.edit_rounded),
+              ),
             ),
           ],
         ),
@@ -263,6 +416,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ),
               ),
             ),
+            UnsplashCreditLine(imageUrl: meal.mainImageUrl),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -271,7 +425,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     children: [
                       Text(
                         EnergyDisplay.formatWithUnit(context, totalKcal),
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       MealValueUnitText(
                         value: double.parse(totalQuantity),
@@ -286,26 +443,35 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8.0),
+                  const SizedBox(height: Dimens.spacing16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       MealDetailMacroNutrients(
                         typeString: S.of(context).carbsLabel,
                         value: totalCarbs,
+                        color: palette.carbs,
                       ),
                       MealDetailMacroNutrients(
                         typeString: S.of(context).fatLabel,
                         value: totalFat,
+                        color: palette.fat,
                       ),
                       MealDetailMacroNutrients(
                         typeString: S.of(context).proteinLabel,
                         value: totalProtein,
+                        color: palette.protein,
                       ),
                     ],
                   ),
-                  const Divider(),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: Dimens.spacing24),
+                  Divider(color: palette.border, height: Dimens.hairline),
+                  const SizedBox(height: Dimens.spacing24),
+                  if (isHydrating)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 16.0),
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
                   MealDetailNutrimentsTable(
                     product: meal,
                     usesImperialUnits: _usesImperialUnits,
@@ -314,7 +480,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     showMicronutrients: _showMicronutrients,
                   ),
                   const SizedBox(height: 32.0),
-                  MealInfoButton(url: meal.url, source: meal.source),
+                  MealInfoButton(
+                    url: meal.url,
+                    source: meal.source,
+                    backendSource: meal.backendSource,
+                  ),
                   meal.source == MealSourceEntity.off
                       ? const Column(
                           children: [SizedBox(height: 32), OffDisclaimer()],
@@ -334,6 +504,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     if (quantityString == null || unit == null) {
       return;
     }
+    if (_applyingInitialSelection) {
+      // Echo from `_applyInitialSelection`'s own controller.text write;
+      // that method dispatches an authoritative UpdateKcalEvent itself.
+      // Treating this as a user edit would collapse the app bar on open
+      // via `_scrollToCalorieText` and record a phantom selection.
+      return;
+    }
+    _userChangedSelection = true;
     _mealDetailBloc.add(
       UpdateKcalEvent(
         meal: meal,

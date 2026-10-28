@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/utils/custom_text_input_formatter.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
@@ -11,6 +11,8 @@ import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
@@ -100,8 +102,17 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
         protein: protein,
         title: title,
       );
-      await locator<AddIntakeUsecase>().addIntake(intake);
-      await _updateTrackedDay(intake);
+      // The entry and its row together, so no reconciliation counts the
+      // entry before the row has it (#1317).
+      final saved = await withTrackedDayLockOnProfile(() async {
+        await locator<AddIntakeUsecase>().addIntake(intake);
+        await _updateTrackedDay(intake);
+        return true;
+      });
+      if (saved != true) {
+        if (mounted) setState(() => _saving = false);
+        return;
+      }
 
       locator<HomeBloc>().add(const LoadItemsEvent());
       locator<DiaryBloc>().add(const LoadDiaryYearEvent());
@@ -109,10 +120,18 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
 
       if (!mounted) return;
       final mealTypeLabel = _intakeTypeLabel(context, widget.intakeType);
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      // Resolve the localized message before navigating: the push below
+      // removes every route (including this sheet's), so reading from
+      // context afterwards would be looking up a deactivated widget.
+      final addedMessage = S.of(context).quickAddAddedSnack(mealTypeLabel);
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+        NavigationOptions.mainRoute,
+        (route) => false,
+      );
+      scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text(S.of(context).quickAddAddedSnack(mealTypeLabel)),
+          content: Text(addedMessage),
         ),
       );
     } catch (e, st) {
@@ -169,7 +188,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
     if (!hasTrackedDay) {
       final kcalGoal = await locator<GetKcalGoalUsecase>().getKcalGoal();
       final macroGoal = locator<GetMacroGoalUsecase>();
-      await addTrackedDay.addNewTrackedDay(
+      await addTrackedDay.addNewTrackedDayIfAbsent(
         widget.day,
         kcalGoal,
         await macroGoal.getCarbsGoal(kcalGoal),
@@ -296,11 +315,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
           keyboardType: numeric
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
-          inputFormatters: numeric
-              ? [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                ]
-              : null,
+          inputFormatters: numeric ? CustomTextInputFormatter.doubleOnly() : null,
           decoration: InputDecoration(
             labelText: isRequired ? '$label *' : label,
             border: const OutlineInputBorder(),

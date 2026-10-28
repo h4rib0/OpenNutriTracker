@@ -96,6 +96,23 @@ void main() {
       expect(parsed.meal.nutriments.iron100, isNull);
     });
 
+    // A build before the reader refused `Infinity` could store one; its
+    // export must still be a file the reader takes back.
+    test('a stored non-finite value is exported blank, so the CSV parses '
+        'again', () {
+      final intake = _intake(
+        amount: double.infinity,
+        meal: _meal(nutriments: _nutriments(kcal: double.negativeInfinity)),
+      );
+
+      final csv = CsvDataExporter.intakesToCsv([intake]);
+      final parsed = CsvDataExporter.parseIntakesFromCsv(csv).single;
+
+      expect(csv, isNot(contains('Infinity')));
+      expect(parsed.amount, 0);
+      expect(parsed.meal.nutriments.energyKcal100, isNull);
+    });
+
     test('exported CSV starts with the documented header row', () {
       final csv = CsvDataExporter.intakesToCsv([]);
       final header = csv.split('\n').first;
@@ -161,6 +178,80 @@ void main() {
           CsvDataExporter.parseUserActivitiesFromCsv(csv).single;
 
       expect(parsed.physicalActivityDBO.tags, isEmpty);
+    });
+
+    test('a manually logged activity keeps its empty provenance', () {
+      final activity = UserActivityDBO(
+        'act-3',
+        20,
+        100,
+        DateTime.utc(2026, 5, 13, 7),
+        PhysicalActivityDBO(
+          '02020',
+          'Walking',
+          'Walking, leisure',
+          3.5,
+          const [],
+          PhysicalActivityTypeDBO.sport,
+        ),
+      );
+
+      final csv = CsvDataExporter.userActivitiesToCsv([activity]);
+      final parsed =
+          CsvDataExporter.parseUserActivitiesFromCsv(csv).single;
+
+      expect(parsed.userKcal, isNull);
+      expect(parsed.externalId, isNull);
+      expect(parsed.sourceReportedKcal, isNull);
+    });
+
+    test('an imported workout round-trips its provenance fields', () {
+      // Without these columns the export silently dropped what marks a row
+      // as imported — the dedupe key and the device's own figure.
+      final activity = UserActivityDBO(
+        'act-4',
+        60,
+        350,
+        DateTime.utc(2026, 5, 13, 18),
+        PhysicalActivityDBO(
+          '12150',
+          'Running',
+          'running, general',
+          8.0,
+          const [],
+          PhysicalActivityTypeDBO.running,
+        ),
+        userKcal: 350,
+        externalId: 'health-connect-record-1',
+        sourceReportedKcal: 500,
+      );
+
+      final csv = CsvDataExporter.userActivitiesToCsv([activity]);
+      final parsed =
+          CsvDataExporter.parseUserActivitiesFromCsv(csv).single;
+
+      expect(parsed.userKcal, 350);
+      expect(parsed.externalId, 'health-connect-record-1');
+      expect(parsed.sourceReportedKcal, 500);
+    });
+
+    test('a CSV written before the provenance columns still parses', () {
+      // Backwards compatibility for a backup taken by an older build: the
+      // parser is header-driven, so the absent columns read as null.
+      const csv =
+          'id,date,duration,burned_kcal,activity_code,specific_activity,'
+          'description,mets,tags,type\n'
+          'act-5,2026-05-13T07:00:00.000Z,20,100,02020,Walking,'
+          'Walking leisure,3.5,,sport\n';
+
+      final parsed =
+          CsvDataExporter.parseUserActivitiesFromCsv(csv).single;
+
+      expect(parsed.id, 'act-5');
+      expect(parsed.burnedKcal, 100);
+      expect(parsed.userKcal, isNull);
+      expect(parsed.externalId, isNull);
+      expect(parsed.sourceReportedKcal, isNull);
     });
   });
 

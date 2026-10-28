@@ -31,7 +31,10 @@ class HomeLoadedState extends HomeState {
   final List<IntakeEntity> lunchIntakeList;
   final List<IntakeEntity> dinnerIntakeList;
   final List<IntakeEntity> snackIntakeList;
+  // Food serving units (g/oz). Sourced from the food-units preference.
   final bool usesImperialUnits;
+  // Body weight unit (kg/lb/st) for the home weight chip, independent of food.
+  final BodyWeightUnit bodyWeightUnit;
   final bool showActivityTracking; // #277
   final bool showMealMacros;
   final double userWeightKg;
@@ -46,8 +49,8 @@ class HomeLoadedState extends HomeState {
   final double snackKcalTarget;
   // #150 follow-up: per-meal share percentages. A 0% share signals that the
   // user has explicitly opted out of seeing that meal section (e.g. OMAD has
-  // 0% snack), so the section is hidden entirely rather than showing an empty
-  // header with a 0-kcal target.
+  // 0% snack), so the section is hidden while empty rather than showing an
+  // empty header with a 0-kcal target (one with intakes still shows, #1305).
   final int breakfastSharePct;
   final int lunchSharePct;
   final int dinnerSharePct;
@@ -79,6 +82,7 @@ class HomeLoadedState extends HomeState {
     required this.dinnerIntakeList,
     required this.snackIntakeList,
     required this.usesImperialUnits,
+    required this.bodyWeightUnit,
     required this.userWeightKg,
     required this.breakfastKcalTarget,
     required this.lunchKcalTarget,
@@ -107,6 +111,7 @@ class HomeLoadedState extends HomeState {
     dinnerIntakeList,
     snackIntakeList,
     usesImperialUnits,
+    bodyWeightUnit,
     userWeightKg,
     totalKcalDaily,
     waterMlToday,

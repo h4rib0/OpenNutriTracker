@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/url_const.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -66,6 +68,26 @@ class SourcesScreen extends StatelessWidget {
         ],
       ),
       _SourceEntry(
+        title: l10n.sourcesEnergyCompensationTitle,
+        description: l10n.sourcesEnergyCompensationDescription,
+        sources: const [
+          _SourceLink(
+            citation:
+                'Careau V, et al. (2021). Energy compensation and adiposity '
+                'in humans. Current Biology, 31(20):4659–4666.e2.',
+            url: URLConst.sourceEnergyCompensationCareau2021URL,
+          ),
+          _SourceLink(
+            citation:
+                'Borrud LG, et al. (2010). Body composition data for '
+                'individuals 8 years of age and older: U.S. population, '
+                '1999–2004. National Center for Health Statistics, Vital and '
+                'Health Statistics Series 11, No. 250.',
+            url: URLConst.sourceBodyCompositionBorrud2010URL,
+          ),
+        ],
+      ),
+      _SourceEntry(
         title: l10n.sourcesNonBinaryTitle,
         description: l10n.sourcesNonBinaryDescription,
         sources: const [
@@ -113,13 +135,13 @@ class SourcesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsSourcesLabel)),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: Dimens.spacing16, vertical: Dimens.spacing16),
         children: [
           Text(
             l10n.sourcesScreenIntro,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Dimens.spacing16),
           ...entries.map((entry) => _SourceCard(entry: entry)),
         ],
       ),
@@ -169,29 +191,26 @@ class _SourceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Dimens.spacing12),
+      child: AppCard(
+        padding: const EdgeInsets.all(Dimens.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               entry.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Dimens.spacing8),
             Text(
               entry.description,
               style: theme.textTheme.bodyMedium,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Dimens.spacing12),
             ...entry.sources.map(
               (source) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: Dimens.spacing4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -205,10 +224,10 @@ class _SourceCard extends StatelessWidget {
                       alignment: AlignmentDirectional.centerStart,
                       child: TextButton.icon(
                         onPressed: () => _launch(context, source.url),
-                        icon: const Icon(Icons.open_in_new_outlined, size: 18),
+                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
                         label: Text(S.of(context).sourcesOpenSourceLabel),
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: Dimens.spacing8),
                           minimumSize: const Size(0, 32),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),

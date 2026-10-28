@@ -7,6 +7,7 @@ import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dar
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/recipes/presentation/bloc/recipes_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/export_import_bloc.dart';
+import 'package:opennutritracker/features/settings/presentation/widgets/export_import_error_text.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -98,7 +99,9 @@ class _ImportCustomFoodDataDialogState
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 8),
-                        Text(S.of(context).exportImportSuccessLabel),
+                        Expanded(
+                          child: Text(S.of(context).exportImportSuccessLabel),
+                        ),
                       ],
                     );
                   } else if (state is ExportImportError) {
@@ -109,7 +112,14 @@ class _ImportCustomFoodDataDialogState
                           color: Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: 8),
-                        Text(S.of(context).exportImportErrorLabel),
+                        Expanded(
+                          child: Text(
+                            exportImportErrorText(
+                              S.of(context),
+                              state.reason,
+                            ),
+                          ),
+                        ),
                       ],
                     );
                   } else if (state is CsvImportResultState) {

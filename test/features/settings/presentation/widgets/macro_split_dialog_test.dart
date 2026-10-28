@@ -1,0 +1,403 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/domain/entity/user_entity.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:opennutritracker/features/settings/presentation/widgets/macro_split_dialog.dart';
+import 'package:opennutritracker/generated/l10n.dart';
+import '../../../../fixture/user_entity_fixtures.dart';
+import '../../../../helpers/fake_reload_blocs.dart';
+import '../../../../helpers/test_l10n.dart';
+
+class _FakeSettingsBloc extends Fake implements SettingsBloc {
+  final List<String> calls;
+  double? savedCarbs;
+  double? savedProtein;
+  double? savedFat;
+
+  _FakeSettingsBloc([List<String>? calls]) : calls = calls ?? <String>[];
+
+  @override
+  Future<double?> getUserCarbGoalPct() async => 0.6;
+
+  @override
+  Future<double?> getUserProteinGoalPct() async => 0.15;
+
+  @override
+  Future<double?> getUserFatGoalPct() async => 0.25;
+
+  @override
+  Future<void> setMacroGoals(
+    double carbGoalPct,
+    double proteinGoalPct,
+    double fatGoalPct,
+  ) async {
+    savedCarbs = carbGoalPct;
+    savedProtein = proteinGoalPct;
+    savedFat = fatGoalPct;
+  }
+
+  @override
+  Future<DateTime> getCurrentLogicalDay() async => DateTime(2026, 10, 10);
+
+  @override
+  Future<void> updateTrackedDay(DateTime day) async {
+    // A real write yields; make sure the reload cannot overtake it.
+    await Future<void>.delayed(Duration.zero);
+    calls.add('updateTrackedDay');
+  }
+
+  // Fork: body-weight macro mode off, so the % split is under test.
+  @override
+  Future<bool> getUseBodyWeightMacros() async => false;
+
+  @override
+  Future<void> setUseBodyWeightMacros(bool value) async {}
+
+  @override
+  void add(SettingsEvent event) {}
+}
+
+// Fork: Polar not configured, so the dialog stays in the % split mode.
+class _FakePolar extends Fake implements PolarInfluxdbDataSource {
+  @override
+  Future<bool> isPolarConfigured() async => false;
+  @override
+  Future<double> getProteinGPerKg() async => 2.2;
+  @override
+  Future<double> getFatGPerKg() async => 0.8;
+}
+
+class _FakeProfileBloc extends Fake implements ProfileBloc {
+  @override
+  Future<UserEntity> getUser() async =>
+      UserEntityFixtures.youngSedentaryMaleWantingToMaintainWeight;
+}
+
+class _FakeHomeBloc extends Fake implements HomeBloc {
+  @override
+  void add(HomeEvent event) {}
+}
+
+Widget _wrap(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: const [S.delegate],
+    supportedLocales: S.supportedLocales,
+    home: Scaffold(body: child),
+  );
+}
+
+void main() {
+  // _save reloads the Diary and Trends singletons from the locator.
+  late ReloadRecorder recorder;
+
+  setUp(() {
+    recorder = ReloadRecorder()..register();
+  });
+
+  tearDown(() async => locator.reset());
+
+  testWidgets(
+    'saving reloads the Diary, the open day and Trends after today\'s '
+    'tracked day has its new macro goals (#1359)',
+    (tester) async {
+      final settingsBloc = _FakeSettingsBloc(recorder.log);
+      final homeBloc = _FakeHomeBloc();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => MacroSplitDialog(
+                    settingsBloc: settingsBloc,
+                    homeBloc: homeBloc,
+                    polarDataSource: _FakePolar(),
+                    profileBloc: _FakeProfileBloc(),
+                  ),
+                ),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(l10nEn.dialogOKLabel));
+      await tester.pumpAndSettle();
+
+      expect(recorder.diaryReloaded, isTrue);
+      expect(recorder.calendarDayReloaded, isTrue);
+      expect(recorder.trendsReloaded, isTrue);
+      expect(recorder.log.first, 'updateTrackedDay');
+    },
+  );
+
+  testWidgets('saves typed macro values even without submitting the field', (
+    tester,
+  ) async {
+    final settingsBloc = _FakeSettingsBloc();
+    final homeBloc = _FakeHomeBloc();
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => MacroSplitDialog(
+                  settingsBloc: settingsBloc,
+                  homeBloc: homeBloc,
+                  polarDataSource: _FakePolar(),
+                  profileBloc: _FakeProfileBloc(),
+                ),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, '50');
+
+    await tester.tap(find.text(l10nEn.dialogOKLabel));
+    await tester.pumpAndSettle();
+
+    // 50 / residual 50 split 15:25 → 18.75 / 31.25. Largest-remainder
+    // floors to 50/18/31 then awards the leftover point to protein → 50/19/31.
+    expect(settingsBloc.savedCarbs, 50);
+    expect(settingsBloc.savedProtein, 19);
+    expect(settingsBloc.savedFat, 31);
+    expect(
+      (settingsBloc.savedCarbs ?? 0) +
+          (settingsBloc.savedProtein ?? 0) +
+          (settingsBloc.savedFat ?? 0),
+      100,
+    );
+  });
+
+  testWidgets('ignores invalid typed macro values on save', (tester) async {
+    final settingsBloc = _FakeSettingsBloc();
+    final homeBloc = _FakeHomeBloc();
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => MacroSplitDialog(
+                  settingsBloc: settingsBloc,
+                  homeBloc: homeBloc,
+                  polarDataSource: _FakePolar(),
+                  profileBloc: _FakeProfileBloc(),
+                ),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, '95');
+
+    await tester.tap(find.text(l10nEn.dialogOKLabel));
+    await tester.pumpAndSettle();
+
+    expect(settingsBloc.savedCarbs, 60);
+    expect(settingsBloc.savedProtein, 15);
+    expect(settingsBloc.savedFat, 25);
+  });
+
+  testWidgets(
+    'saves typed value from a non-first field and rebalances the rest',
+    (tester) async {
+      final settingsBloc = _FakeSettingsBloc();
+      final homeBloc = _FakeHomeBloc();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => MacroSplitDialog(
+                    settingsBloc: settingsBloc,
+                    homeBloc: homeBloc,
+                    polarDataSource: _FakePolar(),
+                    profileBloc: _FakeProfileBloc(),
+                  ),
+                ),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      // Second field is protein; typing here exercises the otherA/otherB wiring
+      // that differs per macro, guarding against a copy-paste mistake.
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(1), '25');
+
+      await tester.tap(find.text(l10nEn.dialogOKLabel));
+      await tester.pumpAndSettle();
+
+      // protein 25 / residual 75 split 60:25 → ~52.941 / ~22.059. Floors
+      // 52/25/22, leftover goes to carbs → 53/25/22.
+      expect(settingsBloc.savedProtein, 25);
+      expect(settingsBloc.savedCarbs, 53);
+      expect(settingsBloc.savedFat, 22);
+      expect(
+        (settingsBloc.savedCarbs ?? 0) +
+            (settingsBloc.savedProtein ?? 0) +
+            (settingsBloc.savedFat ?? 0),
+        100,
+      );
+    },
+  );
+
+  testWidgets(
+    'applies a typed value when its field loses focus, without a submit',
+    (tester) async {
+      // #1324: the iOS number pad has no return key, so onSubmitted never
+      // fires there. Leaving the field has to rebalance the other two.
+      final settingsBloc = _FakeSettingsBloc();
+      final homeBloc = _FakeHomeBloc();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => MacroSplitDialog(
+                    settingsBloc: settingsBloc,
+                    homeBloc: homeBloc,
+                    polarDataSource: _FakePolar(),
+                    profileBloc: _FakeProfileBloc(),
+                  ),
+                ),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextField);
+      await tester.tap(fields.at(1));
+      await tester.enterText(fields.at(1), '25');
+      await tester.pump();
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+
+      String textOf(int i) =>
+          tester.widget<TextField>(fields.at(i)).controller!.text;
+      // protein 25 / residual 75 split 60:25 → ~52.9 / ~22.1.
+      expect(textOf(0), '53');
+      expect(textOf(1), '25');
+      expect(textOf(2), '22');
+      expect(find.text('100% total'), findsOneWidget);
+    },
+  );
+
+  testWidgets('a value applied on focus loss is not applied again on save', (
+    tester,
+  ) async {
+    // Once applied, the typed value must stop being pending. Otherwise a
+    // slider move afterwards is followed by a second, stale application on
+    // save, and the saved split drifts from the one on screen.
+    final settingsBloc = _FakeSettingsBloc();
+    final homeBloc = _FakeHomeBloc();
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => MacroSplitDialog(
+                  settingsBloc: settingsBloc,
+                  homeBloc: homeBloc,
+                  polarDataSource: _FakePolar(),
+                  profileBloc: _FakeProfileBloc(),
+                ),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.tap(fields.at(1));
+    await tester.enterText(fields.at(1), '5');
+    await tester.pump();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+
+    final carbsSlider = tester.widget<Slider>(find.byType(Slider).first);
+    carbsSlider.onChanged!(44);
+    carbsSlider.onChangeEnd!(44);
+    await tester.pump();
+
+    await tester.tap(find.text(l10nEn.dialogOKLabel));
+    await tester.pumpAndSettle();
+
+    // protein 5 → 67.06 / 5 / 27.94; carbs to 44 → 44 / 8.5 / 47.5.
+    // Re-applying the synced protein text "9" would save 44/9/47.
+    expect(settingsBloc.savedCarbs, 44);
+    expect(settingsBloc.savedProtein, 8);
+    expect(settingsBloc.savedFat, 48);
+  });
+
+  test('roundMacroPercentsToHundred always sums to 100', () {
+    // Typical redistribute leftovers.
+    expect(roundMacroPercentsToHundred(50, 18.75, 31.25), (50, 19, 31));
+    expect(roundMacroPercentsToHundred(52.941, 25, 22.059), (53, 25, 22));
+
+    // Independent .round() on 55/22.5/22.5 is 55+23+23=101 (Dart half-away-
+    // from-zero); largest-remainder must still land on 100.
+    final halfUp = roundMacroPercentsToHundred(55, 22.5, 22.5);
+    expect(halfUp.$1 + halfUp.$2 + halfUp.$3, 100);
+    expect(halfUp, (55, 23, 22));
+
+    // Already-integers and the defaults.
+    expect(roundMacroPercentsToHundred(60, 15, 25), (60, 15, 25));
+    expect(roundMacroPercentsToHundred(0, 0, 0), (60, 15, 25));
+  });
+}

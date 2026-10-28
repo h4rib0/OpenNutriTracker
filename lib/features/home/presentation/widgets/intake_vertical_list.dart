@@ -1,15 +1,21 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/repository/recipe_repository.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/get_profiles_usecase.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_dialog.dart';
+import 'package:opennutritracker/core/presentation/widgets/copy_to_profile_sheet.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_all_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/intake_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/placeholder_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/share_qr_dialog.dart';
+import 'package:opennutritracker/core/styles/app_palette.dart';
+import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/energy_display.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/core/utils/vertical_list_popup_menu_selections.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_screen.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
@@ -19,6 +25,8 @@ import 'package:opennutritracker/features/diary/presentation/widgets/diary_sort_
 import 'package:opennutritracker/features/home/domain/entity/shared_meal_payload.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/screens/import_meal_scanner_screen.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/shared_meal_import_dialogs.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/shared_meal_importer.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -31,7 +39,7 @@ class IntakeVerticalList extends StatefulWidget {
   final bool usesImperialUnits;
   final bool showMealMacros;
   final Function(IntakeEntity intake, TrackedDayEntity? trackedDayEntity)
-      onDeleteIntakeCallback;
+  onDeleteIntakeCallback;
   final Function(BuildContext, IntakeEntity)? onItemLongPressedCallback;
   final Function(bool)? onItemDragCallback;
   final Function(BuildContext, IntakeEntity, bool)? onItemTappedCallback;
@@ -74,6 +82,16 @@ class IntakeVerticalList extends StatefulWidget {
     this.sortType,
     this.onSortTypeChanged,
   });
+
+  /// Whether a meal section is rendered on Home and in the Diary. A 0 % share
+  /// hides an empty section the user opted out of (OMAD, two-meal), but one
+  /// that already holds intakes always shows: otherwise those entries count
+  /// toward the day's totals with no way to see, edit or delete them (#1305).
+  static bool isShown({
+    required int sharePct,
+    required List<IntakeEntity> intakes,
+  }) =>
+      sharePct > 0 || intakes.isNotEmpty;
 
   @override
   State<IntakeVerticalList> createState() => _IntakeVerticalListState();
@@ -137,39 +155,76 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
+    final accent = Theme.of(context).colorScheme.primary;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(
+            Dimens.spacing16,
+            Dimens.spacing20,
+            Dimens.spacing12,
+            Dimens.spacing8,
+          ),
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
-              Icon(widget.listIcon,
-                  size: 24, color: Theme.of(context).colorScheme.onSurface),
-              const SizedBox(width: 4.0),
-              Text(
-                widget.title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+              Container(
+                padding: const EdgeInsets.all(Dimens.spacing8),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: Dimens.borderRadiusS,
+                ),
+                child: Icon(widget.listIcon, size: 20, color: accent),
               ),
-              const Spacer(),
+              const SizedBox(width: Dimens.spacing12),
+              Expanded(
+                child: AutoSizeText(
+                  widget.title,
+                  maxLines: 1,
+                  minFontSize: 14,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleLarge?.copyWith(
+                    color: palette.textStrong,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: Dimens.spacing8),
               if (_shouldShowHeaderSummary)
-                Text(
-                  _buildHeaderSummary(context),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7)),
-                  textAlign: TextAlign.center,
+                Flexible(
+                  child: Text(
+                    _buildHeaderSummary(context),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelMedium?.copyWith(
+                      color: palette.textMuted,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.end,
+                  ),
                 ),
               if (widget.onSortTypeChanged != null && totalKcal > 0)
                 _buildSortMenu(context),
-              PopupMenuButton<VerticalListPopupMenuSelections>(
+              Semantics(
+                  identifier: 'intake-section-menu',
+                  // Tight bounds: without this the node inherits the flex
+                  // Row's full-width box and coordinate taps miss the button.
+                  container: true,
+                  child: PopupMenuButton<VerticalListPopupMenuSelections>(
+                    icon: Icon(Icons.more_vert_rounded, color: palette.textMuted),
+                    shape: Dimens.shapeM,
                     onSelected:
                         (VerticalListPopupMenuSelections selection) async {
+                      // The section as it was when the menu was used: the
+                      // Diary can move on to another day while a dialog is
+                      // open (#1360), rebuilding this list for that day.
+                      final intakes = widget.intakeList;
+                      final onDeleteIntake = widget.onDeleteIntakeCallback;
+                      final trackedDay = widget.trackedDayEntity;
                       switch (selection) {
                         case VerticalListPopupMenuSelections.onCopy:
                           final copyDialog =
@@ -179,7 +234,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                                   context: context,
                                   builder: (context) => copyDialog);
                           if (selectedMealType != null) {
-                            for (IntakeEntity intake in widget.intakeList) {
+                            for (IntakeEntity intake in intakes) {
                               widget.onCopyIntakeCallback!(
                                   intake, null, selectedMealType);
                             }
@@ -190,9 +245,8 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                               context: context,
                               builder: (context) => const DeleteAllDialog());
                           if (shouldDeleteIntakes != null) {
-                            for (IntakeEntity intake in widget.intakeList) {
-                              widget.onDeleteIntakeCallback(
-                                  intake, widget.trackedDayEntity);
+                            for (IntakeEntity intake in intakes) {
+                              onDeleteIntake(intake, trackedDay);
                             }
                             break;
                           }
@@ -202,12 +256,23 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                               widget.intakeList,
                               recipeRepository: locator<RecipeRepository>(),
                             ).toJsonString();
+                            final hasOtherProfiles =
+                                locator<GetProfilesUsecase>()
+                                        .getProfiles()
+                                        .length >
+                                    1;
                             await showDialog(
                               context: context,
                               builder: (_) => ShareQrDialog(
                                 title: S.of(context).shareMealLabel,
                                 code: code,
                                 fileBaseName: 'meal_qr',
+                                onCopyToProfile: hasOtherProfiles
+                                    ? () => showCopyToProfileSheet(
+                                          context,
+                                          widget.intakeList,
+                                        )
+                                    : null,
                               ),
                             );
                           }
@@ -221,6 +286,28 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                                 widget.day,
                               ),
                             );
+                          }
+                        case VerticalListPopupMenuSelections.onImportCode:
+                          final payload = await showDialog<SharedMealPayload>(
+                            context: context,
+                            builder: (_) => const SharedMealCodeDialog(),
+                          );
+                          if (payload != null && context.mounted) {
+                            final imported = await SharedMealImporter(
+                              context,
+                              widget.addMealType.getIntakeType(),
+                              widget.addMealType,
+                              widget.day,
+                            ).importPayload(payload);
+                            if (imported && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    S.of(context).importMealSuccessLabel,
+                                  ),
+                                ),
+                              );
+                            }
                           }
                       }
                     },
@@ -242,7 +329,14 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                           PopupMenuItem<VerticalListPopupMenuSelections>(
                               value: VerticalListPopupMenuSelections.onImport,
                               child: Text(S.of(context).importMealLabel)),
-                        ]),
+                          PopupMenuItem<VerticalListPopupMenuSelections>(
+                            value: VerticalListPopupMenuSelections.onImportCode,
+                            child: Semantics(
+                              identifier: 'intake-import-meal-code',
+                              child: Text(S.of(context).pasteCodeLabel),
+                            ),
+                          ),
+                        ])),
             ],
           ),
         ),
@@ -251,68 +345,64 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
             _onItemDropped(intake.data);
           },
           builder: (context, candidateData, rejectedData) {
-            return SizedBox(
-              height: 120,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: widget.intakeList.length + 1,
-                // index 0 = + button (always visible), 1..n = intake cards
-                itemBuilder: (BuildContext context, int index) {
-                  if (index == 0) {
-                    return PlaceholderCard(
-                      day: widget.day,
-                      onTap: () => _onPlaceholderCardTapped(context),
-                      firstListElement: true,
-                    );
-                  }
-                  final intakeEntity = widget.intakeList[index - 1];
-                  return LongPressDraggable<IntakeEntity>(
-                    onDragStarted: () {
-                      widget.onItemDragCallback?.call(true);
-                    },
-                    onDragEnd: (details) {
-                      widget.onItemDragCallback?.call(false);
-                    },
+            return Column(
+              children: [
+                for (final intakeEntity in widget.intakeList)
+                  LongPressDraggable<IntakeEntity>(
+                    key: ValueKey(intakeEntity.id),
                     data: intakeEntity,
+                    onDragStarted: () => widget.onItemDragCallback?.call(true),
+                    onDragEnd: (_) => widget.onItemDragCallback?.call(false),
                     feedback: Material(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      child: Opacity(
-                        opacity: 0.7,
-                        child: IntakeCard(
-                          key: ValueKey(intakeEntity.meal.code),
-                          intake: intakeEntity,
-                          firstListElement: false,
-                          usesImperialUnits: widget.usesImperialUnits,
-                        ),
-                      ),
-                    ),
-                    childWhenDragging: Row(
-                      children: [
-                        SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16.0),
-                            ),
-                            color: Theme.of(context).cardColor,
+                      color: Colors.transparent,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        child: Opacity(
+                          opacity: 0.85,
+                          child: IntakeCard(
+                            key: ValueKey('fb-${intakeEntity.id}'),
+                            intake: intakeEntity,
+                            firstListElement: false,
+                            usesImperialUnits: widget.usesImperialUnits,
+                            sortType: widget.sortType,
                           ),
                         ),
-                      ],
+                      ),
+                    ),
+                    childWhenDragging: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Dimens.spacing16,
+                        vertical: Dimens.spacing4,
+                      ),
+                      child: Container(
+                        height: 76,
+                        decoration: BoxDecoration(
+                          color: palette.surfaceMuted,
+                          borderRadius: Dimens.borderRadiusM,
+                          border: Border.all(
+                            color: palette.border,
+                            width: Dimens.hairline,
+                          ),
+                        ),
+                      ),
                     ),
                     child: IntakeCard(
-                      key: ValueKey(intakeEntity.meal.code),
+                      key: ValueKey(intakeEntity.id),
                       intake: intakeEntity,
                       onItemLongPressed: widget.onItemLongPressedCallback,
                       onItemTapped: widget.onItemTappedCallback,
                       firstListElement: false,
                       usesImperialUnits: widget.usesImperialUnits,
+                      sortType: widget.sortType,
                     ),
-                  );
-                },
-              ),
+                  ),
+                PlaceholderCard(
+                  day: widget.day,
+                  onTap: () => _onPlaceholderCardTapped(context),
+                  firstListElement: true,
+                  semanticIdentifier: 'add-meal-placeholder',
+                ),
+              ],
             );
           },
         ),
@@ -322,11 +412,14 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
   Widget _buildSortMenu(BuildContext context) {
     final current = widget.sortType ?? DiarySortType.timeAdded;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark ? AppPalette.dark : AppPalette.light;
     return Semantics(
       identifier: 'diary-section-sort-menu',
       child: PopupMenuButton<DiarySortType>(
         tooltip: S.of(context).diarySortByLabel,
-        icon: const Icon(Icons.sort),
+        icon: Icon(Icons.sort_rounded, color: palette.textMuted),
+        shape: Dimens.shapeM,
         initialValue: current,
         onSelected: (sort) => widget.onSortTypeChanged?.call(sort),
         itemBuilder: (context) => <PopupMenuEntry<DiarySortType>>[
@@ -365,10 +458,18 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
         arguments: AddMealScreenArguments(widget.addMealType, widget.day));
   }
 
-  void _onItemDropped(IntakeEntity entity) {
-    _mealDetailBloc.addIntake(context, entity.unit, entity.amount.toString(),
-        widget.addMealType.getIntakeType(), entity.meal, entity.dateTime);
-    _homeBloc.deleteIntakeItem(entity);
+  Future<void> _onItemDropped(IntakeEntity entity) async {
+    // One move under one tracked-day lock (#1317): taken apart, a profile
+    // switch queued during the add could run before the delete, which
+    // would then debit the incoming profile and leave the outgoing one
+    // with the entry in both meals. The refreshes below wait for both,
+    // so Home does not reload with the entry in both meals either.
+    await withTrackedDayLockOnProfile(() async {
+      await _mealDetailBloc.addIntake(context, entity.unit,
+          entity.amount.toString(), widget.addMealType.getIntakeType(),
+          entity.meal, entity.dateTime);
+      await _homeBloc.deleteIntakeItem(entity);
+    });
 
     // Refresh Home Page
     locator<HomeBloc>().add(const LoadItemsEvent());

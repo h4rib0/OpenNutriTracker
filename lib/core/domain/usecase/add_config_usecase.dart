@@ -1,5 +1,6 @@
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
+import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 
 class AddConfigUsecase {
@@ -8,11 +9,11 @@ class AddConfigUsecase {
   AddConfigUsecase(this._configRepository);
 
   Future<void> addConfig(ConfigEntity configEntity) async {
-    _configRepository.updateConfig(configEntity);
+    await _configRepository.updateConfig(configEntity);
   }
 
   Future<void> setConfigDisclaimer(bool hasAcceptedDisclaimer) async {
-    _configRepository.setConfigDisclaimer(hasAcceptedDisclaimer);
+    await _configRepository.setConfigDisclaimer(hasAcceptedDisclaimer);
   }
 
   Future<void> setConfigHasAcceptedAnonymousData(
@@ -23,12 +24,32 @@ class AddConfigUsecase {
     );
   }
 
+  Future<void> setConfigHasAcceptedPolicy(bool hasAcceptedPolicy) async {
+    await _configRepository.setConfigHasAcceptedPolicy(hasAcceptedPolicy);
+  }
+
+  Future<void> setConfigPolicyNoticeRevisionSeen(int revision) async {
+    await _configRepository.setConfigPolicyNoticeRevisionSeen(revision);
+  }
+
   Future<void> setConfigAppTheme(AppThemeEntity appTheme) async {
     await _configRepository.setConfigAppTheme(appTheme);
   }
 
   Future<void> setConfigUsesImperialUnits(bool usesImperialUnits) async {
     await _configRepository.setConfigUsesImperialUnits(usesImperialUnits);
+  }
+
+  Future<void> setConfigUsesImperialFoodUnits(bool usesImperial) async {
+    await _configRepository.setConfigUsesImperialFoodUnits(usesImperial);
+  }
+
+  Future<void> setConfigUsesImperialHeightUnits(bool usesImperial) async {
+    await _configRepository.setConfigUsesImperialHeightUnits(usesImperial);
+  }
+
+  Future<void> setConfigBodyWeightUnit(BodyWeightUnit unit) async {
+    await _configRepository.setConfigBodyWeightUnit(unit);
   }
 
   Future<void> setConfigKcalAdjustment(double kcalAdjustment) async {
@@ -48,31 +69,27 @@ class AddConfigUsecase {
   }
 
   Future<void> setConfigShowActivityTracking(bool show) async {
-    _configRepository.setConfigShowActivityTracking(show);
+    await _configRepository.setConfigShowActivityTracking(show);
   }
 
   Future<void> setConfigShowMealMacros(bool show) async {
-    _configRepository.setConfigShowMealMacros(show);
-  }
-
-  Future<void> setNotificationsEnabled(bool enabled) async {
-    _configRepository.setNotificationsEnabled(enabled);
-  }
-
-  Future<void> setNotificationTime(int hour, int minute) async {
-    _configRepository.setNotificationTime(hour, minute);
+    await _configRepository.setConfigShowMealMacros(show);
   }
 
   Future<void> setSelectedLocale(String? locale) async {
-    _configRepository.setSelectedLocale(locale);
+    await _configRepository.setSelectedLocale(locale);
   }
 
   Future<void> setConfigShowMicronutrients(bool show) async {
-    _configRepository.setConfigShowMicronutrients(show);
+    await _configRepository.setConfigShowMicronutrients(show);
   }
 
   Future<void> setConfigUsesKilojoules(bool usesKilojoules) async {
     await _configRepository.setConfigUsesKilojoules(usesKilojoules);
+  }
+
+  Future<void> setConfigDefaultToRawFoodUnits(bool value) async {
+    await _configRepository.setConfigDefaultToRawFoodUnits(value);
   }
 
   Future<void> setConfigMealKcalSharesPct(Map<String, int> shares) async {
@@ -89,14 +106,6 @@ class AddConfigUsecase {
     await _configRepository.setConfigNutrientPanelVisibility(visibility);
   }
 
-  Future<void> setConfigDayStartOffsetHours(int hours) async {
-    await _configRepository.setConfigDayStartOffsetHours(hours);
-  }
-
-  Future<void> setConfigDayStartOffsetMinutes(int minutes) async {
-    _configRepository.setConfigDayStartOffsetMinutes(minutes);
-  }
-
   Future<void> setConfigDailyWaterGoalMl(int goalMl) async {
     await _configRepository.setConfigDailyWaterGoalMl(goalMl);
   }
@@ -109,7 +118,27 @@ class AddConfigUsecase {
     await _configRepository.setConfigAccentColor(value);
   }
 
+  Future<void> setConfigFoodSourceToggles(Map<String, bool> toggles) async {
+    await _configRepository.setConfigFoodSourceToggles(toggles);
+  }
+
+  Future<void> setConfigIsDemoData(bool isDemoData) async {
+    await _configRepository.setIsDemoData(isDemoData);
+  }
+
+  Future<void> setConfigHealthImportEnabled(bool enabled) async {
+    await _configRepository.setConfigHealthImportEnabled(enabled);
+  }
+
+  Future<void> setConfigHealthWorkoutKcalMultiplier(double multiplier) async {
+    await _configRepository.setConfigHealthWorkoutKcalMultiplier(multiplier);
+  }
+
   Future<void> setConfigSyncNutrientsToSupabase(bool sync) async {
     _configRepository.setConfigSyncNutrientsToSupabase(sync);
+  }
+
+  Future<void> setConfigUseBodyWeightMacros(bool value) async {
+    await _configRepository.setConfigUseBodyWeightMacros(value);
   }
 }

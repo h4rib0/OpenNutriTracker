@@ -17,7 +17,11 @@ class ProfileLoadingState extends ProfileState {
 class ProfileLoadedState extends ProfileState {
   final UserBMIEntity userBMI;
   final UserEntity userEntity;
-  final bool usesImperialUnits;
+
+  // Granular unit preferences. Height (cm/ft) and body weight (kg/lb/st) are
+  // chosen independently of the food unit preference.
+  final BodyWeightUnit bodyWeightUnit;
+  final bool usesImperialHeightUnits;
   final bool isPolarActive;
   final double? influxWeightKg;
   // #32: resolved daily water goal in millilitres, with the user's
@@ -29,7 +33,8 @@ class ProfileLoadedState extends ProfileState {
   const ProfileLoadedState({
     required this.userBMI,
     required this.userEntity,
-    required this.usesImperialUnits,
+    required this.bodyWeightUnit,
+    required this.usesImperialHeightUnits,
     required this.effectiveWaterGoalMl,
     this.isPolarActive = false,
     this.influxWeightKg,
@@ -39,7 +44,8 @@ class ProfileLoadedState extends ProfileState {
   List<Object?> get props => [
         userBMI,
         userEntity,
-        usesImperialUnits,
+        bodyWeightUnit,
+        usesImperialHeightUnits,
         isPolarActive,
         influxWeightKg,
         effectiveWaterGoalMl,

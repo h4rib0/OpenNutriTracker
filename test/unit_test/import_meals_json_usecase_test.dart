@@ -21,6 +21,7 @@ import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart
 import 'package:opennutritracker/features/settings/domain/usecase/import_meals_json_usecase.dart';
 
 import '../helpers/hive_test_setup.dart';
+import '../helpers/fake_hive_db_provider.dart';
 
 /// Tracks the intakes the use case wrote without actually touching Hive
 /// for the intake/tracked-day side. The custom-meal side runs against a
@@ -54,10 +55,10 @@ class _NoopAddTrackedDayUsecase extends AddTrackedDayUsecase {
 }
 
 class _StubGetKcalGoalUsecase extends GetKcalGoalUsecase {
-  _StubGetKcalGoalUsecase(UserRepository userRepo, ConfigRepository configRepo, UserActivityRepository activityRepo) : super(userRepo, configRepo, activityRepo, PolarInfluxdbDataSource());
+  _StubGetKcalGoalUsecase(super.userRepo, super.configRepo, super.activityRepo);
 
   @override
-  Future<double> getKcalGoal({userEntity, double? totalKcalActivitiesParam, double? kcalUserAdjustment}) async => 2000;
+  Future<double> getKcalGoal({userEntity, double? totalKcalActivitiesParam, double? kcalUserAdjustment, DateTime? day}) async => 2000;
 }
 
 class _StubGetMacroGoalUsecase extends GetMacroGoalUsecase {
@@ -85,19 +86,22 @@ void main() {
     });
 
     setUp(() async {
-      customMealBox = await Hive.openBox<MealDBO>('custom_meal_json_usecase_${DateTime.now().microsecondsSinceEpoch}');
-      customMealDataSource = CustomMealDataSource(customMealBox);
+      customMealBox = await Hive.openBox<MealDBO>(
+        'custom_meal_json_usecase_${DateTime.now().microsecondsSinceEpoch}',
+      );
+      customMealDataSource = CustomMealDataSource(FakeHiveDBProvider(customMealBox: customMealBox));
 
       // The super constructors of the use cases require concrete repository
       // instances. The recording/no-op subclasses below never call into
       // those repositories — they short-circuit the public methods — so
       // we pass repositories backed by uninitialised data sources. None of
       // these are ever read.
-      final dummyIntakeRepo = IntakeRepository(IntakeDataSource(_FakeBox()));
-      final dummyTrackedRepo = TrackedDayRepository(TrackedDayDataSource(_FakeBox()));
-      final dummyUserRepo = UserRepository(UserDataSource(_FakeBox()));
-      final dummyConfigRepo = ConfigRepository(ConfigDataSource(_FakeBox()));
-      final dummyActivityRepo = UserActivityRepository(UserActivityDataSource(_FakeBox()));
+      final dummyIntakeRepo = IntakeRepository(IntakeDataSource(FakeHiveDBProvider()));
+      final dummyTrackedRepo = TrackedDayRepository(TrackedDayDataSource(FakeHiveDBProvider()));
+      final dummyUserRepo = UserRepository(UserDataSource(FakeHiveDBProvider()));
+      final dummyConfigRepo = ConfigRepository(ConfigDataSource(FakeHiveDBProvider()));
+      final dummyActivityRepo =
+          UserActivityRepository(UserActivityDataSource(FakeHiveDBProvider()));
 
       addIntake = _RecordingAddIntakeUsecase(dummyIntakeRepo);
       sut = ImportMealsJsonUsecase(addIntake, _NoopAddTrackedDayUsecase(dummyTrackedRepo), _StubGetKcalGoalUsecase(dummyUserRepo, dummyConfigRepo, dummyActivityRepo), _StubGetMacroGoalUsecase(dummyConfigRepo), customMealDataSource);
@@ -188,17 +192,4 @@ void main() {
       expect(customMealDataSource.getAllCustomMeals(), hasLength(2));
     });
   });
-}
-
-/// Stand-in for a Hive box used only to satisfy the data-source constructors
-/// in tests where the data source itself is never invoked. Any method call
-/// throws so that misuse fails loudly rather than silently swallowing.
-class _FakeBox<T> implements Box<T> {
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    throw UnsupportedError(
-      'Fake Hive box invoked: ${invocation.memberName}. The test should not '
-      'be reaching the underlying data source.',
-    );
-  }
 }

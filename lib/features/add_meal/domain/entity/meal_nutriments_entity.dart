@@ -5,8 +5,7 @@ import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_nutriment_dto.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/off/off_product_nutriments_dto.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_const.dart';
-import 'package:opennutritracker/features/add_meal/data/dto/sfcd/sfcd_food_detail_dto.dart';
+import 'package:opennutritracker/features/add_meal/data/dto/sp/sp_food_dto.dart';
 
 class MealNutrimentsEntity extends Equatable {
   final double? energyKcal100;
@@ -104,34 +103,40 @@ class MealNutrimentsEntity extends Equatable {
         fiber100: null,
       );
 
+  /// Stored values that are NaN or infinite read back as null ("unknown").
+  /// A custom meal saved with a base quantity of 0 was stored that way
+  /// (#1254); read through unchanged, one such row turned every total it
+  /// fed into NaN and threw in the widgets that round those totals.
   factory MealNutrimentsEntity.fromMealNutrimentsDBO(
     MealNutrimentsDBO nutriments,
   ) {
+    double? finite(double? value) =>
+        value != null && value.isFinite ? value : null;
     return MealNutrimentsEntity(
-      energyKcal100: nutriments.energyKcal100,
-      carbohydrates100: nutriments.carbohydrates100,
-      fat100: nutriments.fat100,
-      proteins100: nutriments.proteins100,
-      sugars100: nutriments.sugars100,
-      saturatedFat100: nutriments.saturatedFat100,
-      fiber100: nutriments.fiber100,
-      monounsaturatedFat100: nutriments.monounsaturatedFat100,
-      polyunsaturatedFat100: nutriments.polyunsaturatedFat100,
-      transFat100: nutriments.transFat100,
-      cholesterol100: nutriments.cholesterol100,
-      sodium100: nutriments.sodium100,
-      potassium100: nutriments.potassium100,
-      magnesium100: nutriments.magnesium100,
-      calcium100: nutriments.calcium100,
-      iron100: nutriments.iron100,
-      zinc100: nutriments.zinc100,
-      phosphorus100: nutriments.phosphorus100,
-      vitaminA100: nutriments.vitaminA100,
-      vitaminC100: nutriments.vitaminC100,
-      vitaminD100: nutriments.vitaminD100,
-      vitaminB6100: nutriments.vitaminB6100,
-      vitaminB12100: nutriments.vitaminB12100,
-      niacin100: nutriments.niacin100,
+      energyKcal100: finite(nutriments.energyKcal100),
+      carbohydrates100: finite(nutriments.carbohydrates100),
+      fat100: finite(nutriments.fat100),
+      proteins100: finite(nutriments.proteins100),
+      sugars100: finite(nutriments.sugars100),
+      saturatedFat100: finite(nutriments.saturatedFat100),
+      fiber100: finite(nutriments.fiber100),
+      monounsaturatedFat100: finite(nutriments.monounsaturatedFat100),
+      polyunsaturatedFat100: finite(nutriments.polyunsaturatedFat100),
+      transFat100: finite(nutriments.transFat100),
+      cholesterol100: finite(nutriments.cholesterol100),
+      sodium100: finite(nutriments.sodium100),
+      potassium100: finite(nutriments.potassium100),
+      magnesium100: finite(nutriments.magnesium100),
+      calcium100: finite(nutriments.calcium100),
+      iron100: finite(nutriments.iron100),
+      zinc100: finite(nutriments.zinc100),
+      phosphorus100: finite(nutriments.phosphorus100),
+      vitaminA100: finite(nutriments.vitaminA100),
+      vitaminC100: finite(nutriments.vitaminC100),
+      vitaminD100: finite(nutriments.vitaminD100),
+      vitaminB6100: finite(nutriments.vitaminB6100),
+      vitaminB12100: finite(nutriments.vitaminB12100),
+      niacin100: finite(nutriments.niacin100),
     );
   }
 
@@ -154,31 +159,103 @@ class MealNutrimentsEntity extends Equatable {
       saturatedFat100:
           (offNutriments.saturated_fat_100g as Object?).asDoubleOrNull(),
       fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull(),
-      // #237: Extended lipid profile
+      // #237: Extended lipid profile. These three are grams either way, so
+      // they pass through like the macros above.
       monounsaturatedFat100:
           (offNutriments.monounsaturated_fat_100g as Object?).asDoubleOrNull(),
       polyunsaturatedFat100:
           (offNutriments.polyunsaturated_fat_100g as Object?).asDoubleOrNull(),
       transFat100: (offNutriments.trans_fat_100g as Object?).asDoubleOrNull(),
-      cholesterol100:
-          (offNutriments.cholesterol_100g as Object?).asDoubleOrNull(),
+      cholesterol100: _gToMg(
+        (offNutriments.cholesterol_100g as Object?).asDoubleOrNull(),
+      ),
       // #237: Minerals
-      sodium100: (offNutriments.sodium_100g as Object?).asDoubleOrNull(),
-      potassium100: (offNutriments.potassium_100g as Object?).asDoubleOrNull(),
-      magnesium100: (offNutriments.magnesium_100g as Object?).asDoubleOrNull(),
-      calcium100: (offNutriments.calcium_100g as Object?).asDoubleOrNull(),
-      iron100: (offNutriments.iron_100g as Object?).asDoubleOrNull(),
-      zinc100: (offNutriments.zinc_100g as Object?).asDoubleOrNull(),
-      phosphorus100:
-          (offNutriments.phosphorus_100g as Object?).asDoubleOrNull(),
+      sodium100: _gToMg(
+        (offNutriments.sodium_100g as Object?).asDoubleOrNull(),
+      ),
+      potassium100: _gToMg(
+        (offNutriments.potassium_100g as Object?).asDoubleOrNull(),
+      ),
+      magnesium100: _gToMg(
+        (offNutriments.magnesium_100g as Object?).asDoubleOrNull(),
+      ),
+      calcium100: _gToMg(
+        (offNutriments.calcium_100g as Object?).asDoubleOrNull(),
+      ),
+      iron100: _gToMg((offNutriments.iron_100g as Object?).asDoubleOrNull()),
+      zinc100: _gToMg((offNutriments.zinc_100g as Object?).asDoubleOrNull()),
+      phosphorus100: _gToMg(
+        (offNutriments.phosphorus_100g as Object?).asDoubleOrNull(),
+      ),
       // #237: Vitamins
-      vitaminA100: (offNutriments.vitamin_a_100g as Object?).asDoubleOrNull(),
-      vitaminC100: (offNutriments.vitamin_c_100g as Object?).asDoubleOrNull(),
-      vitaminD100: (offNutriments.vitamin_d_100g as Object?).asDoubleOrNull(),
-      vitaminB6100: (offNutriments.vitamin_b6_100g as Object?).asDoubleOrNull(),
-      vitaminB12100:
-          (offNutriments.vitamin_b12_100g as Object?).asDoubleOrNull(),
-      niacin100: (offNutriments.niacin_100g as Object?).asDoubleOrNull(),
+      vitaminA100: _gToUg(
+        (offNutriments.vitamin_a_100g as Object?).asDoubleOrNull(),
+      ),
+      vitaminC100: _gToMg(
+        (offNutriments.vitamin_c_100g as Object?).asDoubleOrNull(),
+      ),
+      vitaminD100: _gToUg(
+        (offNutriments.vitamin_d_100g as Object?).asDoubleOrNull(),
+      ),
+      vitaminB6100: _gToMg(
+        (offNutriments.vitamin_b6_100g as Object?).asDoubleOrNull(),
+      ),
+      vitaminB12100: _gToUg(
+        (offNutriments.vitamin_b12_100g as Object?).asDoubleOrNull(),
+      ),
+      niacin100: _gToMg(
+        (offNutriments.niacin_100g as Object?).asDoubleOrNull(),
+      ),
+    );
+  }
+
+  /// Open Food Facts normalises every `<nutrient>_100g` field to grams, while
+  /// this entity carries each micronutrient in the unit the app displays it
+  /// in: milligrams for the minerals, micrograms for vitamins A, D and B12.
+  /// The field comments above are the reference for which is which.
+  ///
+  /// Without these two conversions a product's 2.1 mg of iron was stored as
+  /// 0.0021 and its 5 µg of vitamin D as 0.000005, which is why vitamin D
+  /// read `0.00µg` everywhere and why an OFF food contributed essentially
+  /// nothing to the daily micronutrient panel (#716).
+  ///
+  /// The other two sources need no conversion: the Supabase view already
+  /// pivots into the app's units, and FDC publishes these nutrients in mg and
+  /// µg natively.
+  static double? _gToMg(double? grams) => grams == null ? null : grams * 1000;
+
+  static double? _gToUg(double? grams) =>
+      grams == null ? null : grams * 1000000;
+
+  /// Nutrients from the Supabase `food_summary` view. The view already
+  /// pivots the canonical per-100g nutrient rows into flat columns in the
+  /// app's units, so this is a straight field-for-field copy.
+  factory MealNutrimentsEntity.fromSpFoodSummary(SpFoodDTO food) {
+    return MealNutrimentsEntity(
+      energyKcal100: food.energyKcal100,
+      carbohydrates100: food.carbohydrates100,
+      fat100: food.fat100,
+      proteins100: food.proteins100,
+      sugars100: food.sugars100,
+      saturatedFat100: food.saturatedFat100,
+      fiber100: food.fiber100,
+      monounsaturatedFat100: food.monounsaturatedFat100,
+      polyunsaturatedFat100: food.polyunsaturatedFat100,
+      transFat100: food.transFat100,
+      cholesterol100: food.cholesterol100,
+      sodium100: food.sodium100,
+      potassium100: food.potassium100,
+      magnesium100: food.magnesium100,
+      calcium100: food.calcium100,
+      iron100: food.iron100,
+      zinc100: food.zinc100,
+      phosphorus100: food.phosphorus100,
+      vitaminA100: food.vitaminA100,
+      vitaminC100: food.vitaminC100,
+      vitaminD100: food.vitaminD100,
+      vitaminB6100: food.vitaminB6100,
+      vitaminB12100: food.vitaminB12100,
+      niacin100: food.niacin100,
     );
   }
 
@@ -224,44 +301,6 @@ class MealNutrimentsEntity extends Equatable {
       vitaminB6100: fdcAmount(FDCConst.fdcVitaminB6Id),
       vitaminB12100: fdcAmount(FDCConst.fdcVitaminB12Id),
       niacin100: fdcAmount(FDCConst.fdcNiacinId),
-    );
-  }
-
-  factory MealNutrimentsEntity.fromSfcdNutrients(
-    List<SfcdNutrientDto> nutrients,
-  ) {
-    double? val(String code) {
-      for (final n in nutrients) {
-        if (n.componentCode == code) return n.value;
-      }
-      return null;
-    }
-
-    return MealNutrimentsEntity(
-      energyKcal100: val(SfcdConst.codeEnergyKcal),
-      proteins100: val(SfcdConst.codeProtein),
-      fat100: val(SfcdConst.codeFat),
-      carbohydrates100: val(SfcdConst.codeCarbs),
-      sugars100: val(SfcdConst.codeSugar),
-      saturatedFat100: val(SfcdConst.codeSaturatedFat),
-      monounsaturatedFat100: val(SfcdConst.codeMonounsaturatedFat),
-      polyunsaturatedFat100: val(SfcdConst.codePolyunsaturatedFat),
-      transFat100: val(SfcdConst.codeTransFat),
-      cholesterol100: val(SfcdConst.codeCholesterol),
-      fiber100: val(SfcdConst.codeFiber),
-      sodium100: val(SfcdConst.codeSodium),
-      potassium100: val(SfcdConst.codePotassium),
-      magnesium100: val(SfcdConst.codeMagnesium),
-      calcium100: val(SfcdConst.codeCalcium),
-      iron100: val(SfcdConst.codeIron),
-      zinc100: val(SfcdConst.codeZinc),
-      phosphorus100: val(SfcdConst.codePhosphorus),
-      vitaminA100: val(SfcdConst.codeVitaminA),
-      vitaminC100: val(SfcdConst.codeVitaminC),
-      vitaminD100: val(SfcdConst.codeVitaminD),
-      vitaminB6100: val(SfcdConst.codeVitaminB6),
-      vitaminB12100: val(SfcdConst.codeVitaminB12),
-      niacin100: val(SfcdConst.codeNiacin),
     );
   }
 
@@ -353,4 +392,42 @@ NutrimentsValidationResult validateNutriments(MealNutrimentsEntity nutriments) {
   }
 
   return const NutrimentsValidationResult.ok();
+}
+
+/// Maximum relative gap between declared and Atwater-computed energy before a
+/// product is treated as data-incoherent for ranking. Deliberately generous:
+/// across a sample of ~700 Open Food Facts products the legitimate noise floor
+/// (energy/macro rounding, food-specific Atwater factors, the EU/US fibre-in-
+/// carbs convention) reaches ~10-15%, while genuine data errors are gross
+/// (77% to >20000%). 25% sits in the empty gap between the two, so it demotes
+/// real errors without penalising correctly-entered data.
+const double atwaterEnergyTolerance = 0.25;
+
+/// Relative difference between the declared energy and the energy implied by
+/// the macros via the general Atwater factors (carbs 4, protein 4, fat 9
+/// kcal/g). Fibre is not added separately for the same reason the macro-sum
+/// check omits it — it is already inside the carbohydrate total here.
+///
+/// Returns null when there is nothing to judge (no declared kcal, or none of
+/// the three macros present); callers should treat null as "no opinion" rather
+/// than as inconsistent, so products with sparse data are ranked on the other
+/// signals instead of being penalised.
+double? atwaterEnergyRelativeError(MealNutrimentsEntity nutriments) {
+  final energy = nutriments.energyKcal100;
+  if (energy == null || energy <= 0) return null;
+  final carbs = nutriments.carbohydrates100;
+  final fat = nutriments.fat100;
+  final protein = nutriments.proteins100;
+  if (carbs == null && fat == null && protein == null) return null;
+
+  final computed = 4 * (carbs ?? 0) + 4 * (protein ?? 0) + 9 * (fat ?? 0);
+  return (energy - computed).abs() / energy;
+}
+
+/// True when a product's declared energy is coherent with its macros (within
+/// [atwaterEnergyTolerance]) or cannot be judged. False only for products that
+/// are computable AND diverge beyond the tolerance — the gross-error outliers.
+bool isAtwaterConsistent(MealNutrimentsEntity nutriments) {
+  final error = atwaterEnergyRelativeError(nutriments);
+  return error == null || error <= atwaterEnergyTolerance;
 }
