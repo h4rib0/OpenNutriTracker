@@ -31,7 +31,19 @@ Authentication → Providers → Anonymous Sign-In enabled:
 | `user_custom_meals.sql` | `user_custom_meals` | Custom meals / foods |
 | `user_recipes.sql` | `user_recipes` | Recipes |
 | `../nutrient-overrides/README.md` | `user_nutrient_overrides` | Manually enriched nutrient values |
+| `user_recovery_codes.sql` | `user_recovery_codes` + RPCs | Recovery code (run after the three above) |
 
 On every start the app restores missing custom meals and recipes from these
 tables. Rows belong to the install's anonymous Supabase user, so a fresh
 install (new anonymous user) does not see the old rows on its own.
+
+### Recovery code
+
+Every install registers a random recovery code (Settings → Polar & Sync →
+*Wiederherstellungscode*; it is also written to the JSON export as
+`supabase_recovery.json`). On a new install, enter the old code there — or
+import the old JSON export, which claims it automatically. The
+`claim_recovery_code` RPC moves the old anonymous user's custom meals,
+recipes and nutrient overrides to the new one (on a key clash the newer row
+wins) and hands the code over, so the same code keeps working for the next
+reinstall. Only a SHA-256 hash of the code is stored server-side.

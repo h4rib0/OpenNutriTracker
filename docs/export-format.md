@@ -31,6 +31,7 @@ next to its CSV counterpart will not find one.
 | `goal_settings.json`             | The profile's goal settings. See [below](#goal_settingsjson). |
 | `user_favourites.json`           | The starred foods and meals, each with a meal snapshot. See [below](#user_favouritesjson). |
 | `user_custom_meals.json`         | Fork only: the saved custom meals / foods. See [below](#user_custom_mealsjson). |
+| `supabase_recovery.json`         | Fork only: `{"code": "XXXX-…"}`, the Supabase recovery code. Claimed on import; see `docs/supabase-sync/README.md`. |
 | `tracked_day_boundary.json`      | The day boundary the tracked days are keyed by. See [below](#tracked_day_boundaryjson--tracked_day_boundarycsv). |
 
 **CSV bundle**

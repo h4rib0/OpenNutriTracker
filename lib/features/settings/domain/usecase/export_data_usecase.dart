@@ -18,6 +18,7 @@ import 'package:opennutritracker/core/data/repository/recipe_repository.dart';
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/weight_log_repository.dart';
+import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
 import 'package:opennutritracker/core/utils/csv_data_exporter.dart';
 import 'package:opennutritracker/core/utils/export_write_verifier.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
@@ -37,6 +38,10 @@ class ExportDataUsecase {
   /// tests override, stays as it is.
   static const customMealJsonFileName = 'user_custom_meals.json';
 
+  /// Fork: the Supabase recovery code, `{"code": "XXXX-…"}`. Importing the
+  /// bundle on a new install claims it, so the Supabase backup follows.
+  static const recoveryCodeJsonFileName = 'supabase_recovery.json';
+
   final UserActivityRepository _userActivityRepository;
   final IntakeRepository _intakeRepository;
   final TrackedDayRepository _trackedDayRepository;
@@ -47,6 +52,9 @@ class ExportDataUsecase {
   final ConfigRepository _configRepository;
   final FavouriteMealRepository _favouriteMealRepository;
 
+  /// Fork: null in upstream's tests, which then export no recovery code.
+  final SupabaseBackupUsecase? _supabaseBackupUsecase;
+
   ExportDataUsecase(
     this._userActivityRepository,
     this._intakeRepository,
@@ -56,8 +64,9 @@ class ExportDataUsecase {
     this._weightLogRepository,
     this._customActivityTemplateRepository,
     this._configRepository,
-    this._favouriteMealRepository,
-  );
+    this._favouriteMealRepository, [
+    this._supabaseBackupUsecase,
+  ]);
 
   /// Exports user activity, intake, tracked day, recipe, weight-log, Custom
   /// activity template and favourites data, plus the profile's goal
@@ -164,6 +173,18 @@ class ExportDataUsecase {
   }) async {
     final archive = Archive();
     final imagePaths = <String>[];
+
+    // Fork: the recovery code, read before the lock since registering a
+    // missing one goes to the network. An export never fails over it.
+    if (format == ExportFormat.json) {
+      final code = await _recoveryCodeOrNull();
+      if (code != null) {
+        final bytes = utf8.encode(jsonEncode({'code': code}));
+        archive.addFile(
+          ArchiveFile(recoveryCodeJsonFileName, bytes.length, bytes),
+        );
+      }
+    }
 
     // Serialize the data and its boundary together before a boundary move
     // or profile switch can change either half of the backup.
@@ -347,6 +368,19 @@ class ExportDataUsecase {
       await _addUserImage(archive, path);
     }
     return archive;
+  }
+
+  Future<String?> _recoveryCodeOrNull() async {
+    final backup = _supabaseBackupUsecase;
+    if (backup == null) return null;
+    try {
+      return await backup.getRecoveryCode().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => backup.getRegisteredRecoveryCode(),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   /// The relative slug of every user-attached photo that belongs in a JSON

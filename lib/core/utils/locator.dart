@@ -3,6 +3,8 @@ import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_activity_template_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/supabase_recovery_data_source.dart';
+import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/favourite_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/health/health_service.dart';
@@ -559,6 +561,7 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      locator<SupabaseBackupUsecase>(),
     ),
   );
   locator.registerLazySingleton(
@@ -572,6 +575,7 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       customMealDataSource: locator<CustomMealDataSource>(),
+      supabaseBackupUsecase: locator<SupabaseBackupUsecase>(),
       restoreTrackedDays:
           (
             write, {
@@ -707,6 +711,19 @@ Future<void> initLocator() async {
   );
   locator.registerLazySingleton<NutrientOverrideDataSource>(
     () => NutrientOverrideDataSource(locator<SupabaseClient>()),
+  );
+  locator.registerLazySingleton<SupabaseRecoveryDataSource>(
+    () => SupabaseRecoveryDataSource(locator<SupabaseClient>()),
+  );
+  locator.registerLazySingleton<SupabaseBackupUsecase>(
+    () => SupabaseBackupUsecase(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+    ),
   );
   locator.registerLazySingleton<FastingDataSource>(
     () => FastingDataSource(hiveDBProvider),

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/data_source/custom_activity_template_dbo.dart';
 import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_activity_dbo.dart';
@@ -20,6 +21,7 @@ import 'package:opennutritracker/core/data/repository/recipe_repository.dart';
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/weight_log_repository.dart';
+import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
 import 'package:opennutritracker/core/utils/csv_data_exporter.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/off_micronutrient_repair.dart';
@@ -49,6 +51,8 @@ typedef RestoreTrackedDays =
     });
 
 class ImportDataUsecase {
+  static final _log = Logger('ImportDataUsecase');
+
   final UserActivityRepository _userActivityRepository;
   final IntakeRepository _intakeRepository;
   final TrackedDayRepository _trackedDayRepository;
@@ -70,6 +74,9 @@ class ImportDataUsecase {
   /// which then skip that entry.
   final CustomMealDataSource? _customMealDataSource;
 
+  /// Fork: claims the bundle's recovery code. Null in upstream's tests.
+  final SupabaseBackupUsecase? _supabaseBackupUsecase;
+
   ImportDataUsecase(
     this._userActivityRepository,
     this._intakeRepository,
@@ -82,9 +89,11 @@ class ImportDataUsecase {
     PickImportFile pickFile = _pickAnyFile,
     RestoreTrackedDays? restoreTrackedDays,
     CustomMealDataSource? customMealDataSource,
+    SupabaseBackupUsecase? supabaseBackupUsecase,
   }) : _pickFile = pickFile,
        _restoreTrackedDays = restoreTrackedDays,
-       _customMealDataSource = customMealDataSource;
+       _customMealDataSource = customMealDataSource,
+       _supabaseBackupUsecase = supabaseBackupUsecase;
 
   /// Imports user activity, intake, tracked day, and (optionally) recipe,
   /// weight log, Custom activity template, goal settings and favourites
@@ -194,6 +203,12 @@ class ImportDataUsecase {
       TrackedDayBoundaryRecord.fromJson,
     );
 
+    // Fork: the Supabase recovery code. Unreadable is ignored rather than
+    // rejecting the zip — it is a convenience, not part of the data.
+    final recoveryCode = _decodeRecoveryCode(
+      archive.findFile(ExportDataUsecase.recoveryCodeJsonFileName),
+    );
+
     final imported = await withTrackedDayLockOnProfile(() async {
       await _writeEntriesAndRows(
         userActivityDBOs,
@@ -256,7 +271,39 @@ class ImportDataUsecase {
 
       return true;
     }, startedOn: startedOn);
+    if (imported == true && recoveryCode != null) {
+      await _claimRecoveryCode(recoveryCode);
+    }
     return imported ?? false;
+  }
+
+  static String? _decodeRecoveryCode(ArchiveFile? entry) {
+    if (entry == null) return null;
+    try {
+      final json = jsonDecode(utf8.decode(entry.content as List<int>));
+      final code = json is Map ? json['code'] : null;
+      return code is String && code.isNotEmpty ? code : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Re-attaches the Supabase backup the bundle's install registered. The
+  /// diary import has already succeeded, so offline or an unknown code is
+  /// logged, not thrown.
+  Future<void> _claimRecoveryCode(String code) async {
+    final backup = _supabaseBackupUsecase;
+    if (backup == null) return;
+    try {
+      final moved = await backup.restoreWithCode(code);
+      _log.info(
+        moved == null
+            ? 'The bundle\'s recovery code is not registered on the server'
+            : 'Recovery code claimed on import, $moved rows moved',
+      );
+    } catch (e) {
+      _log.warning('Could not claim the bundle\'s recovery code: $e');
+    }
   }
 
   /// Symmetric CSV counterpart to [importData]. Reads a zip produced by

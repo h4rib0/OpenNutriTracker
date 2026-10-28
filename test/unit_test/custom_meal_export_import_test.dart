@@ -34,6 +34,7 @@ import 'package:opennutritracker/core/data/repository/recipe_repository.dart';
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/weight_log_repository.dart';
+import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
 import 'package:opennutritracker/features/settings/domain/usecase/export_data_usecase.dart';
 import 'package:opennutritracker/features/settings/domain/usecase/import_data_usecase.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/export_import_bloc.dart';
@@ -94,6 +95,34 @@ class _RecordingSupabase extends CustomMealSupabaseDataSource {
 
   @override
   Future<void> delete(String lookupKey) async => deleted.add(lookupKey);
+}
+
+/// Stands in for the Supabase backup: a fixed code, and records claims.
+class _FakeBackup implements SupabaseBackupUsecase {
+  _FakeBackup({this.code, this.claimThrows = false});
+
+  final String? code;
+  final bool claimThrows;
+  final claimed = <String>[];
+
+  @override
+  Future<String?> getRecoveryCode() async => code;
+
+  @override
+  Future<String?> getRegisteredRecoveryCode() async => code;
+
+  @override
+  Future<int?> restoreWithCode(String code) async {
+    claimed.add(code);
+    if (claimThrows) throw Exception('offline');
+    return 3;
+  }
+
+  @override
+  Future<void> initOnStartup() async {}
+
+  @override
+  Future<void> pull() async {}
 }
 
 // Every dataset but custom meals is empty on both legs.
@@ -250,7 +279,10 @@ void main() {
     if (await tempRoot.exists()) await tempRoot.delete(recursive: true);
   });
 
-  Future<Archive> exportFrom(CustomMealDataSource customMeals) =>
+  Future<Archive> exportFrom(
+    CustomMealDataSource customMeals, {
+    SupabaseBackupUsecase? backup,
+  }) =>
       ExportDataUsecase(
         _EmptyUserActivityRepository(),
         _EmptyIntakeRepository(),
@@ -261,6 +293,7 @@ void main() {
         _EmptyTemplateRepository(),
         _EmptyConfigRepository(),
         _EmptyFavouriteMealRepository(),
+        backup,
       ).assembleArchive(
         format: ExportFormat.json,
         userActivityJsonFileName: ExportImportBloc.userActivityJsonFileName,
@@ -272,7 +305,11 @@ void main() {
             ExportImportBloc.customActivityTemplateJsonFileName,
       );
 
-  Future<bool> importInto(CustomMealDataSource customMeals, Archive archive) {
+  Future<bool> importInto(
+    CustomMealDataSource customMeals,
+    Archive archive, {
+    SupabaseBackupUsecase? backup,
+  }) {
     final zip = File('${tempRoot.path}/backup.zip')
       ..writeAsBytesSync(ZipEncoder().encode(archive));
     return ImportDataUsecase(
@@ -286,6 +323,7 @@ void main() {
       _EmptyFavouriteMealRepository(),
       pickFile: () async => _PickedFile('backup.zip', zip.uri),
       customMealDataSource: customMeals,
+      supabaseBackupUsecase: backup,
     ).importData(
       ExportImportBloc.userActivityJsonFileName,
       ExportImportBloc.userIntakeJsonFileName,
@@ -376,5 +414,58 @@ void main() {
     expect(supabase.upserted, ['Oats', 'Oats', '5000']);
     expect(supabase.deleted, ['Oats']);
     expect(ds.getAllCustomMeals().single.code, '5000');
+  });
+
+  group('recovery code', () {
+    const code = 'ABCD-EFGH-JKMN-PQRS-TVWX';
+
+    test('a JSON export carries the code and an import claims it', () async {
+      final archive = await exportFrom(
+        CustomMealDataSource(FakeHiveDBProvider(customMealBox: sourceBox)),
+        backup: _FakeBackup(code: code),
+      );
+      final entry = archive.findFile(
+        ExportDataUsecase.recoveryCodeJsonFileName,
+      );
+      expect(entry, isNotNull);
+      expect(jsonDecode(utf8.decode(entry!.content as List<int>)), {
+        'code': code,
+      });
+
+      final backup = _FakeBackup();
+      final imported = await importInto(
+        CustomMealDataSource(FakeHiveDBProvider(customMealBox: targetBox)),
+        archive,
+        backup: backup,
+      );
+      expect(imported, isTrue);
+      expect(backup.claimed, [code]);
+    });
+
+    test('no code (offline, not signed in) leaves the entry out', () async {
+      final archive = await exportFrom(
+        CustomMealDataSource(FakeHiveDBProvider(customMealBox: sourceBox)),
+        backup: _FakeBackup(),
+      );
+      expect(
+        archive.findFile(ExportDataUsecase.recoveryCodeJsonFileName),
+        isNull,
+      );
+    });
+
+    test('a failing claim does not fail the import', () async {
+      final archive = await exportFrom(
+        CustomMealDataSource(FakeHiveDBProvider(customMealBox: sourceBox)),
+        backup: _FakeBackup(code: code),
+      );
+      final backup = _FakeBackup(claimThrows: true);
+      final imported = await importInto(
+        CustomMealDataSource(FakeHiveDBProvider(customMealBox: targetBox)),
+        archive,
+        backup: backup,
+      );
+      expect(imported, isTrue);
+      expect(backup.claimed, [code]);
+    });
   });
 }

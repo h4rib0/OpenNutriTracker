@@ -54,6 +54,7 @@ import 'package:opennutritracker/features/settings/presentation/widgets/kcal_goa
 import 'package:opennutritracker/features/settings/presentation/widgets/macro_split_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/nutrient_goals_screen.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/per_meal_kcal_share_dialog.dart';
+import 'package:opennutritracker/features/settings/presentation/widgets/recovery_code_dialog.dart';
 
 /// What the settings route was opened *for*.
 ///
@@ -665,6 +666,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _settingsBloc.setSyncNutrientsToSupabase(value);
                         _settingsBloc.add(LoadSettingsEvent());
                       },
+                    ),
+                  ),
+                  _SettingsTile(
+                    identifier: 'settings-recovery-code',
+                    palette: palette,
+                    icon: Icons.key_rounded,
+                    title: 'Wiederherstellungscode',
+                    subtitle: 'Supabase-Sicherung nach Neuinstallation zurückholen',
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => const RecoveryCodeDialog(),
                     ),
                   ),
                 ],
