@@ -6,4 +6,15 @@
          visually distinguishable on the home screen from a Play Store
          install. -->
     <string name="app_name">OpenNutriTracker</string>
+    <!-- Home-screen widgets (#832): the names and descriptions the launcher's
+         widget picker shows. The widgets' own text comes from the app, in the
+         app's language (CalorieWidgetLabels). -->
+    <string name="calorie_widget_small_label">Calories</string>
+    <string name="calorie_widget_small_description">Calories left and today\'s macros</string>
+    <string name="calorie_widget_medium_label">Calories and macros</string>
+    <string name="calorie_widget_medium_description">Calories left with a progress bar per macro</string>
+    <string name="calorie_widget_strip_label">Calories, one line</string>
+    <string name="calorie_widget_strip_description">Calories left and macros as text</string>
+    <string name="calorie_widget_large_label">Today</string>
+    <string name="calorie_widget_large_description">Goal, macros, meals and quick add</string>
 </resources>

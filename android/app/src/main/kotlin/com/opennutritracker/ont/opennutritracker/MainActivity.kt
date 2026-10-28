@@ -3,6 +3,7 @@ package com.opennutritracker.ont.opennutritracker
 import android.app.LocaleManager
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.LocaleList
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -43,6 +44,11 @@ class MainActivity : FlutterFragmentActivity() {
      * racing engine startup for the one launch that most needs to work.
      */
     private var healthRationalePending = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        stampWidgetLaunch(intent)
+        super.onCreate(savedInstanceState)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -191,10 +197,31 @@ class MainActivity : FlutterFragmentActivity() {
      * exactly once per process and then quietly stop.
      */
     override fun onNewIntent(intent: Intent) {
+        // #832: a home-screen widget tap that reaches a restored activity
+        // arrives here before Flutter listens for it, and the plugin only
+        // forwards it to a listener that is already there. Holding it as the
+        // activity's intent lets Dart still read it once the screen is up.
+        if (stampWidgetLaunch(intent)) setIntent(intent)
         super.onNewIntent(intent)
         if (isHealthRationaleIntent(intent)) {
             healthRationalePending = true
         }
+    }
+
+    /**
+     * Marks a widget tap with when it happened, so Dart can follow each tap
+     * once although it may read the same intent twice (as the launching
+     * intent and from the stream). Returns whether it was a widget tap.
+     */
+    private fun stampWidgetLaunch(intent: Intent?): Boolean {
+        if (intent?.action != WIDGET_LAUNCH_ACTION) return false
+        val data = intent.data ?: return true
+        if (data.getQueryParameter("at") == null) {
+            intent.data = data.buildUpon()
+                .appendQueryParameter("at", System.currentTimeMillis().toString())
+                .build()
+        }
+        return true
     }
 
     override fun onDestroy() {
@@ -244,5 +271,6 @@ class MainActivity : FlutterFragmentActivity() {
     private companion object {
         const val ACTION_SHOW_PERMISSIONS_RATIONALE = "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"
         const val ACTION_VIEW_PERMISSION_USAGE = "android.intent.action.VIEW_PERMISSION_USAGE"
+        const val WIDGET_LAUNCH_ACTION = "es.antonborri.home_widget.action.LAUNCH"
     }
 }

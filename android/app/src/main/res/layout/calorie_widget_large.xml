@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/calorie_widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/calorie_widget_background" android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <!-- Fork: "Polar · Stand HH:mm", gone without Polar. -->
+        <TextView android:id="@+id/calorie_widget_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp" android:gravity="end" android:visibility="gone"
+            android:textColor="@color/calorie_widget_text_secondary" android:textSize="12sp" android:maxLines="1" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+        <FrameLayout android:layout_width="108dp" android:layout_height="108dp">
+            <ProgressBar android:id="@+id/calorie_widget_ring" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:max="1000" android:progressDrawable="@drawable/calorie_widget_ring" />
+            <ProgressBar android:id="@+id/calorie_widget_ring_over" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"
+                android:max="1000" android:progress="1000" android:progressDrawable="@drawable/calorie_widget_ring_over" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/calorie_widget_left" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="26sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_left_label" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="11sp" android:maxLines="1" />
+            </LinearLayout>
+        </FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:layout_marginStart="16dp" android:orientation="vertical">
+            <LinearLayout android:id="@+id/calorie_widget_goal_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/calorie_widget_goal_label" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="15sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_goal_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="15sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/calorie_widget_detail1_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/calorie_widget_detail1_label" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_detail1_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/calorie_widget_detail2_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/calorie_widget_detail2_label" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_detail2_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/calorie_widget_detail3_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/calorie_widget_detail3_label" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_detail3_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text_secondary" android:textSize="13sp" android:maxLines="1" />
+            </LinearLayout>
+                <FrameLayout android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp"
+                    android:background="@color/calorie_widget_track" />
+            <LinearLayout android:id="@+id/calorie_widget_supplied_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/calorie_widget_supplied_label" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_supplied_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/calorie_widget_carbs_label" android:layout_width="30dp" android:layout_height="wrap_content"
+                android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" />
+            <ProgressBar android:id="@+id/calorie_widget_carbs_bar" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="8dp"
+                android:max="100" android:progressDrawable="@drawable/calorie_widget_bar_carbs" />
+            <TextView android:id="@+id/calorie_widget_carbs_value" android:layout_width="96dp" android:layout_height="wrap_content"
+                android:gravity="end" android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/calorie_widget_fat_label" android:layout_width="30dp" android:layout_height="wrap_content"
+                android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" />
+            <ProgressBar android:id="@+id/calorie_widget_fat_bar" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="8dp"
+                android:max="100" android:progressDrawable="@drawable/calorie_widget_bar_fat" />
+            <TextView android:id="@+id/calorie_widget_fat_value" android:layout_width="96dp" android:layout_height="wrap_content"
+                android:gravity="end" android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/calorie_widget_protein_label" android:layout_width="30dp" android:layout_height="wrap_content"
+                android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" />
+            <ProgressBar android:id="@+id/calorie_widget_protein_bar" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="8dp"
+                android:max="100" android:progressDrawable="@drawable/calorie_widget_bar_protein" />
+            <TextView android:id="@+id/calorie_widget_protein_value" android:layout_width="96dp" android:layout_height="wrap_content"
+                android:gravity="end" android:textColor="@color/calorie_widget_text" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:layout_marginStart="3dp" android:layout_marginEnd="3dp" android:paddingTop="6dp" android:paddingBottom="6dp"
+                android:background="@drawable/calorie_widget_surface" android:orientation="vertical" android:gravity="center_horizontal">
+                <TextView android:id="@+id/calorie_widget_breakfast_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_breakfast_label" android:layout_width="match_parent" android:layout_height="16dp"
+                    android:paddingStart="2dp" android:paddingEnd="2dp" android:gravity="center"
+                    android:textColor="@color/calorie_widget_text_secondary" android:maxLines="1"
+                    android:autoSizeTextType="uniform" android:autoSizeMinTextSize="8sp" android:autoSizeMaxTextSize="11sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:layout_marginStart="3dp" android:layout_marginEnd="3dp" android:paddingTop="6dp" android:paddingBottom="6dp"
+                android:background="@drawable/calorie_widget_surface" android:orientation="vertical" android:gravity="center_horizontal">
+                <TextView android:id="@+id/calorie_widget_lunch_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_lunch_label" android:layout_width="match_parent" android:layout_height="16dp"
+                    android:paddingStart="2dp" android:paddingEnd="2dp" android:gravity="center"
+                    android:textColor="@color/calorie_widget_text_secondary" android:maxLines="1"
+                    android:autoSizeTextType="uniform" android:autoSizeMinTextSize="8sp" android:autoSizeMaxTextSize="11sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:layout_marginStart="3dp" android:layout_marginEnd="3dp" android:paddingTop="6dp" android:paddingBottom="6dp"
+                android:background="@drawable/calorie_widget_surface" android:orientation="vertical" android:gravity="center_horizontal">
+                <TextView android:id="@+id/calorie_widget_dinner_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_dinner_label" android:layout_width="match_parent" android:layout_height="16dp"
+                    android:paddingStart="2dp" android:paddingEnd="2dp" android:gravity="center"
+                    android:textColor="@color/calorie_widget_text_secondary" android:maxLines="1"
+                    android:autoSizeTextType="uniform" android:autoSizeMinTextSize="8sp" android:autoSizeMaxTextSize="11sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:layout_marginStart="3dp" android:layout_marginEnd="3dp" android:paddingTop="6dp" android:paddingBottom="6dp"
+                android:background="@drawable/calorie_widget_surface" android:orientation="vertical" android:gravity="center_horizontal">
+                <TextView android:id="@+id/calorie_widget_snack_value" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/calorie_widget_text" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/calorie_widget_snack_label" android:layout_width="match_parent" android:layout_height="16dp"
+                    android:paddingStart="2dp" android:paddingEnd="2dp" android:gravity="center"
+                    android:textColor="@color/calorie_widget_text_secondary" android:maxLines="1"
+                    android:autoSizeTextType="uniform" android:autoSizeMinTextSize="8sp" android:autoSizeMaxTextSize="11sp" />
+            </LinearLayout>
+        </LinearLayout>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="44dp" android:orientation="horizontal">
+            <LinearLayout android:id="@+id/calorie_widget_add_food" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
+                android:layout_marginEnd="4dp" android:background="@drawable/calorie_widget_button" android:orientation="horizontal" android:gravity="center">
+                <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/calorie_widget_ic_add" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/calorie_widget_add_food_label" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp" android:textColor="@color/calorie_widget_on_button" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/calorie_widget_add_water" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
+                android:layout_marginStart="4dp" android:background="@drawable/calorie_widget_button_secondary" android:orientation="horizontal" android:gravity="center">
+                <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/calorie_widget_ic_water" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/calorie_widget_water_label" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp" android:textColor="@color/calorie_widget_text" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

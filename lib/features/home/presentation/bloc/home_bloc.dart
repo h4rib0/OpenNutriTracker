@@ -29,6 +29,8 @@ import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_labels.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_snapshot.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_writer.dart';
+import 'package:opennutritracker/core/utils/widget/polar_widget_extras.dart';
+import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
@@ -287,9 +289,55 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       await _publishCalorieWidget(
         consumedKcal: totalKcalIntake,
         goalKcal: totalKcalGoal,
+        macros: CalorieWidgetMacros.fromHome(
+          carbs: totalCarbsIntake,
+          carbsGoal: totalCarbsGoal,
+          fat: totalFatsIntake,
+          fatGoal: totalFatsGoal,
+          protein: totalProteinsIntake,
+          proteinGoal: totalProteinsGoal,
+        ),
+        burnedKcal: totalKcalActivities,
+        waterMl: totalWaterMl,
+        waterGoalMl: configData.effectiveDailyWaterGoalMl(
+          user.gender,
+          caloriesProfile: user.caloriesProfile,
+        ),
+        meals: CalorieWidgetMeals(
+          breakfastKcal: totalBreakfastKcal.round(),
+          lunchKcal: totalLunchKcal.round(),
+          dinnerKcal: totalDinnerKcal.round(),
+          snackKcal: totalSnackKcal.round(),
+        ),
         offsetMinutes: configData.dayStartOffsetTotalMinutes,
         logicalDay: loadDay,
         generation: widgetGeneration,
+      );
+
+      // Fork: the Polar rows of the large widget, and what the background
+      // refresh needs to recompute the goal from InfluxDB.
+      final polar = _polarDataSource;
+      final widgetWeightKg = influxWeightKg ?? user.weightKG;
+      await PolarWidgetExtras.publish(
+        base: isPolarActive && polar != null
+            ? PolarWidgetBase(
+                dayId: CalorieWidgetSnapshot.formatDayId(loadDay),
+                offsetMinutes: CalorieWidgetSnapshot.sanitiseOffsetMinutes(
+                  configData.dayStartOffsetTotalMinutes,
+                ),
+                bmrWithoutWeight: PolarBmrCalc.getBMRMifflinStJeor1990(
+                  user.copyWith(weightKG: 0),
+                ),
+                activityKcal: totalKcalActivities,
+                adjustmentKcal: configData.userKcalAdjustment ?? 0,
+                proteinGPerKg: await polar.getProteinGPerKg(),
+                fatGPerKg: await polar.getFatGPerKg(),
+                weightKg: widgetWeightKg,
+              )
+            : null,
+        weightKg: widgetWeightKg,
+        polarActiveKcal: polarActiveKcal ?? 0,
+        now: DateTime.now(),
       );
     });
   }
@@ -297,6 +345,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _publishCalorieWidget({
     required double consumedKcal,
     required double goalKcal,
+    required CalorieWidgetMacros macros,
+    required double burnedKcal,
+    required int waterMl,
+    required int waterGoalMl,
+    required CalorieWidgetMeals meals,
     required int offsetMinutes,
     required DateTime logicalDay,
     required int generation,
@@ -304,6 +357,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final snapshot = CalorieWidgetSnapshot.fromHome(
       consumedKcal: consumedKcal,
       goalKcal: goalKcal,
+      macros: macros,
+      burnedKcal: burnedKcal,
+      waterMl: waterMl,
+      waterGoalMl: waterGoalMl,
+      meals: meals,
       offsetMinutes: offsetMinutes,
       // The day this load read, not the one it finishes in: a load that
       // crosses the day boundary publishes the old day's figures under the

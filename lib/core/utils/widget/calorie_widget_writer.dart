@@ -33,9 +33,8 @@ abstract class CalorieWidgetStore {
   Future<void> relabel(S s);
 }
 
-/// App Group on iOS, shared preferences on Android. Android has no
-/// widget UI in this milestone; the save still runs so a later widget
-/// can reuse the same keys.
+/// App Group on iOS, shared preferences on Android, where the four
+/// widget sizes read the same keys (#832).
 class HomeWidgetCalorieStore implements CalorieWidgetStore {
   final bool _isIOS;
   final Future<String> Function() _bundleId;
@@ -75,7 +74,28 @@ class HomeWidgetCalorieStore implements CalorieWidgetStore {
       CalorieWidgetLabels.storageKey: labels.encodeLanguage(),
       CalorieWidgetSnapshot.storageKey: snapshot.encode(labels),
     });
+    if (snapshot.hasData) await _scheduleDayEnd(snapshot.nextBoundary());
   });
+
+  /// Android redraws a widget only when asked, so without this the
+  /// figures of a day would stay up past its end until the app is opened.
+  /// The widgets themselves show the placeholder once the stored day is
+  /// over; this makes them check at the boundary. iOS needs nothing: the
+  /// extension's timeline already ends at the boundary.
+  Future<void> _scheduleDayEnd(DateTime boundary) async {
+    if (_isIOS) return;
+    for (final provider in CalorieWidgetSnapshot.androidProviders) {
+      try {
+        await HomeWidget.scheduleWidgetUpdates([
+          boundary,
+        ], qualifiedAndroidName: provider);
+      } on MissingPluginException {
+        return;
+      } on PlatformException {
+        // A provider missing from this build is skipped.
+      }
+    }
+  }
 
   /// A null value makes the plugin remove the key, which the extension
   /// reads as "no data yet" and answers with its placeholder.
@@ -142,7 +162,18 @@ class HomeWidgetCalorieStore implements CalorieWidgetStore {
         appGroupId: group,
       );
     }
-    if (!_isIOS) return;
+    if (!_isIOS) {
+      for (final provider in CalorieWidgetSnapshot.androidProviders) {
+        try {
+          await HomeWidget.updateWidget(qualifiedAndroidName: provider);
+        } on MissingPluginException {
+          return;
+        } on PlatformException {
+          // A provider missing from this build is skipped.
+        }
+      }
+      return;
+    }
     try {
       await HomeWidget.updateWidget(
         iOSName: CalorieWidgetSnapshot.iosWidgetKind,

@@ -69,6 +69,15 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- #832: the home-screen widgets launch this activity with a
+                 opennutritracker://widget/... URI, which MainScreen follows.
+                 Flutter's own deep linking would also push that URI as a
+                 named route, which does not exist. The app has no deep links
+                 of its own, so it is off. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -90,6 +99,72 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+        <!-- #832: home-screen widgets, one receiver per size. They only draw
+             the snapshot Home writes (CalorieWidgetSnapshot). -->
+        <receiver
+            android:name=".widget.CalorieWidgetSmallProvider"
+            android:label="@string/calorie_widget_small_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_small_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetMediumProvider"
+            android:label="@string/calorie_widget_medium_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_medium_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetStripProvider"
+            android:label="@string/calorie_widget_strip_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_strip_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetLargeProvider"
+            android:label="@string/calorie_widget_large_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_large_info" />
+        </receiver>
+        <!-- Fork: runs the Dart background refresh of the Polar goal
+             (polar_widget_extras.dart) when a widget asks for it. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
+        <!-- Redraws the widgets at the day boundary, so a past day's figures
+             do not stay up until the app is next opened. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetScheduledUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!-- #312: Notification scheduling receivers -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
