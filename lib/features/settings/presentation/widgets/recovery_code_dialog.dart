@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:opennutritracker/core/data/data_source/supabase_recovery_data_source.dart';
 import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -41,15 +42,22 @@ class _RecoveryCodeDialogState extends State<RecoveryCodeDialog> {
     String message;
     var isError = true;
     try {
+      final current = await _code;
+      final isOwn =
+          current != null &&
+          SupabaseRecoveryDataSource.normalize(_input.text) ==
+              SupabaseRecoveryDataSource.normalize(current);
       final moved = await _backup.restoreWithCode(_input.text);
       if (moved == null) {
         message = 'Dieser Code ist auf dem Server nicht bekannt.';
       } else {
         isError = false;
-        message = moved == 0
+        message = isOwn
             ? 'Der Code gehört bereits zu dieser Installation.'
-            : '$moved Einträge übernommen. Eigene Mahlzeiten und Rezepte '
-                  'wurden wiederhergestellt.';
+            : moved == 0
+            ? 'Code eingelöst — in der Sicherung lagen keine Einträge.'
+            : '${moved == 1 ? '1 Eintrag' : '$moved Einträge'} übernommen. '
+                  'Eigene Mahlzeiten und Rezepte wurden wiederhergestellt.';
         _input.clear();
         _code = _backup.getRecoveryCode();
       }

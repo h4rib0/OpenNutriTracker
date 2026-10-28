@@ -75,6 +75,34 @@ void main() {
     expect(find.text('BBBB-BBBB-BBBB-BBBB-BBBB'), findsOneWidget);
   });
 
+  testWidgets('one row reads in the singular', (tester) async {
+    final backup = _FakeBackup('AAAA-AAAA-AAAA-AAAA-AAAA', claimResult: 1);
+    await _pump(tester, backup);
+
+    await tester.enterText(find.byType(TextField), 'BBBB-BBBB-BBBB-BBBB-BBBB');
+    await tester.tap(find.text('Wiederherstellen'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 Eintrag übernommen'), findsOneWidget);
+  });
+
+  testWidgets('an empty backup is not mistaken for the own code', (
+    tester,
+  ) async {
+    final backup = _FakeBackup('AAAA-AAAA-AAAA-AAAA-AAAA', claimResult: 0);
+    await _pump(tester, backup);
+
+    await tester.enterText(find.byType(TextField), 'BBBB-BBBB-BBBB-BBBB-BBBB');
+    await tester.tap(find.text('Wiederherstellen'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('keine Einträge'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'bbbb bbbb bbbb bbbb bbbb');
+    await tester.tap(find.text('Wiederherstellen'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('gehört bereits'), findsOneWidget);
+  });
+
   testWidgets('an unknown code is reported', (tester) async {
     final backup = _FakeBackup('AAAA-AAAA-AAAA-AAAA-AAAA');
     await _pump(tester, backup);
