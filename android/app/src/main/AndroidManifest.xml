@@ -145,6 +145,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/calorie_widget_large_info" />
         </receiver>
+        <!-- Fork: runs the Dart background refresh of the Polar goal
+             (polar_widget_extras.dart) when a widget asks for it. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
         <!-- Redraws the widgets at the day boundary, so a past day's figures
              do not stay up until the app is next opened. -->
         <receiver

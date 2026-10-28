@@ -9,6 +9,7 @@ import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import com.opennutritracker.ont.opennutritracker.MainActivity
 import com.opennutritracker.ont.opennutritracker.R
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import java.time.LocalDate
@@ -49,8 +50,58 @@ abstract class CalorieWidgetProvider(private val size: CalorieWidgetSize) : Home
   ) {
     val labels = CalorieWidgetLabels.read(widgetData)
     val snapshot = CalorieWidgetSnapshot.read(widgetData)?.takeIf { it.isCurrentAt(LocalDateTime.now()) }
-    val views = CalorieWidgetRenderer(context, size, labels).render(snapshot)
+    val extras = if (snapshot != null) PolarWidgetExtras.read(widgetData) else null
+    val views = CalorieWidgetRenderer(context, size, labels, extras).render(snapshot)
     appWidgetIds.forEach { appWidgetManager.updateAppWidget(it, views) }
+    PolarWidgetExtras.maybeRefresh(context, widgetData)
+  }
+}
+
+/**
+ * Fork-only: the Polar rows and status line Home (or the background
+ * refresh) writes next to the snapshot — `polar_widget_extras.dart`.
+ */
+class PolarWidgetExtras(val status: String?, val details: List<Pair<String, String>>) {
+  companion object {
+    private const val EXTRAS_KEY = "ont_calorie_extras"
+    private const val BASE_KEY = "ont_polar_widget_base"
+    private const val REFRESHED_AT_KEY = "ont_polar_refreshed_at"
+    private const val REFRESH_EVERY_MS = 14 * 60 * 1000L
+
+    fun read(prefs: SharedPreferences): PolarWidgetExtras? =
+        try {
+          prefs.getString(EXTRAS_KEY, null)?.let { raw ->
+            val json = JSONObject(raw)
+            val rows = json.optJSONArray("details") ?: JSONArray()
+            PolarWidgetExtras(
+                json.optString("status").ifEmpty { null },
+                (0 until rows.length()).mapNotNull { i ->
+                  rows.optJSONArray(i)?.let { Pair(it.optString(0), it.optString(1)) }
+                },
+            )
+          }
+        } catch (e: Exception) {
+          null
+        }
+
+    /**
+     * Starts the Dart background refresh (InfluxDB → goal) when Polar is on
+     * and the last computation is older than ~15 minutes. Every provider
+     * redraws on the same schedule, so the time is claimed here first and
+     * only one of them starts it.
+     */
+    fun maybeRefresh(context: Context, prefs: SharedPreferences) {
+      if (!prefs.contains(BASE_KEY)) return
+      val last = prefs.getString(REFRESHED_AT_KEY, null)?.toLongOrNull() ?: 0L
+      val now = System.currentTimeMillis()
+      if (now - last < REFRESH_EVERY_MS) return
+      prefs.edit().putString(REFRESHED_AT_KEY, now.toString()).apply()
+      try {
+        HomeWidgetBackgroundIntent.getBroadcast(context, Uri.parse("opennutritracker://widget/refresh")).send()
+      } catch (e: Exception) {
+        // The next redraw tries again.
+      }
+    }
   }
 }
 
@@ -131,6 +182,7 @@ class CalorieWidgetRenderer(
     private val context: Context,
     private val size: CalorieWidgetSize,
     private val labels: CalorieWidgetLabels,
+    private val extras: PolarWidgetExtras? = null,
 ) {
   private val views = RemoteViews(context.packageName, size.layout)
 
@@ -168,6 +220,7 @@ class CalorieWidgetRenderer(
     listOf(R.id.calorie_widget_carbs_bar, R.id.calorie_widget_fat_bar, R.id.calorie_widget_protein_bar)
         .forEach { views.setProgressBar(it, 100, 0, false) }
     if (size == CalorieWidgetSize.LARGE) {
+      views.setViewVisibility(R.id.calorie_widget_status, View.GONE)
       views.setViewVisibility(R.id.calorie_widget_detail1_row, View.GONE)
       views.setViewVisibility(R.id.calorie_widget_detail2_row, View.GONE)
       views.setViewVisibility(R.id.calorie_widget_detail3_row, View.GONE)
@@ -209,10 +262,20 @@ class CalorieWidgetRenderer(
     if (size == CalorieWidgetSize.LARGE) {
       views.setTextViewText(R.id.calorie_widget_goal_label, labels.get("goalTitle", "Goal"))
       views.setTextViewText(R.id.calorie_widget_goal_value, "${s.goalKcal} $unit")
-      detail(R.id.calorie_widget_detail1_row, R.id.calorie_widget_detail1_label, R.id.calorie_widget_detail1_value,
-          labels.get("burned", "burned"), if (s.burnedKcal > 0) "+${s.burnedKcal}" else null)
-      views.setViewVisibility(R.id.calorie_widget_detail2_row, View.GONE)
-      views.setViewVisibility(R.id.calorie_widget_detail3_row, View.GONE)
+      val rows = extras?.details?.takeIf { it.isNotEmpty() }
+          ?: listOf(Pair(labels.get("burned", "burned"), if (s.burnedKcal > 0) "+${s.burnedKcal}" else ""))
+      val detailIds = listOf(
+          Triple(R.id.calorie_widget_detail1_row, R.id.calorie_widget_detail1_label, R.id.calorie_widget_detail1_value),
+          Triple(R.id.calorie_widget_detail2_row, R.id.calorie_widget_detail2_label, R.id.calorie_widget_detail2_value),
+          Triple(R.id.calorie_widget_detail3_row, R.id.calorie_widget_detail3_label, R.id.calorie_widget_detail3_value),
+      )
+      detailIds.forEachIndexed { i, (row, label, value) ->
+        val entry = rows.getOrNull(i)
+        detail(row, label, value, entry?.first ?: "", entry?.second?.ifEmpty { null })
+      }
+      val status = extras?.status
+      views.setViewVisibility(R.id.calorie_widget_status, if (status == null) View.GONE else View.VISIBLE)
+      if (status != null) views.setTextViewText(R.id.calorie_widget_status, status)
       views.setTextViewText(R.id.calorie_widget_supplied_label, labels.get("supplied", "supplied"))
       views.setTextViewText(R.id.calorie_widget_supplied_value, "${s.consumedKcal} $unit")
       mealLabels()

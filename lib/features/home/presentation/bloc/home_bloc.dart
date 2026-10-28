@@ -29,6 +29,8 @@ import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_labels.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_snapshot.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_writer.dart';
+import 'package:opennutritracker/core/utils/widget/polar_widget_extras.dart';
+import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
@@ -310,6 +312,32 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         offsetMinutes: configData.dayStartOffsetTotalMinutes,
         logicalDay: loadDay,
         generation: widgetGeneration,
+      );
+
+      // Fork: the Polar rows of the large widget, and what the background
+      // refresh needs to recompute the goal from InfluxDB.
+      final polar = _polarDataSource;
+      final widgetWeightKg = influxWeightKg ?? user.weightKG;
+      await PolarWidgetExtras.publish(
+        base: isPolarActive && polar != null
+            ? PolarWidgetBase(
+                dayId: CalorieWidgetSnapshot.formatDayId(loadDay),
+                offsetMinutes: CalorieWidgetSnapshot.sanitiseOffsetMinutes(
+                  configData.dayStartOffsetTotalMinutes,
+                ),
+                bmrWithoutWeight: PolarBmrCalc.getBMRMifflinStJeor1990(
+                  user.copyWith(weightKG: 0),
+                ),
+                activityKcal: totalKcalActivities,
+                adjustmentKcal: configData.userKcalAdjustment ?? 0,
+                proteinGPerKg: await polar.getProteinGPerKg(),
+                fatGPerKg: await polar.getFatGPerKg(),
+                weightKg: widgetWeightKg,
+              )
+            : null,
+        weightKg: widgetWeightKg,
+        polarActiveKcal: polarActiveKcal ?? 0,
+        now: DateTime.now(),
       );
     });
   }

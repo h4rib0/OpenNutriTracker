@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,8 @@ import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/domain/usecase/supabase_backup_usecase.dart';
+import 'package:opennutritracker/core/utils/widget/polar_widget_extras.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
 import 'package:opennutritracker/core/l10n/app_locales.dart';
 import 'package:opennutritracker/core/presentation/main_screen.dart';
@@ -99,6 +102,16 @@ Future<void> _bootstrapApp() async {
   // Anonymous Supabase auth, restore custom meals / recipes / nutrient
   // overrides from the cloud and register the recovery code (fork-only).
   unawaited(locator<SupabaseBackupUsecase>().initOnStartup());
+
+  // Fork: lets the Android widgets recompute the Polar goal in the
+  // background (PolarWidgetExtras).
+  if (Platform.isAndroid) {
+    unawaited(
+      HomeWidget.registerInteractivityCallback(
+        polarWidgetBackgroundCallback,
+      ).then((_) {}, onError: (_) {}),
+    );
+  }
 
   final isUserInitialized = await locator<UserDataSource>().hasUserData();
   final configRepo = locator<ConfigRepository>();
