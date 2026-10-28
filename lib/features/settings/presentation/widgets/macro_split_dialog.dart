@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
-import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
-import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
+import 'package:opennutritracker/core/utils/reload_diary_and_trends.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
@@ -62,9 +61,7 @@ import 'package:opennutritracker/generated/l10n.dart';
 class MacroSplitDialog extends StatefulWidget {
   final SettingsBloc settingsBloc;
   final HomeBloc homeBloc;
-  final DiaryBloc diaryBloc;
-  final CalendarDayBloc calendarDayBloc;
-  // Default to the locator; injectable for widget tests.
+  // Fork: default to the locator; injectable for widget tests.
   final PolarInfluxdbDataSource? polarDataSource;
   final ProfileBloc? profileBloc;
 
@@ -72,8 +69,6 @@ class MacroSplitDialog extends StatefulWidget {
     super.key,
     required this.settingsBloc,
     required this.homeBloc,
-    required this.diaryBloc,
-    required this.calendarDayBloc,
     this.polarDataSource,
     this.profileBloc,
   });
@@ -95,11 +90,13 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   bool _loaded = false;
   bool _syncingControllers = false;
 
-  /// The field the user typed in most recently. On save we apply only this
-  /// field's pending (unsubmitted) text — last write wins. Reconciling
-  /// conflicting edits across multiple fields at once isn't worth the
-  /// complexity, and every submit/reset re-syncs the controllers anyway, so
-  /// an already-applied field re-applies as a no-op.
+  /// The field whose typed text has not been applied yet. Only this field's
+  /// text is applied — last write wins. Reconciling conflicting edits across
+  /// multiple fields at once isn't worth the complexity.
+  ///
+  /// Applying clears it. A controller's text is only a rounded copy of its
+  /// value after a sync, so applying it a second time, after a slider has
+  /// moved, would nudge the split away from the one on screen.
   _MacroField? _lastEditedMacro;
 
   late final TextEditingController _carbsController;
@@ -112,6 +109,7 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
 
   bool _isPolarActive = false;
   bool _useBodyWeightMacros = false;
+  bool _initialUseBodyWeightMacros = false;
   bool get _bodyWeightMode => _isPolarActive || _useBodyWeightMacros;
   double _proteinGPerKg = _defaultProteinGPerKg;
   double _fatGPerKg = _defaultFatGPerKg;
@@ -120,7 +118,14 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   late final TextEditingController _proteinGPerKgController;
   late final TextEditingController _fatGPerKgController;
 
-  PolarInfluxdbDataSource get _polarDataSource => widget.polarDataSource ?? locator<PolarInfluxdbDataSource>();
+  PolarInfluxdbDataSource? get _polarDataSource =>
+      widget.polarDataSource ??
+      (locator.isRegistered<PolarInfluxdbDataSource>() ? locator<PolarInfluxdbDataSource>() : null);
+
+  /// A typed value is applied when its field loses focus, not only on
+  /// submit: the iOS number pad has no return key, so a submit never comes
+  /// and the other two macros never visibly rebalanced (#1324).
+  late final Map<_MacroField, FocusNode> _focusNodes;
 
   @override
   void initState() {
@@ -130,6 +135,10 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     _fatController = TextEditingController();
     _proteinGPerKgController = TextEditingController();
     _fatGPerKgController = TextEditingController();
+    _focusNodes = {
+      for (final field in _MacroField.values)
+        field: FocusNode()..addListener(() => _onFocusChanged(field)),
+    };
     _load();
   }
 
@@ -140,21 +149,42 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     _fatController.dispose();
     _proteinGPerKgController.dispose();
     _fatGPerKgController.dispose();
+    for (final node in _focusNodes.values) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  void _onFocusChanged(_MacroField field) {
+    if (!mounted || _focusNodes[field]!.hasFocus) return;
+    if (_lastEditedMacro == field) _applyPendingTextInputs();
   }
 
   Future<void> _load() async {
     final carbs = await widget.settingsBloc.getUserCarbGoalPct();
     final protein = await widget.settingsBloc.getUserProteinGoalPct();
     final fat = await widget.settingsBloc.getUserFatGoalPct();
-    final useBodyWeightMacros = await widget.settingsBloc.getUseBodyWeightMacros();
-    final polarDataSource = _polarDataSource;
-    final isPolar = await polarDataSource.isPolarConfigured();
-    final proteinGPerKg = await polarDataSource.getProteinGPerKg();
-    final fatGPerKg = await polarDataSource.getFatGPerKg();
-    final user = await (widget.profileBloc ?? locator<ProfileBloc>()).getUser();
-    final influxWeightKg = isPolar ? await polarDataSource.fetchLatestWeightKg() : null;
-    final weightKg = influxWeightKg ?? user.weightKG;
+    var useBodyWeightMacros = false;
+    var isPolar = false;
+    var proteinGPerKg = _defaultProteinGPerKg;
+    var fatGPerKg = _defaultFatGPerKg;
+    var weightKg = _weightKg;
+    try {
+      useBodyWeightMacros = await widget.settingsBloc.getUseBodyWeightMacros();
+      final polarDataSource = _polarDataSource;
+      if (polarDataSource != null) {
+        isPolar = await polarDataSource.isPolarConfigured();
+        proteinGPerKg = await polarDataSource.getProteinGPerKg();
+        fatGPerKg = await polarDataSource.getFatGPerKg();
+      }
+      final profileBloc = widget.profileBloc ??
+          (locator.isRegistered<ProfileBloc>() ? locator<ProfileBloc>() : null);
+      final user = await profileBloc?.getUser();
+      weightKg = user?.weightKG ?? weightKg;
+      if (isPolar) weightKg = await polarDataSource!.fetchLatestWeightKg() ?? weightKg;
+    } catch (_) {
+      // Fall back to the % split; the macro goals stay editable.
+    }
     if (!mounted) return;
     setState(() {
       _carbsPct = (carbs ?? _defaultCarbsPct / 100) * 100;
@@ -162,6 +192,7 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
       _fatPct = (fat ?? _defaultFatPct / 100) * 100;
       _isPolarActive = isPolar;
       _useBodyWeightMacros = useBodyWeightMacros;
+      _initialUseBodyWeightMacros = useBodyWeightMacros;
       _proteinGPerKg = proteinGPerKg;
       _fatGPerKg = fatGPerKg;
       _weightKg = weightKg;
@@ -293,7 +324,9 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   }
 
   void _applyPendingTextInputs() {
-    switch (_lastEditedMacro) {
+    final pending = _lastEditedMacro;
+    _lastEditedMacro = null;
+    switch (pending) {
       case _MacroField.carbs:
         _applyCarbsInput();
         break;
@@ -309,20 +342,20 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
   }
 
   Future<void> _save() async {
-    if (!_isPolarActive) {
+    if (!_isPolarActive && _useBodyWeightMacros != _initialUseBodyWeightMacros) {
       await widget.settingsBloc.setUseBodyWeightMacros(_useBodyWeightMacros);
     }
     if (_bodyWeightMode) {
       final protein = double.tryParse(_proteinGPerKgController.text.trim()) ?? _defaultProteinGPerKg;
       final fat = double.tryParse(_fatGPerKgController.text.trim()) ?? _defaultFatGPerKg;
-      final polarDataSource = _polarDataSource;
-      await polarDataSource.saveProteinGPerKg(protein.clamp(0.5, 4.0));
-      await polarDataSource.saveFatGPerKg(fat.clamp(0.3, 2.0));
+      await _polarDataSource?.saveProteinGPerKg(protein.clamp(0.5, 4.0));
+      await _polarDataSource?.saveFatGPerKg(fat.clamp(0.3, 2.0));
       widget.settingsBloc.add(LoadSettingsEvent());
       widget.homeBloc.add(const LoadItemsEvent());
-      await widget.settingsBloc.updateTrackedDay(DateTime.now());
-      widget.calendarDayBloc.add(const RefreshCalendarDayEvent());
-      widget.diaryBloc.add(const LoadDiaryYearEvent());
+      await widget.settingsBloc.updateTrackedDay(
+        await widget.settingsBloc.getCurrentLogicalDay(),
+      );
+      reloadDiaryAndTrends();
       if (!mounted) return;
       Navigator.of(context).pop();
       return;
@@ -343,9 +376,10 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
     );
     widget.settingsBloc.add(LoadSettingsEvent());
     widget.homeBloc.add(const LoadItemsEvent());
-    await widget.settingsBloc.updateTrackedDay(DateTime.now());
-    widget.calendarDayBloc.add(const RefreshCalendarDayEvent());
-    widget.diaryBloc.add(const LoadDiaryYearEvent());
+    await widget.settingsBloc.updateTrackedDay(
+      await widget.settingsBloc.getCurrentLogicalDay(),
+    );
+    reloadDiaryAndTrends();
     if (!mounted) return;
     Navigator.of(context).pop();
   }
@@ -369,14 +403,15 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
           TextButton(
             onPressed: _loaded
                 ? () {
+                    _lastEditedMacro = null;
                     setState(() {
                       if (_bodyWeightMode) {
                         _proteinGPerKg = _defaultProteinGPerKg;
                         _fatGPerKg = _defaultFatGPerKg;
                       } else {
                         _carbsPct = _defaultCarbsPct;
-                        _proteinPct = _defaultProteinPct;
-                        _fatPct = _defaultFatPct;
+                      _proteinPct = _defaultProteinPct;
+                      _fatPct = _defaultFatPct;
                       }
                     });
                     _syncControllers();
@@ -471,6 +506,7 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                     value: _carbsPct,
                     color: Colors.orange,
                     controller: _carbsController,
+                    focusNode: _focusNodes[_MacroField.carbs]!,
                     semanticIdentifier: 'macro-split-carbs',
                     onSliderChanged: (v) => setState(
                       () => _redistribute(
@@ -485,13 +521,14 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                     ),
                     onSliderEnd: _syncControllers,
                     onTextChanged: (_) => _markLastEdited(_MacroField.carbs),
-                    onTextSubmitted: _applyCarbsInput,
+                    onTextSubmitted: _applyPendingTextInputs,
                   ),
                   _MacroRow(
                     label: s.proteinLabel,
                     value: _proteinPct,
                     color: Colors.blue,
                     controller: _proteinController,
+                    focusNode: _focusNodes[_MacroField.protein]!,
                     semanticIdentifier: 'macro-split-protein',
                     onSliderChanged: (v) => setState(
                       () => _redistribute(
@@ -506,13 +543,14 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                     ),
                     onSliderEnd: _syncControllers,
                     onTextChanged: (_) => _markLastEdited(_MacroField.protein),
-                    onTextSubmitted: _applyProteinInput,
+                    onTextSubmitted: _applyPendingTextInputs,
                   ),
                   _MacroRow(
                     label: s.fatLabel,
                     value: _fatPct,
                     color: Colors.green,
                     controller: _fatController,
+                    focusNode: _focusNodes[_MacroField.fat]!,
                     semanticIdentifier: 'macro-split-fat',
                     onSliderChanged: (v) => setState(
                       () => _redistribute(
@@ -527,7 +565,7 @@ class _MacroSplitDialogState extends State<MacroSplitDialog> {
                     ),
                     onSliderEnd: _syncControllers,
                     onTextChanged: (_) => _markLastEdited(_MacroField.fat),
-                    onTextSubmitted: _applyFatInput,
+                    onTextSubmitted: _applyPendingTextInputs,
                   ),
                   ],
                 ],
@@ -555,6 +593,7 @@ class _MacroRow extends StatelessWidget {
   final double value;
   final Color color;
   final TextEditingController controller;
+  final FocusNode focusNode;
   final String semanticIdentifier;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onSliderEnd;
@@ -566,6 +605,7 @@ class _MacroRow extends StatelessWidget {
     required this.value,
     required this.color,
     required this.controller,
+    required this.focusNode,
     required this.semanticIdentifier,
     required this.onSliderChanged,
     required this.onSliderEnd,
@@ -591,6 +631,7 @@ class _MacroRow extends StatelessWidget {
               width: MediaQuery.textScalerOf(context).scale(96),
               child: TextField(
                 controller: controller,
+                focusNode: focusNode,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 textAlign: TextAlign.right,

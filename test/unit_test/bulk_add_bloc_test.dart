@@ -58,6 +58,7 @@ class _FakeSearch implements SearchProductsUseCase {
   Future<SearchProductsResult> searchFDCFoodByString(
     String searchString, {
     bool skipRemote = false,
+    bool forResolution = false,
   }) async => const SearchProductsResult(meals: [], remoteSourceEmpty: false);
 
   @override
@@ -220,6 +221,79 @@ void main() {
     expect(state.rows.single.amountText, '125');
     expect(state.rows.single.unit, 'g');
   });
+
+  // The amount field accepts at most two decimals, and the same anchored
+  // pattern is both the submit check and the field's input formatter. A
+  // prefill it refuses is a row that cannot be logged and cannot be edited
+  // back into shape — the field blanks on the first keystroke — and the
+  // submit check aborts the whole batch on it. The pattern itself rather
+  // than a copy of it: a copy is a test that can pass while the check it
+  // claims to speak for says something else.
+  final fieldPattern = bulkAddQuantityPattern;
+
+  test(
+    'a pound quantity is prefilled at a precision the field accepts',
+    () async {
+      final bloc = blocWith({
+        'mince': [meal('Mince')],
+      });
+
+      // 1 lb is 453.59237 g. Prefilled verbatim it was unloggable.
+      final state = await parse(bloc, '1 lb mince');
+
+      expect(state.rows.single.amountText, '453.59');
+      expect(state.rows.single.unit, 'g');
+      expect(fieldPattern.hasMatch(state.rows.single.amountText), isTrue);
+    },
+  );
+
+  test('one refused row no longer blocks the rows beside it', () async {
+    final bloc = blocWith({
+      'mince': [meal('Mince')],
+      'rice': [meal('Rice')],
+    });
+
+    final state = await parse(bloc, '1 lb mince, 100 g rice');
+
+    expect(state.rows, hasLength(2));
+    for (final row in state.rows) {
+      expect(
+        fieldPattern.hasMatch(row.amountText),
+        isTrue,
+        reason: '${row.meal?.name}: "${row.amountText}" fails the submit '
+            'check, and that check refuses the entire batch',
+      );
+    }
+  });
+
+  test('a serving weight carrying more decimals is rounded too', () async {
+    final bloc = blocWith({
+      'almonds': [
+        meal('Almonds', servingQuantity: 226.796185, servingUnit: 'g'),
+      ],
+    });
+
+    final state = await parse(bloc, 'almonds');
+
+    expect(state.rows.single.amountText, '226.8');
+    expect(fieldPattern.hasMatch(state.rows.single.amountText), isTrue);
+  });
+
+  test(
+    'a positive quantity below the rounding floor does not become zero',
+    () async {
+      final bloc = blocWith({
+        'saffron': [meal('Saffron', servingQuantity: 0.004, servingUnit: 'g')],
+      });
+
+      final state = await parse(bloc, 'saffron');
+
+      // Rounding alone gives "0.00", which the submit check rejects for
+      // being non-positive — the same dead end by the other route.
+      expect(state.rows.single.amountText, '0.01');
+      expect(fieldPattern.hasMatch(state.rows.single.amountText), isTrue);
+    },
+  );
 
   test('changing candidates falls back from unsupported units', () async {
     final bloc = blocWith({
@@ -1107,6 +1181,389 @@ void main() {
     });
   });
 
+  group('a named portion the food cannot honour is marked (#1159)', () {
+    // Almonds, as the backend serves them: one row, and "handful" is not it.
+    const nut = MealPortionEntity(
+      label: '1 nut',
+      gramWeight: 1.2,
+      localized: false,
+    );
+    const cup = MealPortionEntity(
+      label: '1 cup',
+      gramWeight: 244,
+      localized: false,
+    );
+    const slice = MealPortionEntity(
+      label: '1 slice',
+      gramWeight: 38,
+      localized: false,
+    );
+
+    test(
+      'the case this exists for: "a handful of almonds" logs 1 nut',
+      () async {
+        // The key misses, `_initialUnit` falls to the bare-count rule, and the
+        // row reads `1 serving` = 1.2 g with nothing to say it is not what was
+        // asked. The user's word was discarded and a default took its place
+        // looking settled — the case `amountNeedsCheck` exists for, and the
+        // dropdown holds the answer.
+        final bloc = blocWithModelReply(
+          {
+            'almonds': [
+              meal('Almonds', servingQuantity: 1.2, portions: [nut]),
+            ],
+          },
+          const [
+            ParsedMealItem(query: 'almonds', quantity: 1, portion: 'handful'),
+          ],
+        );
+
+        final row = (await parse(bloc, 'a handful of almonds')).rows.single;
+
+        expect(row.unit, 'serving');
+        expect(row.portionKeyMissed, isTrue);
+        expect(row.amountNeedsCheck, isTrue);
+        expect(row.willBeLogged, isFalse);
+      },
+    );
+
+    test('a key that matched is unmarked', () async {
+      // The row shows the user's own word back; nothing to warn about.
+      final bloc = blocWithModelReply(
+        {
+          'bread': [
+            meal('Bread', servingQuantity: 244, portions: [cup, slice]),
+          ],
+        },
+        const [ParsedMealItem(query: 'bread', quantity: 3, portion: 'slice')],
+      );
+
+      final row = (await parse(bloc, '3 slices of bread')).rows.single;
+
+      expect(row.unit, 'serving#1');
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+    });
+
+    test('the query words matching is a hit too', () async {
+      // Precedence is key, then query words: a key that missed while the
+      // words the model left in the query landed is the row the user asked
+      // for, and `_initialUnit` picked it.
+      final bloc = blocWithModelReply(
+        {
+          'slices of bread': [
+            meal('Bread', servingQuantity: 244, portions: [cup, slice]),
+          ],
+        },
+        const [
+          ParsedMealItem(
+            query: 'slices of bread',
+            quantity: 3,
+            portion: 'thimble',
+          ),
+        ],
+      );
+
+      final row = (await parse(bloc, '3 slices of bread')).rows.single;
+
+      expect(row.unit, 'serving#1');
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+    });
+
+    test('a food with no portion rows stays quiet', () async {
+      // The addendum's gate. Measured over 999 live calls, the ungated
+      // clause fired on 40 of 48 German rows because the record had no
+      // portion rows at all — and on such a row the dropdown offers `g`,
+      // `oz`, `g/ml` and nothing that means *a slice*, so the warning would
+      // point at a control that cannot answer it (#973). A wrong record is
+      // #1164's and #1165's to fix, not a missed word.
+      final bloc = blocWithModelReply(
+        {
+          'almonds': [meal('Almonds', servingQuantity: 1.2)],
+        },
+        const [
+          ParsedMealItem(query: 'almonds', quantity: 1, portion: 'handful'),
+        ],
+      );
+
+      final row = (await parse(bloc, 'a handful of almonds')).rows.single;
+
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+      expect(row.willBeLogged, isTrue);
+    });
+
+    test('an unavailable portion lookup stays quiet too', () async {
+      // The list is empty for a different reason — the backend could not be
+      // asked — and a transient outage says nothing about the food. Raising
+      // the flag here would mark a row the next search would clear.
+      final bloc = blocWithModelReply(
+        {
+          'almonds': [
+            meal('Almonds', servingQuantity: 1.2).withPortionsUnavailable(),
+          ],
+        },
+        const [
+          ParsedMealItem(query: 'almonds', quantity: 1, portion: 'handful'),
+        ],
+      );
+
+      final row = (await parse(bloc, 'a handful of almonds')).rows.single;
+
+      expect(row.meal?.portionsUnavailable, isTrue);
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+
+      // The rule is the flag, not the list's length. The repository never
+      // pairs the flag with a list today, so this state is constructed
+      // rather than reached — but a path that one day kept a stale list
+      // beside the flag must still stay quiet, and the empty-list gate
+      // above would not catch it.
+      final stale = BulkAddRow(
+        resolved: ResolvedMealItem(
+          parsed: const ParsedMealItem(
+            query: 'almonds',
+            quantity: 1,
+            portion: 'handful',
+          ),
+          candidates: [
+            MealEntity(
+              code: 'almonds',
+              name: 'Almonds',
+              url: null,
+              mealQuantity: null,
+              mealUnit: null,
+              servingQuantity: 1.2,
+              servingUnit: null,
+              servingSize: null,
+              portions: const [nut],
+              portionsUnavailable: true,
+              source: MealSourceEntity.off,
+              nutriments: MealNutrimentsEntity.empty(),
+            ),
+          ],
+          selectedIndex: 0,
+          confidence: 0.9,
+        ),
+        selectedIndex: 0,
+        amountText: '1',
+        unit: 'serving',
+      );
+      expect(stale.portionKeyMissed, isFalse);
+    });
+
+    test('a photo miss stays quiet', () async {
+      // "banana, 1, large" with no large row logs the default row — the same
+      // one the count alone would have produced. Most survey records the app
+      // can see carry no size row, so a warning here would fire on most
+      // photo rows and become wallpaper; the batch banner is the marker.
+      // The rows are chosen so that neither the key nor the query word
+      // lands: only the photo gate keeps this quiet.
+      final bloc = blocWith(
+        {
+          'banana': [
+            meal(
+              'Banana',
+              servingQuantity: 126,
+              portions: const [
+                MealPortionEntity(
+                  label: '1 small',
+                  gramWeight: 101,
+                  localized: false,
+                ),
+                MealPortionEntity(
+                  label: '1 cup, sliced',
+                  gramWeight: 150,
+                  localized: false,
+                ),
+              ],
+            ),
+          ],
+        },
+        photoReader: _StubPhotoReader(
+          const MealPhotoRead(
+            MealTextParseResult(
+              items: [
+                ParsedMealItem(query: 'banana', quantity: 1, portion: 'large'),
+              ],
+              errors: [],
+            ),
+          ),
+        ),
+      );
+      bloc.add(ReadMealPhotoEvent(photo: _photo, usesImperialUnits: false));
+      final state =
+          await bloc.stream.firstWhere((s) => s is BulkAddLoadedState)
+              as BulkAddLoadedState;
+
+      final row = state.rows.single;
+      expect(state.source, BulkAddReadSource.photo);
+      expect(row.fromPhoto, isTrue);
+      expect(row.unit, 'serving');
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+      expect(row.willBeLogged, isTrue);
+
+      // The gate has to survive the row being edited: `copyWith` carries
+      // `fromPhoto`, and resetting it there would let the miss fire the
+      // moment the user touched the amount. Read straight after the load,
+      // the assertions above cannot tell.
+      bloc.add(const ChangeRowAmountEvent(0, '2'));
+      final edited =
+          (await bloc.stream.first as BulkAddLoadedState).rows.single;
+      expect(edited.amountText, '2');
+      expect(edited.fromPhoto, isTrue);
+      expect(edited.portionKeyMissed, isFalse);
+      expect(edited.amountNeedsCheck, isFalse);
+    });
+
+    test('picking a unit settles it, like the other clauses', () async {
+      // The flag points at the dropdown, and the dropdown holds every
+      // portion the food has. Choosing one is the answer.
+      final bloc = blocWithModelReply(
+        {
+          'almonds': [
+            meal('Almonds', servingQuantity: 1.2, portions: [nut]),
+          ],
+        },
+        const [
+          ParsedMealItem(query: 'almonds', quantity: 1, portion: 'handful'),
+        ],
+      );
+      await parse(bloc, 'a handful of almonds');
+
+      bloc.add(const ChangeRowUnitEvent(0, 'g'));
+      final state = await bloc.stream.first as BulkAddLoadedState;
+
+      final row = state.rows.single;
+      expect(row.unitChosenByUser, isTrue);
+      expect(row.amountNeedsCheck, isFalse);
+      expect(row.willBeLogged, isTrue);
+    });
+
+    test('no key, no miss: the typed path cannot see one', () async {
+      // The deterministic parser keeps the word inside the query and sets no
+      // key, so "a handful of almonds" typed without a model is
+      // indistinguishable from no word at all. The same 1 nut, unmarked —
+      // the asymmetry #1159 records and does not fix.
+      final bloc = blocWith({
+        'handful of almonds': [
+          meal('Almonds', servingQuantity: 1.2, portions: [nut]),
+        ],
+      });
+
+      final row = (await parse(bloc, '1 handful of almonds')).rows.single;
+
+      expect(row.resolved.parsed.portion, isNull);
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+    });
+
+    test('a key with no count never reached the matcher', () async {
+      // `_initialUnit` only consults the word under a stated quantity, so
+      // there was no match to miss; the row takes the serving default and
+      // `amountNeedsCheck` keeps its own gate on a stated quantity.
+      final bloc = blocWithModelReply(
+        {
+          'almonds': [
+            meal('Almonds', servingQuantity: 1.2, portions: [nut]),
+          ],
+        },
+        const [ParsedMealItem(query: 'almonds', portion: 'handful')],
+      );
+
+      final row = (await parse(bloc, 'almonds')).rows.single;
+
+      expect(row.portionKeyMissed, isFalse);
+      expect(row.amountNeedsCheck, isFalse);
+    });
+  });
+
+  group('a refused quantity says which refusal it is (#1013)', () {
+    /// A perfectly ordinary loggable row, with [amount] typed into it.
+    Future<BulkAddRow> rowWithAmount(String amount) async {
+      final bloc = blocWith({
+        'rice': [meal('Rice')],
+      });
+      final state = await parse(bloc, '100g rice');
+      return state.rows.single.copyWith(amountText: amount);
+    }
+
+    test('zero is refused for being zero', () async {
+      final row = await rowWithAmount('0');
+
+      expect(row.quantityError, BulkAddQuantityError.tooSmall);
+    });
+
+    test('and so is a zero written with decimals', () async {
+      final row = await rowWithAmount('0.00');
+
+      expect(row.quantityError, BulkAddQuantityError.tooSmall);
+    });
+
+    test('past the bound is refused for being past the bound', () async {
+      final row = await rowWithAmount('${bulkAddMaxQuantity + 1}');
+
+      expect(row.quantityError, BulkAddQuantityError.tooLarge);
+    });
+
+    test('the bound itself is allowed', () async {
+      final row = await rowWithAmount('$bulkAddMaxQuantity');
+
+      expect(row.quantityError, isNull);
+    });
+
+    test('a third decimal is refused for its shape, not its size', () async {
+      // The rule nothing on the screen states. Reported as itself rather
+      // than as "too small", which is what a check that parsed first would
+      // have called 0.001.
+      final row = await rowWithAmount('0.001');
+
+      expect(row.quantityError, BulkAddQuantityError.malformed);
+    });
+
+    test('an emptied field is refused the same way', () async {
+      final row = await rowWithAmount('');
+
+      expect(row.quantityError, BulkAddQuantityError.malformed);
+    });
+
+    test('a decimal comma is a number, not a fault', () async {
+      final row = await rowWithAmount('1,5');
+
+      expect(row.quantityError, isNull);
+    });
+
+    test('surrounding space is not a fault either', () async {
+      final row = await rowWithAmount(' 100 ');
+
+      expect(row.quantityError, isNull);
+    });
+
+    test('the three refusals are three distinct answers', () async {
+      final errors = {
+        (await rowWithAmount('0')).quantityError,
+        (await rowWithAmount('99999')).quantityError,
+        (await rowWithAmount('1.234')).quantityError,
+      };
+
+      // One message for all three was the bug: `Rice: Quantity`, whichever
+      // of them had happened.
+      expect(errors, hasLength(3));
+    });
+
+    test('a refused row is still part of the batch', () async {
+      // The batch is all-or-nothing, so a bad amount has to be handed back
+      // to the user rather than filtered out of the write — dropping it
+      // would log everything else and say nothing about the row that was
+      // meant to be there.
+      final row = await rowWithAmount('0');
+
+      expect(row.quantityError, isNotNull);
+      expect(row.willBeLogged, isTrue);
+    });
+  });
 }
 
 final _photo = MealPhoto(

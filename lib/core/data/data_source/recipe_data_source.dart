@@ -57,4 +57,8 @@ class RecipeDataSource {
       }
     }
   }
+
+  /// Fires after every write to the box, so a list showing a recipe can
+  /// follow an edit made on another screen.
+  Stream<void> watch() => _recipeBox.watch().map((_) {});
 }

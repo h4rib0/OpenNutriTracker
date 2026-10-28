@@ -17,6 +17,12 @@ class PolarInfluxdbDataSource {
   static const double _defaultFatGPerKg = 0.8;
 
   final _log = Logger('PolarInfluxdbDataSource');
+
+  // One home load asks for the weight from several usecases; keep the last
+  // answer briefly so that is one InfluxDB query, not several.
+  static const _weightCacheTtl = Duration(seconds: 30);
+  double? _cachedWeightKg;
+  DateTime? _cachedWeightAt;
   final FlutterSecureStorage _storage = SecureAppStorageProvider.secureAppStorage;
 
   Future<String> getUrl() async => await _storage.read(key: _keyUrl) ?? '';
@@ -49,6 +55,7 @@ class PolarInfluxdbDataSource {
     await _storage.write(key: _keyIsV2, value: isV2.toString());
     await _storage.write(key: _keyToken, value: token);
     await _storage.write(key: _keyTriggerUrl, value: triggerUrl);
+    _cachedWeightAt = null;
   }
 
   /// Calls the configured trigger URL to start a fresh Polar → InfluxDB sync.
@@ -162,6 +169,17 @@ class PolarInfluxdbDataSource {
   }
 
   Future<double?> fetchLatestWeightKg() async {
+    final cachedAt = _cachedWeightAt;
+    if (cachedAt != null && DateTime.now().difference(cachedAt) < _weightCacheTtl) {
+      return _cachedWeightKg;
+    }
+    final weightKg = await _fetchLatestWeightKgUncached();
+    _cachedWeightKg = weightKg;
+    _cachedWeightAt = DateTime.now();
+    return weightKg;
+  }
+
+  Future<double?> _fetchLatestWeightKgUncached() async {
     final url = await getUrl();
     final database = await getDatabase();
     if (url.isEmpty || database.isEmpty) return null;

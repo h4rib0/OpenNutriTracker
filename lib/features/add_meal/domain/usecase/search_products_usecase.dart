@@ -15,13 +15,19 @@ import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dar
 /// or failed (rate limit, timeout, network error). The UI uses this to
 /// decide whether to render a "no remote results" hint below the custom-meal
 /// matches.
+///
+/// [remoteSourceFailed] is true only when the remote source threw — a
+/// genuine zero-row answer leaves it false. The "All" view needs the two
+/// apart: a provider outage must not read as "no matching foods".
 class SearchProductsResult {
   final List<MealEntity> meals;
   final bool remoteSourceEmpty;
+  final bool remoteSourceFailed;
 
   const SearchProductsResult({
     required this.meals,
     required this.remoteSourceEmpty,
+    this.remoteSourceFailed = false,
   });
 }
 
@@ -64,9 +70,9 @@ class SearchProductsUseCase {
     // unbounded. Items the user actually selects (logs an intake of)
     // get their timestamp refreshed and stay until 90 days after the
     // last selection.
-    await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote,
-        cacheSource: MealSourceEntity.off);
+    await _cacheRemoteResults(remote.meals);
+    return _buildResult(searchString, remote.meals,
+        remoteFailed: remote.failed, cacheSource: MealSourceEntity.off);
   }
 
   /// Searches the reference-food corpus. "FDC" here names the *data* (USDA
@@ -74,9 +80,17 @@ class SearchProductsUseCase {
   /// host: the request goes to the Supabase backend, never to USDA. The name
   /// is kept because [MealSourceEntity.fdc] is persisted in Hive and renaming
   /// it would need a data migration.
+  ///
+  /// [forResolution] is what `ResolveParsedMealsUseCase` passes and the
+  /// Food tab does not: the backend's hundred rows are cut to twenty in
+  /// the data source, and for the resolver's page — which it auto-selects
+  /// from — that cut reads each row's `has_portion` column, where the
+  /// Food tab's page is cut without it (#1164 part 3, #1190; the cut's
+  /// comment in `sp_food_data_source.dart` has the measurements).
   Future<SearchProductsResult> searchFDCFoodByString(
     String searchString, {
     bool skipRemote = false,
+    bool forResolution = false,
   }) async {
     if (skipRemote) {
       return _buildResult(searchString, const [],
@@ -84,11 +98,14 @@ class SearchProductsUseCase {
     }
     final remote = await _safeRemoteCall(
       'FDC',
-      () => _productsRepository.getSupabaseFoodsByString(searchString),
+      () => _productsRepository.getSupabaseFoodsByString(
+        searchString,
+        forResolution: forResolution,
+      ),
     );
-    await _cacheRemoteResults(remote);
-    return _buildResult(searchString, remote,
-        cacheSource: MealSourceEntity.fdc);
+    await _cacheRemoteResults(remote.meals);
+    return _buildResult(searchString, remote.meals,
+        remoteFailed: remote.failed, cacheSource: MealSourceEntity.fdc);
   }
 
   Future<void> _cacheRemoteResults(List<MealEntity> remote) async {
@@ -105,20 +122,21 @@ class SearchProductsUseCase {
   /// Run a remote search and fall back to an empty list when the source
   /// throws (rate limit, timeout, network failure, etc). The caller still
   /// receives matching custom meals from local intake history even when the
-  /// remote API is unavailable.
-  Future<List<MealEntity>> _safeRemoteCall(
+  /// remote API is unavailable; [failed] tells that fallback apart from a
+  /// source that answered with zero rows.
+  Future<({List<MealEntity> meals, bool failed})> _safeRemoteCall(
     String sourceLabel,
     Future<List<MealEntity>> Function() call,
   ) async {
     try {
-      return await call();
+      return (meals: await call(), failed: false);
     } catch (exception, stack) {
       _log.warning(
         '$sourceLabel search failed; falling back to custom-meal results only',
         exception,
         stack,
       );
-      return const [];
+      return (meals: const <MealEntity>[], failed: true);
     }
   }
 
@@ -126,6 +144,7 @@ class SearchProductsUseCase {
     String searchString,
     List<MealEntity> remoteResults, {
     bool remoteSkipped = false,
+    bool remoteFailed = false,
     required MealSourceEntity cacheSource,
   }) async {
     // When the remote source was deliberately skipped (short query), don't
@@ -138,6 +157,7 @@ class SearchProductsUseCase {
       return SearchProductsResult(
         meals: remoteResults,
         remoteSourceEmpty: remoteSourceEmpty,
+        remoteSourceFailed: remoteFailed,
       );
     }
 
@@ -191,7 +211,22 @@ class SearchProductsUseCase {
     // already filters server-side. Entries without a backendSource (OFF
     // products, pre-migration rows) are always kept — only Supabase backend
     // sources are user-selectable.
+    //
+    // A record this search's remote page returned is in the cache already
+    // — `_cacheRemoteResults` ran first — and its cached copy takes the
+    // fresh copy's place in the dedup below. The cache cannot hold
+    // everything a fresh backend result carries, though: `MealDBO` has no
+    // column for `portions` or for `servingSizeIsLocalized`, so the copy
+    // read back is the same record with its portions gone, and the
+    // resolver, which scores portions (#1164) and offers them for picking
+    // (#968), saw none on this path from the first search on. Every
+    // persisted field agrees between the two — the cache was just written
+    // from the page — so the fresh entity stands in the cached copy's slot:
+    // the position is the cache's, the data the page's (see [_freshest]).
     final config = await _getConfigUsecase.getConfig();
+    final freshByKey = {
+      for (final meal in remoteResults) _dedupKey(meal): meal,
+    };
     final fromCache = _cachedOffMealDataSource
         .getAllByMostRecentlyTouched()
         .map(MealEntity.fromMealDBO)
@@ -200,14 +235,15 @@ class SearchProductsUseCase {
             meal.backendSource == null ||
             config.isFoodSourceEnabled(meal.backendSource!))
         .where((meal) => _mealMatchesSearch(meal, normalizedSearchString))
+        .map((meal) => _freshest(meal, freshByKey))
         .toList();
 
     // Cache-first ordering: cached entries appear before fresh remote
     // results. The dedup helper takes the first occurrence, so a cached
-    // entry wins when its code matches a fresh remote one — keeps the
-    // search list stable from the user's perspective ("the version I
-    // saw yesterday is still at the top"). Fresh remote data still
-    // wins on the per-item refresh path triggered by intake-add.
+    // entry's position wins when its code matches a fresh remote one —
+    // keeps the search list stable from the user's perspective ("the
+    // version I saw yesterday is still at the top"). Fresh remote data
+    // still wins on the per-item refresh path triggered by intake-add.
     return SearchProductsResult(
       meals: _deduplicateMeals([
         ...fromCustomMealBox,
@@ -217,6 +253,7 @@ class SearchProductsUseCase {
         ...remoteResults,
       ]),
       remoteSourceEmpty: remoteSourceEmpty,
+      remoteSourceFailed: remoteFailed,
     );
   }
 
@@ -226,13 +263,29 @@ class SearchProductsUseCase {
         (meal.brands?.toLowerCase().contains(normalizedSearchString) ?? false);
   }
 
+  /// The fresh copy of [cached] when this search's remote page returned the
+  /// same record, else [cached] itself.
+  ///
+  /// The one fresh copy not taken is the one
+  /// [RemoteSearchCacheDataSource.cacheFromSearch] refuses to write: a thin
+  /// search result standing in for a product already hydrated to its full
+  /// record. The cache kept the full one, and so does the list.
+  MealEntity _freshest(MealEntity cached, Map<String, MealEntity> freshByKey) {
+    final fresh = freshByKey[_dedupKey(cached)];
+    if (fresh == null) return cached;
+    if (cached.detailed && !fresh.detailed) return cached;
+    return fresh;
+  }
+
+  String _dedupKey(MealEntity meal) =>
+      '${meal.source.name}:${meal.code ?? meal.name ?? ''}';
+
   List<MealEntity> _deduplicateMeals(List<MealEntity> meals) {
     final seenKeys = <String>{};
     final uniqueMeals = <MealEntity>[];
 
     for (final meal in meals) {
-      final key = '${meal.source.name}:${meal.code ?? meal.name ?? ''}';
-      if (seenKeys.add(key)) {
+      if (seenKeys.add(_dedupKey(meal))) {
         uniqueMeals.add(meal);
       }
     }

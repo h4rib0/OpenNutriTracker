@@ -19,12 +19,10 @@ class GetKcalGoalUsecase {
 
   GetKcalGoalUsecase(this._userRepository, this._configRepository, this._userActivityRepository, [this._polarDataSource]);
 
-  /// [day] is the logical day whose Polar energy is used (defaults to now).
   Future<double> getKcalGoal({
     UserEntity? userEntity,
     double? totalKcalActivitiesParam,
     double? kcalUserAdjustment,
-    DateTime? day,
   }) async {
     final user = userEntity ?? await _userRepository.getUserData();
     final config = await _configRepository.getConfig();
@@ -53,7 +51,9 @@ class GetKcalGoalUsecase {
     if (polar != null && await polar.isPolarConfigured()) {
       final weightKg = await polar.fetchLatestWeightKg() ?? user.weightKG;
       final bmr = PolarBmrCalc.getBMRMifflinStJeor1990(user.copyWith(weightKG: weightKg));
-      final polarActiveKcal = await polar.fetchActiveKcalForDate(day ?? DateTime.now()) ?? 0;
+      // The logical day (day boundary), same as the home screen's.
+      final day = DayBoundaryCalc.currentLogicalDayMinutes(config.dayStartOffsetTotalMinutes);
+      final polarActiveKcal = await polar.fetchActiveKcalForDate(day) ?? 0;
       return bmr + polarActiveKcal + totalKcalActivities + (config.userKcalAdjustment ?? 0);
     }
 

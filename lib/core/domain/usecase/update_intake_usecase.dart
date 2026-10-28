@@ -4,9 +4,10 @@ import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 
 class UpdateIntakeUsecase {
   final IntakeRepository _intakeRepository;
-  final PolarInfluxdbDataSource _polarDataSource;
+  // Fork: optional so upstream code and tests can build it without Polar.
+  final PolarInfluxdbDataSource? _polarDataSource;
 
-  UpdateIntakeUsecase(this._intakeRepository, this._polarDataSource);
+  UpdateIntakeUsecase(this._intakeRepository, [this._polarDataSource]);
 
   Future<IntakeEntity?> updateIntake(
     String intakeId,
@@ -14,7 +15,7 @@ class UpdateIntakeUsecase {
   ) async {
     final updated = await _intakeRepository.updateIntake(intakeId, intakeFields);
     if (updated != null) {
-      _polarDataSource.writeIntake(updated); // fire-and-forget, overwrites by timestamp
+      _polarDataSource?.writeIntake(updated); // fire-and-forget, overwrites by timestamp
     }
     return updated;
   }

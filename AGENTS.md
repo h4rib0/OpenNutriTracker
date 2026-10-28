@@ -8,6 +8,39 @@ OpenNutriTracker is a Flutter mobile app (iOS/Android) for nutritional tracking.
 
 Flutter version: **3.44.6** (managed via FVM; see `.fvmrc`)
 
+## Code Review Rules
+
+Reviews are advisory and cannot block a merge. Most PRs come from outside contributors, often their first — write for that person. Cite `file:line`, phrase findings as observations, and raise at most five. Silence is a valid review.
+
+Never assert a count, or an "every locale" claim, you have not computed from this PR's own diff — not from the PR description, which has been wrong before. Don't restate what CI already failed on: `linux-checks` runs `just check_agents_md`, `just check_l10n`, `just build`, `flutter analyze`, `just test` — it deliberately does **not** run the format check. Don't comment on the target branch; a maintainer repoints those.
+
+When a diff edits prose that already existed, separate what it introduced from what it inherited, and say which. Never ask for a fix to text the PR did not touch — on a documentation-correction PR that is the whole difference between useful feedback and asking someone to repair another person's mistake.
+
+### 1. Localization in a code PR: `intl_en.arb` only
+
+Translations come from Weblate as their own pull requests (`CONTRIBUTING.md`, "Translating"); the `Merge Weblate pull requests` workflow merges them with a merge commit once CI is green, and a Weblate PR must never be squashed — that locks the component (recovery: Weblate's *Reset and reapply*). A code PR that adds or changes a string edits `lib/l10n/intl_en.arb` alone; the other languages show English until Weblate fills them, and `just check_l10n` does not fail on that. Report a code PR that hand-edits another `intl_*.arb` — it collides with Weblate's next rebase — unless the PR is Weblate's own, or ships a language (a line in `lib/core/l10n/shipped_locales.dart` plus `dart run tool/check_locales.dart --fix`; `just test` checks that the platform lists agree). Never ask a contributor to translate, and never audit keys the PR did not touch.
+
+Before approving a new key, search the ARBs for one that already says the same thing — this app has shipped a while and often does. A second phrasing for one action is worse than a late translation: name the existing key.
+
+### 2. Never report an ARB key-count difference
+
+Locale ARBs legitimately lag the template — Weblate fills them over time — and carry differing amounts of `@key` metadata, so counts differ between any two files. Say nothing about counts, and nothing about a key missing from a locale.
+
+### 3. Semantics identifiers
+
+New interactive widgets take `Semantics(identifier: 'kebab-case')`, locale-independent. Exempt: children of a `ListView`/`GridView.builder` (the parent surface is labelled instead), and OK/Cancel inside a Material dialog. Don't ask for `button:`/`textField:` when the child already publishes that role — unless `excludeSemantics: true` is set, where the flag is required.
+
+`container: true` is **conditional**: needed only when the immediate parent is layout-greedy (`Expanded`, a filling `Container`). Under a `Wrap`, or any parent sized by its content, its absence is correct — do not ask for it. `Align` is the documented alternative to the flag, not a trigger for it. Bounds are a device fact (`uiautomator dump`), not a diff fact: ask, never assert.
+
+### 4. Everything else, in one line each
+
+- Row titles: `Expanded` on the title plus `maxLines` + ellipsis, `AutoSizeText` for prominent headers. Never `Flexible(title)` beside a `Spacer()` — that starves the title. Wrapping body copy, and Rows sized by their content, are exempt.
+- `lib/generated/` and `env.g.dart` are gitignored — their absence from a diff is correct, never ask for them. Every other `*.g.dart` is committed: a changed `@HiveType` / `@HiveField` / `@JsonSerializable` without its regenerated file is a real finding.
+- `locator<T>()` on a `registerFactory` type returns a **fresh** instance in its initial state, not the screen's — reading `.state` off one is a bug `flutter analyze` cannot see.
+- The same constructor call with the same arguments at three or more sites: point at it once.
+- Reformatted lines the change did not need: mention once, ask for those hunks back. The cause is pinned-SDK format drift plus the `just format` that `CONTRIBUTING.md` tells contributors to run — never blame the contributor, never suggest a repo-wide reformat.
+- If you can read the linked issue, name any state it asked for that no test covers. If you cannot, do not characterise what it asked for.
+
 ## Commits
 
 - Use [conventional commits](https://www.conventionalcommits.org/) (e.g. `feat:`, `fix:`, `chore:`, `docs:`).
@@ -32,61 +65,9 @@ just dev           # fvm flutter run --flavor develop
 just dev_seed      # same, but wipes the active profile and seeds a year of demo data — see below
 ```
 
-### Demo data — the dev seeder and the shipped "try it" onboarding flow
+See [`docs/demo-data.md`](docs/demo-data.md) for the demo seeder and the shipped
+"try it" onboarding flow that share `lib/core/utils/demo/`.
 
-One seeding engine, two callers — a dev-only fixture and a real,
-shipped-in-every-build feature:
-
-- **`just dev_seed`** runs a separate entry point, `lib/dev/main_dev.dart`,
-  instead of the normal `lib/main.dart`. On every launch it wipes the active
-  profile's Hive boxes and reseeds a full year of realistic data — skips
-  onboarding entirely, and lands on Home. This is dev-only: `main_dev.dart`
-  throws if built in release mode, and it's never referenced from
-  `lib/main.dart`, so it can't leak into a shipped build.
-- **The onboarding intro screen's "Try it with sample data" link**
-  (`lib/features/onboarding/presentation/onboarding_intro_page_body.dart`)
-  is a real, shipped feature — a prospective user can seed the same active
-  profile with three weeks of always-on-track sample data and jump straight
-  to Home, but only with the privacy-policy checkbox ticked, the same bar as
-  Start — tapping it unchecked just explains itself in a snackbar and seeds
-  nothing, so no path into the app skips policy acceptance. The checkbox
-  that is independent is the data-collection one: crash reporting stays off
-  (and locked) while demo data is active.
-  While the active profile holds sample data, a persistent banner
-  (`lib/core/presentation/widgets/demo_mode_banner.dart`) shows on every tab
-  of `MainScreen`; tapping "Set up your profile" wipes it and returns to
-  onboarding (mirrors `SettingsScreen._confirmDeleteAllData`'s
-  confirm-then-wipe-then-route pattern). Whether the active profile holds
-  sample data is tracked by `ConfigEntity.isDemoData`, cleared for free by
-  `DeleteAllUserDataUsecase.deleteAll()` (which already wipes the whole
-  config box) and defensively re-cleared when real onboarding completes
-  (`OnboardingBloc.saveOnboardingData`).
-
-Both callers share [`lib/core/utils/demo/`](lib/core/utils/demo/) — this
-is **not** dev-only, since the onboarding flow needs it in every build:
-
-- `demo_seeder.dart` — `seedDemoData(DemoSeedOptions options)`, the
-  day-loop/bulk-write engine. `DemoSeedOptions.dev` (365 days, ~10% of days
-  deliberately miss the calorie goal, a 15-day guaranteed current streak) vs
-  `DemoSeedOptions.onboarding` (21 days, `missedDayProbability: 0.0` so
-  every day is on-track by construction — no separate "flattering" content
-  needed, just that one dial) is the only thing that differs between the
-  exhaustive QA fixture and the public first-impression demo.
-- `demo_content.dart` — the food set, activity pool, recipes, and the
-  per-day macro-targeting algorithm. Duration-agnostic; reused unchanged by
-  both presets.
-- `unsplash_attribution.dart` — a small, hand-picked set of Unsplash photo
-  ids (not a live search), so seeding needs network access only to fetch
-  those fixed URLs (and downloads the profile picture locally); a failed
-  lookup just skips that one photo rather than aborting the seed. Also
-  carries the photographer-credit lookup and small credit-line widget shown
-  on the meal detail screen and the profile editor — see the file's doc
-  comment for why hardcoded URLs sidestep Unsplash's stricter API usage
-  terms.
-
-Data is generated from a fixed-seed RNG (`demoRng` in `demo_content.dart`),
-so re-seeding reproduces the same fixture every time rather than a new
-random one.
 
 Run a single test file:
 
@@ -148,15 +129,17 @@ dart run build_runner build
 
 ## Localization
 
-Source strings live in `lib/l10n/intl_en.arb` (and locale ARBs for `de`, `cs`, `it`, `pl`, `sk`, `tr`, `uk`, `zh`). `lib/generated/l10n.dart` plus one `l10n_<locale>.dart` per locale are produced by `flutter gen-l10n`, configured in `l10n.yaml`.
+Source strings live in `lib/l10n/intl_en.arb`. The other `lib/l10n/intl_<code>.arb` files belong to Weblate: it lands them while they are still being translated, so their presence does not mean the language ships. `lib/generated/l10n.dart` plus one `l10n_<locale>.dart` per locale are produced by `flutter gen-l10n`, configured in `l10n.yaml`.
 
-The generated files are **gitignored — never edit them by hand**. Add the key to every ARB (all nine stay at the same key count) and run `just gen_l10n`. Placeholder metadata (`"@key": {"placeholders": ...}`) only needs to be declared in the template `intl_en.arb`.
+The generated files are **gitignored — never edit them by hand**. Add a key to `intl_en.arb` only, with its `"@key": {"placeholders": ...}` metadata, and run `just gen_l10n`; a missing translation falls back to English and is not a CI failure. `just check_l10n` fails only on an ARB gen-l10n rejects or an empty (or whitespace-only) `""` value.
 
-Note: the `SupportedLanguage` enum maps device locales to `food_translation` locales via `SPConst.translationLocaleOf` (`en` reads `food_summary.name` directly; `de`, `pl`, `zh`, `cs`, `it`, `sk`, `tr`, `uk` query translations, falling back to English).
+Shipped languages are the map in `lib/core/l10n/shipped_locales.dart` — resolution, the Settings picker, `Info.plist` and `locales_config.xml` all derive from it (`tool/check_locales.dart`, run by `just test`). The recipe is in that file's header.
+
+Note: the `SupportedLanguage` enum maps device locales to `food_translation` locales via `SPConst.translationLocaleOf` (`en` reads `food_summary.name` directly; `de`, `pl`, `zh`, `cs`, `it`, `sk`, `tr`, `uk` query translations, falling back to English; `hu` and `es` are in the enum for Open Food Facts names but map to `null` until the backend carries their rows). It is about food names from the backend, not UI languages, and is deliberately separate.
 
 ## Code Style
 
-The project uses a **120-character line width** (configured in `analysis_options.yaml`). The `just format` command targets only `./lib/core ./lib/features ./lib/l10n ./test` — it deliberately excludes `lib/generated/`. Do not run `dart format` on `lib/generated/` files.
+`just format` runs `dart format` with no `--line-length`, so the width `just ci` enforces is the formatter's own default of **80 characters**. Nothing configures a different one: `analysis_options.yaml` sets no width, `pubspec.yaml` has no formatter section, and there is no `.editorconfig`. About 1.7% of lines do run past 80 — those are the ones `dart format` will not break, such as long string literals, URLs and comments. The `just format` command targets only `./lib/core ./lib/features ./lib/l10n ./test` — it deliberately excludes `lib/generated/`. Do not run `dart format` on `lib/generated/` files.
 
 ## Accessibility identifiers for interactive widgets
 
@@ -221,59 +204,8 @@ Or — if `container: true` causes other TalkBack issues — restructure the lay
 
 Always verify with `adb shell uiautomator dump /sdcard/d.xml && adb pull /sdcard/d.xml /tmp/d.xml && grep your-id /tmp/d.xml` after adding a label inside a flex container. Reasonable bounds are tens to a few hundred pixels on each side, not screen-sized.
 
-### Flutter widgets on Android use `content-desc`, not `text`
-
-When inspecting the uiautomator dump, the visible text of Flutter widgets is reported under `content-desc`, not `text`. System dialogs (DatePicker, AlertDialog) use `text`. Test drivers that find widgets by visible label must check both.
-
-### Form fields drift between taps
-
-Flutter `TextField` / `TextFormField` widgets all report screen-wide `bounds` in the uiautomator dump (the `container: true` gotcha applied to every form input). Tapping a field by hard-coded coordinates from an earlier dump only works once — the moment the keyboard pops up, every layout in the form shifts, and the next tap lands on the wrong row.
-
-The `adb-driver.sh` helpers `tap_field_by_hint`, `enter_text_in_field`, and `fill_fields_by_hint` re-dump the UI before every tap and locate the field by its placeholder `hint` attribute (uiautomator dumps the TextField's placeholder there even when there's no `Semantics(identifier:)` on the field). They also hide the keyboard between fields so the next field's hit target is calculated against the post-IME layout, not the pre-IME one.
-
-Use them for any custom-meal / recipe / onboarding flow that fills more than one input:
-
-```bash
-source tools/adb/adb-driver.sh
-fill_fields_by_hint \
-  'Meal name'     'Greek%syoghurt' \
-  'Energy (kcal)' '100' \
-  'Carbohydrates' '4' \
-  'Fat'           '5' \
-  'Protein'       '10'
-```
-
-Pass `clear` as a third argument to `enter_text_in_field` when overwriting an existing value:
-
-```bash
-enter_text_in_field 'Protein' '10' clear
-```
-
-### ADB test tooling
-
-Reusable ADB scripts live in `tools/adb/`:
-
-| Script | Purpose |
-|--------|---------|
-| `adb-driver.sh` | Core driver library: `tap_id`, `wait_for_id`, `enter_text_at`, `_tap_text`, `screenshot`, `list_ids`, plus form-field helpers `tap_field_by_hint`, `enter_text_in_field`, `fill_fields_by_hint`, `clear_focused_field`, `hide_keyboard`. Source from any test script. |
-| `walk-onboarding.sh` | Walks the 7-page onboarding flow, lands the app on the main screen. Exports `walk_onboarding()`. Run standalone or source it. |
-| `run-branch-tests.sh` | Sequential smoke-test runner for all triage branches: builds a debug APK, installs it, walks onboarding, and runs a branch-specific probe. Produces a pass/fail summary and per-branch screenshots. |
-
-Usage:
-
-```bash
-# Source the driver in a one-off script
-source tools/adb/adb-driver.sh
-wait_for_id 'nav-home' 15 && echo "on main screen"
-
-# Walk onboarding standalone (clears app data first)
-DEVICE=1C151FDEE003YJ bash tools/adb/walk-onboarding.sh
-
-# Run the full branch test pass (unattended, ~90 min)
-DEVICE=1C151FDEE003YJ bash tools/adb/run-branch-tests.sh
-```
-
-`DEVICE` defaults to the first device returned by `adb devices` when not set.
+See [`tools/adb/README.md`](tools/adb/README.md) for the ADB driver scripts, the
+`content-desc` gotcha, and the form-field helpers that re-dump before every tap.
 
 ### Enforcement
 
@@ -378,6 +310,7 @@ Named routes are defined in `NavigationOptions` and registered in `main.dart`. T
 | `WeightLogBox`                 | `WeightLogDBO`              | Weight history points for the profile trend chart                    |
 | `WaterIntakeBox`               | `WaterIntakeDBO`            | Water log entries powering the home chip                             |
 | `FastingBox`                   | `FastingSessionDBO`         | Fasting sessions (current and historical) for the timer              |
+| `FavouriteMealBox`             | `FavouriteMealDBO`          | Starred foods and meals for the add-food Favourites tab              |
 
 When adding a new `@HiveType`, assign a unique `typeId`. Check all existing DBOs to avoid collisions — IDs are currently scattered across 0–30+.
 
@@ -403,7 +336,7 @@ Calculation utilities live in `lib/core/utils/calc/`:
 
 ### Data export / import
 
-Settings screen exports to a `.zip` that bundles intakes, activities, tracked days, and recipes in both JSON (canonical, re-importable) and CSV (flat, for spreadsheets) formats — see [`docs/export-format.md`](docs/export-format.md) for the full schema. Import accepts the same zip and merges its contents into the existing boxes. User profile data (height, weight, birthday, PAL, goal) is intentionally **not** included in the export. Settings → Import also supports a pasted JSON blob for ad-hoc meal imports.
+Settings screen exports to a `.zip` that bundles intakes, activities and tracked days as JSON (canonical, re-importable) or CSV (flat, for spreadsheets); recipes, favourites, the weight log and custom activity templates are JSON-only — see [`docs/export-format.md`](docs/export-format.md) for the full schema. Import accepts the same zip and merges its contents into the existing boxes. User profile data (height, weight, birthday, PAL, goal) is intentionally **not** included in the export. Settings → Import also supports a pasted JSON blob for ad-hoc meal imports.
 
 ## GitHub issue and PR templates
 

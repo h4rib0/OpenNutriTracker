@@ -6,6 +6,7 @@ import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_sourc
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
+import 'package:opennutritracker/core/l10n/shipped_locales.dart';
 import 'package:opennutritracker/core/presentation/sources_screen.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_banner_version.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
@@ -17,11 +18,15 @@ import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dar
 import 'package:opennutritracker/core/domain/usecase/delete_all_user_data_usecase.dart';
 import 'package:opennutritracker/core/utils/app_const.dart';
 import 'package:opennutritracker/core/utils/app_locale_service.dart';
+import 'package:opennutritracker/core/data/repository/config_repository.dart';
+import 'package:opennutritracker/core/utils/app_locale_sync.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/daily_reminder_scheduler.dart';
 import 'package:opennutritracker/core/utils/notification_service.dart';
 import 'package:opennutritracker/core/utils/locale_provider.dart';
+import 'package:opennutritracker/core/utils/reload_diary_and_trends.dart';
 import 'package:opennutritracker/core/utils/theme_mode_provider.dart';
 import 'package:opennutritracker/core/utils/url_const.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
@@ -128,6 +133,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _settingsBloc.add(LoadSettingsEvent());
   }
 
+  /// Whether a route was covering this screen's own the last time we looked.
+  bool _wasCovered = false;
+
+  /// Reloads when the user comes back to this screen from a route pushed
+  /// over it.
+  ///
+  /// `initState` covers the pushed form, which is built fresh on every visit,
+  /// but the embedded form lives on in the You tab: the search and scan
+  /// screens that fill the cache are pushed over it and popped, and nothing
+  /// rebuilt it, so the "Clear cached items" count stayed at what it was
+  /// when Settings was first expanded (#1368). `isCurrentOf` makes this run
+  /// again whenever the route stops or starts being the top one.
+  void _reloadOnReturn() {
+    final isCurrent = ModalRoute.isCurrentOf(context) ?? true;
+    if (isCurrent && _wasCovered) _settingsBloc.add(LoadSettingsEvent());
+    _wasCovered = !isCurrent;
+  }
+
   /// Acts on what the caller asked the settings route for — see
   /// [SettingsScreenArguments].
   ///
@@ -136,6 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _reloadOnReturn();
     if (_routeRequestHandled || widget.embedded) return;
     _routeRequestHandled = true;
     final arguments = ModalRoute.of(context)?.settings.arguments;
@@ -154,6 +178,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final Widget body = BlocBuilder<SettingsBloc, SettingsState>(
       bloc: _settingsBloc,
+      // Every save and toggle reloads, and the reload starts with a loading
+      // state. Swapping the list for a spinner then threw its scroll position
+      // away and put the user back at the top, out of sight of the row they
+      // just changed (#1368). Only the first load shows the spinner; a reload
+      // keeps the list until the fresh values arrive.
+      buildWhen: (previous, current) =>
+          !(previous is SettingsLoadedState && current is SettingsLoadingState),
       builder: (context, state) {
         if (state is SettingsInitial) {
           _settingsBloc.add(LoadSettingsEvent());
@@ -238,6 +269,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () =>
                         _showEnergyUnitDialog(context, state.usesKilojoules),
                   ),
+                  // #1126: opt out of the serving-first default so the
+                  // meal-detail dropdown lands on the food unit (g, oz,
+                  // ml, fl oz) straight away. Sits after Energy unit in
+                  // the Units & Energy group since it steers the same
+                  // meal-detail dropdown. Off preserves the pre-existing
+                  // behaviour — serving wins whenever the food has one.
+                  _SettingsSwitchTile(
+                    identifier: 'settings-default-raw-food-units',
+                    palette: palette,
+                    icon: Icons.straighten_rounded,
+                    title: S.of(context).settingsDefaultToRawFoodUnitsLabel,
+                    subtitle: S
+                        .of(context)
+                        .settingsDefaultToRawFoodUnitsSubtitle,
+                    value: state.defaultToRawFoodUnits,
+                    onChanged: (bool value) {
+                      _settingsBloc.setDefaultToRawFoodUnits(value);
+                      _settingsBloc.add(LoadSettingsEvent());
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: Dimens.spacing20),
@@ -270,7 +321,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     identifier: 'settings-kcal-adjustment',
                     palette: palette,
                     icon: Icons.calculate_rounded,
-                    title: S.of(context).settingsKcalAdjustmentLabel,
+                    title: state.usesKilojoules
+                        ? S.of(context).settingsKjAdjustmentLabel
+                        : S.of(context).settingsKcalAdjustmentLabel,
                     onTap: () => _showKcalAdjustmentDialog(context),
                   ),
                   _SettingsTile(
@@ -334,10 +387,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.bar_chart_rounded,
                     title: S.of(context).settingsShowMealMacros,
                     value: state.showMealMacros,
-                    onChanged: (bool value) {
-                      _settingsBloc.setShowMealMacros(value);
+                    onChanged: (bool value) async {
+                      // Every reload below reads the flag back, so it must
+                      // be stored first.
+                      await _settingsBloc.setShowMealMacros(value);
                       _settingsBloc.add(LoadSettingsEvent());
                       _homeBloc.add(LoadItemsEvent());
+                      // The Diary's meal headers read the flag from
+                      // DiaryBloc, which keeps it until reloaded.
+                      reloadDiaryAndTrends();
                     },
                   ),
                   _SettingsSwitchTile(
@@ -361,36 +419,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: S.of(context).settingsNutrientsLabel,
                     subtitle: S.of(context).settingsNutrientsSubtitle,
                     onTap: () => _openNutrientVisibilityScreen(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Dimens.spacing20),
-              // Fork-only: Polar / InfluxDB integration and Supabase backup.
-              _categoryHeader(context, palette, 'Polar & Sync'),
-              _SettingsGroup(
-                palette: palette,
-                tiles: [
-                  _SettingsTile(
-                    identifier: 'settings-polar',
-                    palette: palette,
-                    icon: Icons.monitor_heart_rounded,
-                    title: 'Polar Integration',
-                    subtitle: 'InfluxDB URL & Datenbank konfigurieren',
-                    onTap: () => _showPolarInfluxdbDialog(context),
-                  ),
-                  Semantics(
-                    identifier: 'settings-sync-nutrients',
-                    child: _SettingsSwitchTile(
-                      palette: palette,
-                      icon: Icons.cloud_upload_rounded,
-                      title: 'Nährwert-Ergänzungen sichern',
-                      subtitle: 'Manuell eingetragene Nährwerte in Supabase speichern',
-                      value: state.syncNutrientsToSupabase,
-                      onChanged: (bool value) {
-                        _settingsBloc.setSyncNutrientsToSupabase(value);
-                        _settingsBloc.add(LoadSettingsEvent());
-                      },
-                    ),
                   ),
                 ],
               ),
@@ -611,6 +639,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: Dimens.spacing20),
+              // Fork-only: Polar / InfluxDB integration and Supabase backup.
+              _categoryHeader(context, palette, 'Polar & Sync'),
+              _SettingsGroup(
+                palette: palette,
+                tiles: [
+                  _SettingsTile(
+                    identifier: 'settings-polar',
+                    palette: palette,
+                    icon: Icons.monitor_heart_rounded,
+                    title: 'Polar Integration',
+                    subtitle: 'InfluxDB URL & Datenbank konfigurieren',
+                    onTap: () => _showPolarInfluxdbDialog(context),
+                  ),
+                  Semantics(
+                    identifier: 'settings-sync-nutrients',
+                    child: _SettingsSwitchTile(
+                      palette: palette,
+                      icon: Icons.cloud_upload_rounded,
+                      title: 'Nährwert-Ergänzungen sichern',
+                      subtitle: 'Manuell eingetragene Nährwerte in Supabase speichern',
+                      value: state.syncNutrientsToSupabase,
+                      onChanged: (bool value) {
+                        _settingsBloc.setSyncNutrientsToSupabase(value);
+                        _settingsBloc.add(LoadSettingsEvent());
+                      },
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: Dimens.spacing24),
               AppBannerVersion(versionNumber: state.versionNumber),
           ];
@@ -672,6 +730,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsLoadedState state,
   ) async {
     final l10n = S.of(context);
+    final locale = Localizations.localeOf(context);
     final notificationService = locator<NotificationService>();
     await notificationService.initialize();
     if (enabled) {
@@ -684,18 +743,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
         return;
       }
-      await notificationService.scheduleDailyReminder(
-        hour: state.notificationHour,
-        minute: state.notificationMinute,
-        title: l10n.notificationsDailyReminderTitle,
-        body: l10n.notificationsDailyReminderBody,
-        channelName: l10n.notificationsDailyReminderChannelName,
-        channelDescription: l10n.notificationsDailyReminderChannelDescription,
-      );
-    } else {
-      await notificationService.cancelDailyReminder();
     }
-    _settingsBloc.setNotificationsEnabled(enabled);
+    // Saves the choice and schedules or cancels in one step, in turn with
+    // any language-change refresh still running.
+    await locator<DailyReminderScheduler>().setEnabled(
+      enabled,
+      locale: locale,
+    );
     _settingsBloc.add(LoadSettingsEvent());
   }
 
@@ -703,18 +757,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     TimeOfDay current,
   ) async {
-    final l10n = S.of(context);
+    final locale = Localizations.localeOf(context);
     final picked = await showTimePicker(context: context, initialTime: current);
     if (picked == null) return;
-    _settingsBloc.setNotificationTime(picked.hour, picked.minute);
-    final notificationService = locator<NotificationService>();
-    await notificationService.scheduleDailyReminder(
-      hour: picked.hour,
-      minute: picked.minute,
-      title: l10n.notificationsDailyReminderTitle,
-      body: l10n.notificationsDailyReminderBody,
-      channelName: l10n.notificationsDailyReminderChannelName,
-      channelDescription: l10n.notificationsDailyReminderChannelDescription,
+    await locator<DailyReminderScheduler>().setTime(
+      picked.hour,
+      picked.minute,
+      locale: locale,
     );
     _settingsBloc.add(LoadSettingsEvent());
   }
@@ -1057,12 +1106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) =>
-          MacroSplitDialog(
-            settingsBloc: _settingsBloc,
-            homeBloc: _homeBloc,
-            diaryBloc: _diaryBloc,
-            calendarDayBloc: _calendarDayBloc,
-          ),
+          MacroSplitDialog(settingsBloc: _settingsBloc, homeBloc: _homeBloc),
     );
   }
 
@@ -1097,6 +1141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) => DiaryDayBoundaryDialog(
         settingsBloc: _settingsBloc,
         homeBloc: _homeBloc,
+        diaryBloc: _diaryBloc,
         calendarDayBloc: _calendarDayBloc,
       ),
     );
@@ -1303,19 +1348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  static const _supportedLocales = <String, String>{
-    'en': 'English',
-    'de': 'Deutsch',
-    'tr': 'Türkçe',
-    'cs': 'Čeština',
-    'it': 'Italiano',
-    'uk': 'Українська',
-    'zh': '中文',
-    'pl': 'Polski',
-    'sk': 'Slovenčina',
-  };
-
-  String? _localeDisplayName(String? code) => _supportedLocales[code];
+  String? _localeDisplayName(String? code) => shippedLocales[code];
 
   // Sentinel value meaning "follow system locale"
   static const _systemLocale = '';
@@ -1338,22 +1371,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     groupValue: selectedCode,
                     onChanged: (v) =>
                         setState(() => selectedCode = v as String),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        RadioListTile<String>(
-                          title: Text(
-                            S.of(context).settingsThemeSystemDefaultLabel,
+                    // The list outgrows a short phone, so it scrolls
+                    // between the title and the buttons (#1331).
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RadioListTile<String>(
+                            title: Text(
+                              S.of(context).settingsThemeSystemDefaultLabel,
+                            ),
+                            value: _systemLocale,
                           ),
-                          value: _systemLocale,
-                        ),
-                        ..._supportedLocales.entries.map(
-                          (e) => RadioListTile<String>(
-                            title: Text(e.value),
-                            value: e.key,
+                          ...shippedLocales.entries.map(
+                            (e) => RadioListTile<String>(
+                              title: Text(e.value),
+                              value: e.key,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -1366,17 +1403,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             TextButton(
               onPressed: () {
                 final locale = selectedCode.isEmpty ? null : selectedCode;
-                _settingsBloc.setSelectedLocale(locale);
+                final localeProvider = Provider.of<LocaleProvider>(
+                  context,
+                  listen: false,
+                );
+                final configRepo = locator<ConfigRepository>();
                 // Keep Android's per-app language picker in step, so someone
                 // who later looks there finds the language they chose here
                 // rather than a stale one. A no-op off Android and below
-                // API 33.
-                unawaited(AppLocaleService.setApplicationLocale(locale));
-                _settingsBloc.add(LoadSettingsEvent());
-                Provider.of<LocaleProvider>(
-                  context,
-                  listen: false,
-                ).updateLocale(locale != null ? Locale(locale) : null);
+                // API 33. The pushed value is read back and recorded, so a
+                // later clear in Android's picker is honoured even if this
+                // pick never fires a locale-change callback. The whole write
+                // shares the lock runtime reconciliation runs under, so an
+                // OS clear being reconciled cannot undo it halfway.
+                unawaited(
+                  applyInAppLocaleChoice(
+                    lock: localeSyncLock,
+                    localeCode: locale,
+                    persistSelectedLocale: _settingsBloc.setSelectedLocale,
+                    applyToApp: () {
+                      _settingsBloc.add(LoadSettingsEvent());
+                      localeProvider.updateLocale(
+                        locale != null ? Locale(locale) : null,
+                      );
+                    },
+                    pushToSystem: AppLocaleService.setApplicationLocale,
+                    readSystemTag: AppLocaleService.getApplicationLocale,
+                    markLocaleSyncSeeded: configRepo.setLocaleSyncSeeded,
+                    clearLocaleSyncSeeded: configRepo.clearLocaleSyncSeeded,
+                  ),
+                );
                 Navigator.of(context).pop();
               },
               child: Text(S.of(context).dialogOKLabel),
@@ -1750,6 +1806,7 @@ class _SettingsTile extends StatelessWidget {
 
 /// Switch variant of [_SettingsTile] for the boolean toggles.
 class _SettingsSwitchTile extends StatelessWidget {
+  final String? identifier;
   final AppPalette palette;
   final IconData icon;
   final String title;
@@ -1758,6 +1815,7 @@ class _SettingsSwitchTile extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const _SettingsSwitchTile({
+    this.identifier,
     required this.palette,
     required this.icon,
     required this.title,
@@ -1770,7 +1828,7 @@ class _SettingsSwitchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
     final text = Theme.of(context).textTheme;
-    return SwitchListTile(
+    final tile = SwitchListTile(
       secondary: _SettingsIconChip(palette: palette, icon: icon, color: accent),
       title: Text(
         title,
@@ -1785,6 +1843,8 @@ class _SettingsSwitchTile extends StatelessWidget {
       value: value,
       onChanged: onChanged,
     );
+    if (identifier == null) return tile;
+    return Semantics(identifier: identifier!, child: tile);
   }
 }
 

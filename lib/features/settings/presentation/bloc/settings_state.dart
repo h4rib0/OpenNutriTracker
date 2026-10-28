@@ -47,6 +47,11 @@ class SettingsLoadedState extends SettingsState {
   final bool healthImportEnabled;
   final double? healthWorkoutKcalMultiplier;
 
+  /// #1126: whether the meal-detail unit dropdown defaults to weight/volume
+  /// even when the food has a scalable serving. False = pre-existing
+  /// behaviour.
+  final bool defaultToRawFoodUnits;
+
   const SettingsLoadedState(
     this.versionNumber,
     this.sendAnonymousData,
@@ -73,6 +78,7 @@ class SettingsLoadedState extends SettingsState {
     this.isDemoData = false,
     this.healthImportEnabled = false,
     this.healthWorkoutKcalMultiplier,
+    this.defaultToRawFoodUnits = false,
   });
 
   @override
@@ -102,5 +108,6 @@ class SettingsLoadedState extends SettingsState {
         isDemoData,
         healthImportEnabled,
         healthWorkoutKcalMultiplier,
+        defaultToRawFoodUnits,
       ];
 }

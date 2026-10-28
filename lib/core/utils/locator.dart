@@ -4,6 +4,7 @@ import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/custom_activity_template_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/nutrient_override_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/favourite_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/health/health_service.dart';
 import 'package:opennutritracker/core/data/data_source/health/health_service_factory.dart';
 import 'package:opennutritracker/core/data/data_source/remote_search_cache_data_source.dart';
@@ -21,6 +22,7 @@ import 'package:opennutritracker/core/data/data_source/water_intake_data_source.
 import 'package:opennutritracker/core/data/data_source/weight_log_data_source.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/custom_activity_template_repository.dart';
+import 'package:opennutritracker/core/data/repository/favourite_meal_repository.dart';
 import 'package:opennutritracker/core/data/repository/health_import_repository.dart';
 import 'package:opennutritracker/core/data/repository/intake_repository.dart';
 import 'package:opennutritracker/core/data/repository/physical_activity_repository.dart';
@@ -53,6 +55,7 @@ import 'package:opennutritracker/core/domain/usecase/delete_weight_log_usecase.d
 import 'package:opennutritracker/core/domain/usecase/get_all_recipes_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_custom_activity_templates_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/get_favourite_meals_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_fork_goal_breakdown_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_breakdown_usecase.dart';
@@ -70,11 +73,15 @@ import 'package:opennutritracker/core/domain/usecase/import_workouts_usecase.dar
 import 'package:opennutritracker/core/domain/usecase/log_user_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/save_recipe_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/send_intake_to_profiles_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/set_day_boundary_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/switch_profile_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/toggle_favourite_meal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_profile_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_user_activity_usecase.dart';
 import 'package:opennutritracker/core/utils/config_initializer.dart';
+import 'package:opennutritracker/core/utils/off_micronutrient_repair.dart';
+import 'package:opennutritracker/core/utils/tracked_day_reconciler.dart';
 import 'package:opennutritracker/core/utils/env.dart';
 import 'package:http/http.dart' as http;
 import 'package:opennutritracker/core/utils/ai_credential_storage.dart';
@@ -86,10 +93,12 @@ import 'package:opennutritracker/features/add_meal/domain/usecase/read_meal_phot
 import 'package:opennutritracker/features/add_meal/domain/usecase/read_meal_text_usecase.dart';
 import 'package:opennutritracker/features/add_meal/domain/usecase/run_ai_endpoint_probe_usecase.dart';
 import 'package:opennutritracker/core/utils/hive_db_provider.dart';
+import 'package:opennutritracker/core/utils/daily_reminder_scheduler.dart';
 import 'package:opennutritracker/core/utils/notification_service.dart';
 import 'package:opennutritracker/core/utils/profile_bootstrap.dart';
 import 'package:opennutritracker/core/utils/ont_image_cache_manager.dart';
 import 'package:opennutritracker/core/utils/secure_app_storage_provider.dart';
+import 'package:opennutritracker/core/utils/widget/calorie_widget_writer.dart';
 import 'package:opennutritracker/features/activity_detail/presentation/bloc/activity_detail_bloc.dart';
 import 'package:opennutritracker/features/trends/presentation/bloc/trends_bloc.dart';
 import 'package:opennutritracker/features/add_activity/presentation/bloc/activities_bloc.dart';
@@ -101,6 +110,8 @@ import 'package:opennutritracker/features/add_meal/domain/usecase/resolve_parsed
 import 'package:opennutritracker/features/add_meal/domain/usecase/search_products_usecase.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/add_meal_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/bulk_add_bloc.dart';
+import 'package:opennutritracker/features/add_meal/presentation/bloc/favourite_meal_bloc.dart';
+import 'package:opennutritracker/features/add_meal/presentation/bloc/favourite_toggle_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/food_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/products_bloc.dart';
 import 'package:opennutritracker/features/add_meal/presentation/bloc/recent_meal_bloc.dart';
@@ -189,9 +200,9 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<DeleteAllUserDataUsecase>(
     () => DeleteAllUserDataUsecase(
       locator(),
-      locator(),
-      locator(),
+      locator<DailyReminderScheduler>(),
       locator<AiCredentialStorage>(),
+      calorieWidgetStore: locator<CalorieWidgetStore>(),
     ),
   );
 
@@ -208,14 +219,35 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
 
   // Notification service (#312)
-  locator.registerLazySingleton<NotificationService>(() => NotificationService());
+  locator.registerLazySingleton<NotificationService>(
+    () => NotificationService(),
+  );
+  locator.registerLazySingleton<DailyReminderScheduler>(
+    () => DailyReminderScheduler(
+      locator<ConfigRepository>(),
+      locator<NotificationService>(),
+    ),
+  );
+
+  // The iOS home-screen widget's App Group copy. One instance for Home,
+  // the language picker, delete-all and the profile switch, so they share
+  // the App Group it resolves once from the bundle id.
+  locator.registerLazySingleton<CalorieWidgetStore>(
+    HomeWidgetCalorieStore.new,
+  );
 
   // Cache manager
   locator.registerLazySingleton<CacheManager>(() => OntImageCacheManager.instance);
 
   // BLoCs
   locator.registerLazySingleton<OnboardingBloc>(
-    () => OnboardingBloc(locator(), locator(), locator()),
+    () => OnboardingBloc(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator<DailyReminderScheduler>(),
+    ),
   );
   locator.registerLazySingleton<PolarInfluxdbDataSource>(() => PolarInfluxdbDataSource());
   locator.registerLazySingleton<HomeBloc>(
@@ -235,7 +267,8 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
-      locator(),
+      calorieWidgetStore: locator<CalorieWidgetStore>(),
+      polarDataSource: locator<PolarInfluxdbDataSource>(),
     ),
   );
   locator.registerLazySingleton(() => DiaryBloc(locator(), locator()));
@@ -262,23 +295,76 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(), // #173: GetTrackedDayUsecase for nutrient-goal pre-fill
+      locator(),
     ),
   );
-  locator.registerFactory(() => ExportImportBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator(), locator()));
+  locator.registerFactory(
+    () => ExportImportBloc(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(), // SettingsBloc: today's goals after an import (#1363)
+    ),
+  );
   // Lazy singleton: shared between RecipesPage's Custom Meals tab and the
   // create-from-popup flow on the same tab — both must mutate / observe the
   // same instance so the list refreshes after a new entry is created.
   locator.registerLazySingleton<CustomMealsBloc>(
     () =>
-        CustomMealsBloc(locator(), locator(), locator(), locator(), locator()),
+        CustomMealsBloc(
+          locator(),
+          locator(),
+          locator(),
+          locator(),
+          locator(),
+          locator(),
+        ),
   );
 
   locator.registerFactory<ActivitiesBloc>(() => ActivitiesBloc(locator()));
-  locator.registerFactory<RecentActivitiesBloc>(() => RecentActivitiesBloc(locator()));
-  locator.registerFactory<ActivityDetailBloc>(() => ActivityDetailBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator()));
-  locator.registerFactory<MealDetailBloc>(() => MealDetailBloc(locator(), locator(), locator(), locator(), locator(), locator(), locator()));
+  locator.registerFactory<RecentActivitiesBloc>(
+    () => RecentActivitiesBloc(locator()),
+  );
+  locator.registerFactory<ActivityDetailBloc>(
+    () => ActivityDetailBloc(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+    ),
+  );
+  locator.registerFactory<MealDetailBloc>(
+    () => MealDetailBloc(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      favourites: locator<ToggleFavouriteMealUsecase>(),
+    ),
+  );
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
-  locator.registerFactory<EditMealBloc>(() => EditMealBloc(locator(), locator(), locator(), locator(), locator()));
+  locator.registerFactory<EditMealBloc>(
+    () => EditMealBloc(
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+      locator(),
+    ),
+  );
   locator.registerFactory<AddMealBloc>(() => AddMealBloc(locator()));
   locator.registerFactory<BulkAddBloc>(
     () => BulkAddBloc(locator(), locator(), locator()),
@@ -288,6 +374,11 @@ Future<void> initLocator() async {
   );
   locator.registerFactory<FoodBloc>(() => FoodBloc(locator(), locator()));
   locator.registerFactory(() => RecentMealBloc(locator(), locator()));
+  // #1307: the add-food Favourites source. Factory, and closed by the screen,
+  // because it holds a subscription to the favourites box.
+  locator.registerFactory(() => FavouriteMealBloc(locator(), locator()));
+  // One per star, closed by the star's widget.
+  locator.registerFactory(() => FavouriteToggleBloc(locator(), locator()));
   // #84: fasting timer. Factory so the screen-scoped timer and dialog
   // state reset cleanly each time the user opens the screen.
   locator.registerFactory<FastingBloc>(() => FastingBloc(locator(), locator(), locator(), locator(), locator(), locator()));
@@ -298,6 +389,9 @@ Future<void> initLocator() async {
   );
   locator.registerLazySingleton<AddConfigUsecase>(
     () => AddConfigUsecase(locator()),
+  );
+  locator.registerLazySingleton<SetDayBoundaryUsecase>(
+    () => SetDayBoundaryUsecase(locator(), locator()),
   );
   locator.registerLazySingleton<GetUserUsecase>(
     () => GetUserUsecase(locator()),
@@ -314,7 +408,12 @@ Future<void> initLocator() async {
     () => CreateProfileUsecase(locator()),
   );
   locator.registerLazySingleton<SwitchProfileUsecase>(
-    () => SwitchProfileUsecase(locator(), locator(), locator()),
+    () => SwitchProfileUsecase(
+      locator(),
+      locator(),
+      locator(),
+      currentTrackedDayGoals: _currentTrackedDayGoals,
+    ),
   );
   locator.registerLazySingleton<UpdateProfileUsecase>(
     () => UpdateProfileUsecase(locator()),
@@ -326,7 +425,11 @@ Future<void> initLocator() async {
     () => SendIntakeToProfilesUsecase(locator()),
   );
   locator.registerLazySingleton<ProfileSwitchCoordinator>(
-    () => ProfileSwitchCoordinator(locator(), locator()),
+    () => ProfileSwitchCoordinator(
+      locator(),
+      locator(),
+      calorieWidgetStore: locator<CalorieWidgetStore>(),
+    ),
   );
   locator.registerLazySingleton<SearchProductsUseCase>(
     () => SearchProductsUseCase(
@@ -345,10 +448,15 @@ Future<void> initLocator() async {
     () => ResolveParsedMealsUseCase(locator()),
   );
   locator.registerLazySingleton<SearchProductByBarcodeUseCase>(
-    () => SearchProductByBarcodeUseCase(locator(), locator(), locator()),
+    () => SearchProductByBarcodeUseCase(
+      locator(),
+      locator(),
+      locator(),
+      locator<ToggleFavouriteMealUsecase>(),
+    ),
   );
   locator.registerLazySingleton<GetIntakeUsecase>(
-    () => GetIntakeUsecase(locator()),
+    () => GetIntakeUsecase(locator(), locator()),
   );
   locator.registerLazySingleton<AddIntakeUsecase>(
     () => AddIntakeUsecase(locator(), locator()),
@@ -413,6 +521,12 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<DeleteWeightLogUsecase>(
     () => DeleteWeightLogUsecase(locator()),
   );
+  locator.registerLazySingleton<GetFavouriteMealsUsecase>(
+    () => GetFavouriteMealsUsecase(locator()),
+  );
+  locator.registerLazySingleton<ToggleFavouriteMealUsecase>(
+    () => ToggleFavouriteMealUsecase(locator()),
+  );
   locator.registerLazySingleton<AddWaterIntakeUsecase>(
     () => AddWaterIntakeUsecase(locator()),
   );
@@ -443,6 +557,8 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      locator(),
+      locator(),
     ),
   );
   locator.registerLazySingleton(
@@ -453,6 +569,22 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      locator(),
+      locator(),
+      restoreTrackedDays:
+          (
+            write, {
+            required importedDayKeys,
+            required importedActivities,
+            required keyedByOffsetMinutes,
+          }) => restoreTrackedDays(
+            hiveDBProvider,
+            locator(),
+            write: write,
+            importedDayKeys: importedDayKeys,
+            importedActivities: importedActivities,
+            keyedByOffsetMinutes: keyedByOffsetMinutes,
+          ),
     ),
   );
   locator.registerLazySingleton(() => ImportMealsCsvUsecase(locator()));
@@ -474,8 +606,12 @@ Future<void> initLocator() async {
   locator.registerLazySingleton(() => SaveRecipeUseCase(locator(), locator()));
   locator.registerLazySingleton(() => GetAllRecipesUseCase(locator()));
   locator.registerLazySingleton(() => GetRecipeByIdUseCase(locator()));
-  locator.registerLazySingleton(() => DeleteRecipeUseCase(locator()));
-  locator.registerLazySingleton(() => MergeCustomMealsUseCase(locator(), locator(), locator()));
+  locator.registerLazySingleton(
+    () => DeleteRecipeUseCase(locator(), locator()),
+  );
+  locator.registerLazySingleton(
+    () => MergeCustomMealsUseCase(locator(), locator(), locator(), locator()),
+  );
 
   // Repositories
   locator.registerLazySingleton(() => ConfigRepository(locator()));
@@ -499,6 +635,9 @@ Future<void> initLocator() async {
   );
   locator.registerLazySingleton<WeightLogRepository>(
     () => WeightLogRepository(locator()),
+  );
+  locator.registerLazySingleton<FavouriteMealRepository>(
+    () => FavouriteMealRepository(locator(), locator(), locator()),
   );
   locator.registerLazySingleton<WaterIntakeRepository>(
     () => WaterIntakeRepository(locator()),
@@ -542,6 +681,9 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<WeightLogDataSource>(
     () => WeightLogDataSource(hiveDBProvider),
   );
+  locator.registerLazySingleton<FavouriteMealDataSource>(
+    () => FavouriteMealDataSource(hiveDBProvider),
+  );
   locator.registerLazySingleton<WaterIntakeDataSource>(
     () => WaterIntakeDataSource(hiveDBProvider),
   );
@@ -578,4 +720,31 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<HealthService>(() => healthService);
 
   await ensureConfigInitialized(locator());
+  // Before any screen reads the intake log: brings Open Food Facts rows a
+  // released build wrote in raw grams into the app's units (#1152).
+  await ensureOffMicronutrientsRepaired(hiveDBProvider);
+  // Before Diary and Trends read the day rows: brings each in line with
+  // the entries the Diary lists on its day (#1317), then rebuilds any
+  // total a NaN intake left NaN (#1254).
+  await ensureTrackedDaysRepaired(
+    hiveDBProvider,
+    locator(),
+    currentGoals: _currentTrackedDayGoals,
+  );
+}
+
+/// The goals a tracked day starts from today, before activities — what
+/// `LogUserActivityUsecase` creates a row with. Only asked for when a
+/// profile lists entries without a single row (#1317).
+Future<TrackedDayGoals> _currentTrackedDayGoals() async {
+  final kcal = await locator<GetKcalGoalUsecase>().getKcalGoal(
+    totalKcalActivitiesParam: 0,
+  );
+  final macroGoals = locator<GetMacroGoalUsecase>();
+  return (
+    kcal: kcal,
+    carbs: await macroGoals.getCarbsGoal(kcal),
+    fat: await macroGoals.getFatsGoal(kcal),
+    protein: await macroGoals.getProteinsGoal(kcal),
+  );
 }

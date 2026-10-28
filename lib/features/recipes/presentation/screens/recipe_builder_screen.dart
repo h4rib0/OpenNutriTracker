@@ -283,7 +283,11 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                 ],
                 decoration: InputDecoration(
                   labelText: S.of(context).recipeTotalWeightLabel,
-                  helperText: S.of(context).recipeTotalWeightHelper,
+                  // Says which of the two the number is, since nothing else
+                  // on screen does unless the ingredients are added up.
+                  helperText: state.totalWeightOverridden
+                      ? S.of(context).recipeTotalWeightManualHelper
+                      : S.of(context).recipeTotalWeightCalculatedHelper,
                   helperMaxLines: 3,
                   border: fieldBorder,
                   enabledBorder: fieldBorder,
@@ -296,6 +300,23 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
                   }
                 },
               ),
+              // The way back from a typed weight. Without it the only route
+              // was typing the exact ingredient sum and reopening the recipe.
+              if (state.totalWeightOverridden)
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Semantics(
+                    identifier: 'recipe-builder-weight-reset',
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          _bloc.add(const ResetTotalWeightEvent()),
+                      icon: const Icon(Icons.calculate_outlined),
+                      label: Text(
+                        S.of(context).recipeTotalWeightUseIngredientTotalButton,
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: Dimens.spacing16),
               RecipeNutritionSummary(
                 nutrimentsPer100: state.aggregatedNutrimentsPer100,
@@ -412,8 +433,8 @@ class _RecipeBuilderScreenState extends State<RecipeBuilderScreen> {
     try {
       final picker = ImagePicker();
       // Pick at full resolution — `UserImageStorage.importFrom` re-encodes
-      // to WebP at quality 80 with a 1024px longest-edge cap, so we don't
-      // need image_picker's own JPEG compression on top. Doing it in one
+      // to WebP at quality 80, bounding the shortest edge at 1024px, so we
+      // don't need image_picker's own JPEG compression on top. Doing it in one
       // place keeps the on-disk footprint consistent regardless of which
       // source (camera / gallery) the photo came from.
       final picked = await picker.pickImage(source: source);

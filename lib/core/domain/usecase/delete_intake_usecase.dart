@@ -4,12 +4,13 @@ import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 
 class DeleteIntakeUsecase {
   final IntakeRepository _intakeRepository;
-  final PolarInfluxdbDataSource _polarDataSource;
+  // Fork: optional so upstream code and tests can build it without Polar.
+  final PolarInfluxdbDataSource? _polarDataSource;
 
-  DeleteIntakeUsecase(this._intakeRepository, this._polarDataSource);
+  DeleteIntakeUsecase(this._intakeRepository, [this._polarDataSource]);
 
   Future<void> deleteIntake(IntakeEntity intakeEntity) async {
     await _intakeRepository.deleteIntake(intakeEntity);
-    _polarDataSource.deleteIntakeByTime(intakeEntity.dateTime); // fire-and-forget
+    _polarDataSource?.deleteIntakeByTime(intakeEntity.dateTime); // fire-and-forget
   }
 }

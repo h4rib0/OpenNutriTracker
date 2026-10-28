@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
-import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
-import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/macro_split_dialog.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import '../../../../fixture/user_entity_fixtures.dart';
+import '../../../../helpers/fake_reload_blocs.dart';
 import '../../../../helpers/test_l10n.dart';
 
 class _FakeSettingsBloc extends Fake implements SettingsBloc {
+  final List<String> calls;
   double? savedCarbs;
   double? savedProtein;
   double? savedFat;
+
+  _FakeSettingsBloc([List<String>? calls]) : calls = calls ?? <String>[];
 
   @override
   Future<double?> getUserCarbGoalPct() async => 0.6;
@@ -38,8 +41,16 @@ class _FakeSettingsBloc extends Fake implements SettingsBloc {
   }
 
   @override
-  Future<void> updateTrackedDay(DateTime day) async {}
+  Future<DateTime> getCurrentLogicalDay() async => DateTime(2026, 10, 10);
 
+  @override
+  Future<void> updateTrackedDay(DateTime day) async {
+    // A real write yields; make sure the reload cannot overtake it.
+    await Future<void>.delayed(Duration.zero);
+    calls.add('updateTrackedDay');
+  }
+
+  // Fork: body-weight macro mode off, so the % split is under test.
   @override
   Future<bool> getUseBodyWeightMacros() async => false;
 
@@ -50,22 +61,7 @@ class _FakeSettingsBloc extends Fake implements SettingsBloc {
   void add(SettingsEvent event) {}
 }
 
-class _FakeHomeBloc extends Fake implements HomeBloc {
-  @override
-  void add(HomeEvent event) {}
-}
-
-class _FakeDiaryBloc extends Fake implements DiaryBloc {
-  @override
-  void add(DiaryEvent event) {}
-}
-
-class _FakeCalendarDayBloc extends Fake implements CalendarDayBloc {
-  @override
-  void add(CalendarDayEvent event) {}
-}
-
-// Polar not configured: the dialog stays in the % split mode under test.
+// Fork: Polar not configured, so the dialog stays in the % split mode.
 class _FakePolar extends Fake implements PolarInfluxdbDataSource {
   @override
   Future<bool> isPolarConfigured() async => false;
@@ -77,7 +73,13 @@ class _FakePolar extends Fake implements PolarInfluxdbDataSource {
 
 class _FakeProfileBloc extends Fake implements ProfileBloc {
   @override
-  Future<UserEntity> getUser() async => UserEntityFixtures.youngSedentaryMaleWantingToMaintainWeight;
+  Future<UserEntity> getUser() async =>
+      UserEntityFixtures.youngSedentaryMaleWantingToMaintainWeight;
+}
+
+class _FakeHomeBloc extends Fake implements HomeBloc {
+  @override
+  void add(HomeEvent event) {}
 }
 
 Widget _wrap(Widget child) {
@@ -89,6 +91,56 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  // _save reloads the Diary and Trends singletons from the locator.
+  late ReloadRecorder recorder;
+
+  setUp(() {
+    recorder = ReloadRecorder()..register();
+  });
+
+  tearDown(() async => locator.reset());
+
+  testWidgets(
+    'saving reloads the Diary, the open day and Trends after today\'s '
+    'tracked day has its new macro goals (#1359)',
+    (tester) async {
+      final settingsBloc = _FakeSettingsBloc(recorder.log);
+      final homeBloc = _FakeHomeBloc();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => MacroSplitDialog(
+                    settingsBloc: settingsBloc,
+                    homeBloc: homeBloc,
+                    polarDataSource: _FakePolar(),
+                    profileBloc: _FakeProfileBloc(),
+                  ),
+                ),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(l10nEn.dialogOKLabel));
+      await tester.pumpAndSettle();
+
+      expect(recorder.diaryReloaded, isTrue);
+      expect(recorder.calendarDayReloaded, isTrue);
+      expect(recorder.trendsReloaded, isTrue);
+      expect(recorder.log.first, 'updateTrackedDay');
+    },
+  );
+
   testWidgets('saves typed macro values even without submitting the field', (
     tester,
   ) async {
@@ -105,8 +157,6 @@ void main() {
                 builder: (_) => MacroSplitDialog(
                   settingsBloc: settingsBloc,
                   homeBloc: homeBloc,
-                  diaryBloc: _FakeDiaryBloc(),
-                  calendarDayBloc: _FakeCalendarDayBloc(),
                   polarDataSource: _FakePolar(),
                   profileBloc: _FakeProfileBloc(),
                 ),
@@ -154,8 +204,6 @@ void main() {
                 builder: (_) => MacroSplitDialog(
                   settingsBloc: settingsBloc,
                   homeBloc: homeBloc,
-                  diaryBloc: _FakeDiaryBloc(),
-                  calendarDayBloc: _FakeCalendarDayBloc(),
                   polarDataSource: _FakePolar(),
                   profileBloc: _FakeProfileBloc(),
                 ),
@@ -197,8 +245,6 @@ void main() {
                   builder: (_) => MacroSplitDialog(
                     settingsBloc: settingsBloc,
                     homeBloc: homeBloc,
-                    diaryBloc: _FakeDiaryBloc(),
-                    calendarDayBloc: _FakeCalendarDayBloc(),
                     polarDataSource: _FakePolar(),
                     profileBloc: _FakeProfileBloc(),
                   ),
@@ -234,6 +280,110 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'applies a typed value when its field loses focus, without a submit',
+    (tester) async {
+      // #1324: the iOS number pad has no return key, so onSubmitted never
+      // fires there. Leaving the field has to rebalance the other two.
+      final settingsBloc = _FakeSettingsBloc();
+      final homeBloc = _FakeHomeBloc();
+
+      await tester.pumpWidget(
+        _wrap(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => MacroSplitDialog(
+                    settingsBloc: settingsBloc,
+                    homeBloc: homeBloc,
+                    polarDataSource: _FakePolar(),
+                    profileBloc: _FakeProfileBloc(),
+                  ),
+                ),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextField);
+      await tester.tap(fields.at(1));
+      await tester.enterText(fields.at(1), '25');
+      await tester.pump();
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+
+      String textOf(int i) =>
+          tester.widget<TextField>(fields.at(i)).controller!.text;
+      // protein 25 / residual 75 split 60:25 → ~52.9 / ~22.1.
+      expect(textOf(0), '53');
+      expect(textOf(1), '25');
+      expect(textOf(2), '22');
+      expect(find.text('100% total'), findsOneWidget);
+    },
+  );
+
+  testWidgets('a value applied on focus loss is not applied again on save', (
+    tester,
+  ) async {
+    // Once applied, the typed value must stop being pending. Otherwise a
+    // slider move afterwards is followed by a second, stale application on
+    // save, and the saved split drifts from the one on screen.
+    final settingsBloc = _FakeSettingsBloc();
+    final homeBloc = _FakeHomeBloc();
+
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) {
+            return ElevatedButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => MacroSplitDialog(
+                  settingsBloc: settingsBloc,
+                  homeBloc: homeBloc,
+                  polarDataSource: _FakePolar(),
+                  profileBloc: _FakeProfileBloc(),
+                ),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.tap(fields.at(1));
+    await tester.enterText(fields.at(1), '5');
+    await tester.pump();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+
+    final carbsSlider = tester.widget<Slider>(find.byType(Slider).first);
+    carbsSlider.onChanged!(44);
+    carbsSlider.onChangeEnd!(44);
+    await tester.pump();
+
+    await tester.tap(find.text(l10nEn.dialogOKLabel));
+    await tester.pumpAndSettle();
+
+    // protein 5 → 67.06 / 5 / 27.94; carbs to 44 → 44 / 8.5 / 47.5.
+    // Re-applying the synced protein text "9" would save 44/9/47.
+    expect(settingsBloc.savedCarbs, 44);
+    expect(settingsBloc.savedProtein, 8);
+    expect(settingsBloc.savedFat, 48);
+  });
 
   test('roundMacroPercentsToHundred always sums to 100', () {
     // Typical redistribute leftovers.

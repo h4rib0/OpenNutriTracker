@@ -15,6 +15,38 @@ import 'package:opennutritracker/features/meal_detail/util/meal_quantity_convert
 part 'bulk_add_event.dart';
 part 'bulk_add_state.dart';
 
+/// The shape an amount has to have: no scientific notation, no sign, at most
+/// two decimals. The same shape the manual-entry quantity field enforces
+/// (`meal_detail_bottom_sheet.dart`), so the bulk path accepts exactly what
+/// manual entry does.
+///
+/// Kept here rather than on the screen because three things have to agree
+/// about it and only one of them is a widget: the field's input formatter,
+/// [BulkAddBloc._amountText] — which rounds every prefilled amount to satisfy
+/// it — and [BulkAddRow.quantityError], which reports what fails it.
+final bulkAddQuantityPattern = RegExp(r'^\d+([.,]\d{0,2})?$');
+
+/// Matches the manual-entry upper bound.
+const bulkAddMaxQuantity = 10000;
+
+/// Why a row's amount cannot be written, in terms the user can act on.
+///
+/// The three arrived at the screen as one message naming the field and
+/// nothing else, so "0", "99999" and "1.234" all read as `Rice: Quantity`.
+/// They are separated here rather than at the render site because the render
+/// site would then have to re-derive which of them happened. #1013.
+enum BulkAddQuantityError {
+  /// Not a number this screen accepts: empty, or carrying more decimals than
+  /// the field allows. The one failure the UI never stated a rule for.
+  malformed,
+
+  /// Zero or less. Nothing to log.
+  tooSmall,
+
+  /// Above [bulkAddMaxQuantity].
+  tooLarge,
+}
+
 /// One editable row on the review screen.
 ///
 /// Holds the user's edits separately from what the resolver produced, so
@@ -44,6 +76,16 @@ class BulkAddRow extends Equatable {
   /// Set once the user types in the amount field.
   final bool amountEditedByUser;
 
+  /// True when the batch this row belongs to was read off a photograph.
+  ///
+  /// Copied from [BulkAddLoadedState.source] when the row is built, because
+  /// one flag on the row reads it: a photo-path portion miss stays quiet
+  /// ([portionKeyMissed]). The state already tells the user a machine
+  /// identified the food from a picture, with a banner over every row; a
+  /// second marker on the rows would draw the eye to the smaller of the two
+  /// judgements. #1159.
+  final bool fromPhoto;
+
   /// True while the amount and unit are still what the bloc derived, so
   /// re-deriving them against a newly picked candidate cannot overwrite
   /// anything the user typed or chose.
@@ -57,6 +99,7 @@ class BulkAddRow extends Equatable {
     this.skipped = false,
     this.unitChosenByUser = false,
     this.amountEditedByUser = false,
+    this.fromPhoto = false,
   });
 
   bool get isResolved => resolved.isResolved;
@@ -72,7 +115,7 @@ class BulkAddRow extends Equatable {
       isResolved ? resolved.candidates[selectedIndex] : null;
 
   /// The row's amount cannot be trusted to mean what the user typed, for
-  /// either of two reasons.
+  /// any of three reasons.
   ///
   /// **No unit was stated** and the matched food has no scalable serving, so
   /// there is nothing for the "2" in `2 eggs` to count (#622).
@@ -83,7 +126,14 @@ class BulkAddRow extends Equatable {
   /// serving that becomes 3 g/ml, and looking only for a *missing* unit
   /// would let it through unmarked.
   ///
-  /// Either way the row is **held back from the batch** until the user
+  /// **A portion was named and this food cannot honour it** —
+  /// [portionKeyMissed]. The second case in different clothes: "a handful of
+  /// almonds" arrives as `quantity 1, portion "handful"`, nothing matches,
+  /// and the bare-count rule logs `1 nut` = 1.2 g as a settled row. The
+  /// user's word was discarded and a default took its place looking
+  /// settled. Text path only; a photo miss stays quiet (#1159).
+  ///
+  /// Any way the row is **held back from the batch** until the user
   /// settles it, and marked so the eye lands on the one row needing a
   /// decision rather than on a plausible-looking wrong number.
   ///
@@ -113,8 +163,10 @@ class BulkAddRow extends Equatable {
       isResolved &&
       resolved.parsed.quantity != null &&
       (resolved.parsed.unit == null
-          // Nothing stated, and nothing for the number to count.
-          ? meal?.servingQuantity == null
+          // Nothing stated, and nothing for the number to count — or a
+          // portion named that the food's own rows do not hold, so the
+          // count fell to the default row instead.
+          ? meal?.servingQuantity == null || portionKeyMissed
           // A unit *was* stated but this food cannot honour it, so
           // `effectiveUnit` quietly substituted another. Live probing found
           // a model answering "three slices of bread" as `3 serving`; on a
@@ -122,6 +174,41 @@ class BulkAddRow extends Equatable {
           // warning, because the old condition only looked at a *missing*
           // unit. A substituted one is just as wrong and less visible.
           : effectiveUnit != unit);
+
+  /// True when the model named a portion, this food has portions to choose
+  /// from, and neither that word nor the query words is one of them.
+  ///
+  /// Each conjunct earns its place. **A key was given**: the deterministic
+  /// parser never sets one, so a typed "handful" that misses is
+  /// indistinguishable from no word and cannot be marked — that asymmetry is
+  /// recorded on #1159, not fixed here. **The food has portions**: measured
+  /// over 999 live calls, the clause without this gate fired on 40 of 48
+  /// German rows, almost every one a record with no portion rows at all —
+  /// there the dropdown offers `g`, `oz`, `g/ml` and nothing that means *a
+  /// slice*, so the warning would point at a control that cannot answer it,
+  /// the #973 anti-pattern; gated, 3 of 48. An unavailable lookup counts as
+  /// no portions too: a transient outage says nothing about the food and
+  /// must not raise a flag the next search would clear. **A count was
+  /// stated**: `_initialUnit` consults the word only under one, so without
+  /// it there was no match to miss. **Nothing matched**: a tie is a hit, and
+  /// the query words are tried after the key exactly as `_initialUnit` tries
+  /// them, so this asks what that method asked and nothing more. **Not a
+  /// photo read**: most survey records the app can see carry no size row,
+  /// so a photo warning would fire on most photo rows and become wallpaper;
+  /// the batch banner is the marker there.
+  ///
+  /// Cleared by `unitChosenByUser` like the rest of [amountNeedsCheck]:
+  /// picking a unit is the answer the warning asks for, and the dropdown
+  /// holds every portion the food has.
+  bool get portionKeyMissed {
+    final key = resolved.parsed.portion;
+    final food = meal;
+    if (key == null || food == null || fromPhoto) return false;
+    if (resolved.parsed.quantity == null) return false;
+    if (food.portionsUnavailable || food.portions.isEmpty) return false;
+    return matchPortionToKey(key, food.portions) == null &&
+        matchPortionToQuery(resolved.parsed.query, food.portions) == null;
+  }
 
   /// True when the amount on this row is the app's flat fallback — neither
   /// stated by the user nor carried by the food record.
@@ -208,7 +295,10 @@ class BulkAddRow extends Equatable {
   /// rather than inferred from the label:
   ///
   /// * **Nothing was stated** and the food cannot be counted, so the number
-  ///   is a count about to be read as a weight — `2 Eier` as two grams.
+  ///   is a count about to be read as a weight — `2 Eier` as two grams. Or
+  ///   a portion was named that the food's rows do not hold
+  ///   ([portionKeyMissed]), so the count landed on the default row instead
+  ///   of the one that was asked for.
   /// * **A serving the food cannot scale.** `3 serving` against a record
   ///   with no scalable serving converts to a bare `3`, and so does
   ///   `3 g/ml` — numerically identical, both meaningless, so comparing the
@@ -239,6 +329,30 @@ class BulkAddRow extends Equatable {
   /// points at. #973.
   bool get willBeLogged => isResolved && !skipped && !amountWouldBeWrong;
 
+  /// What is wrong with [amountText], or null when the row can be written.
+  ///
+  /// Deliberately **not** consulted by [willBeLogged]. A row the user
+  /// mistyped is handed back to them to fix; dropping it from the batch
+  /// instead would log the rest and say nothing about the one that was
+  /// meant to be there.
+  ///
+  /// Asked on submit rather than on every keystroke — [amountText] is text
+  /// precisely so that a half-typed "1," is not called wrong mid-edit.
+  BulkAddQuantityError? get quantityError {
+    final text = amountText.trim();
+    final quantity = double.tryParse(text.replaceAll(',', '.'));
+    // Shape first, because the other two need a number to compare against a
+    // bound and "" and "1.234" do not supply one. The parse is checked
+    // beside the pattern rather than after it, so that whatever the write
+    // would actually parse is what the bounds below are read from.
+    if (!bulkAddQuantityPattern.hasMatch(text) || quantity == null) {
+      return BulkAddQuantityError.malformed;
+    }
+    if (quantity <= 0) return BulkAddQuantityError.tooSmall;
+    if (quantity > bulkAddMaxQuantity) return BulkAddQuantityError.tooLarge;
+    return null;
+  }
+
   BulkAddRow copyWith({
     int? selectedIndex,
     String? amountText,
@@ -254,6 +368,7 @@ class BulkAddRow extends Equatable {
     skipped: skipped ?? this.skipped,
     unitChosenByUser: unitChosenByUser ?? this.unitChosenByUser,
     amountEditedByUser: amountEditedByUser ?? this.amountEditedByUser,
+    fromPhoto: fromPhoto,
   );
 
   @override
@@ -265,6 +380,7 @@ class BulkAddRow extends Equatable {
     skipped,
     unitChosenByUser,
     amountEditedByUser,
+    fromPhoto,
   ];
 }
 
@@ -274,6 +390,15 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
   final ResolveParsedMealsUseCase _resolveParsedMealsUseCase;
   final ReadMealTextUseCase _readMealTextUseCase;
   final ReadMealPhotoUseCase _readMealPhotoUseCase;
+
+  /// Which read is current. Bumped by every parse, photo read and cancel, and
+  /// compared after every await, so a result that lands for an earlier
+  /// attempt is dropped. `emit.isDone` cannot do this: it only answers for a
+  /// closed bloc, and a cancelled wait leaves the bloc very much open.
+  int _attempt = 0;
+
+  /// True when [attempt] is no longer the read the screen is waiting on.
+  bool _superseded(int attempt) => attempt != _attempt;
 
   BulkAddBloc(
     this._resolveParsedMealsUseCase,
@@ -285,6 +410,7 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
     on<ReadMealPhotoFailedEvent>(
       (event, emit) => emit(BulkAddPhotoErrorState(event.error)),
     );
+    on<CancelBulkReadEvent>(_onCancel);
     on<ChangeRowCandidateEvent>(_onChangeCandidate);
     on<ChangeRowAmountEvent>(_onChangeAmount);
     on<ChangeRowUnitEvent>(_onChangeUnit);
@@ -298,17 +424,19 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
     // Emitted before the read, not after: with a key configured this waits
     // on a network round trip, and a screen that does nothing for two
     // seconds reads as broken.
-    emit(const BulkAddLoadingState());
+    final attempt = ++_attempt;
+    emit(BulkAddLoadingState(attempt: attempt));
 
     final reading = await _readMealTextUseCase.read(
       event.text,
       localeCode: event.localeCode,
     );
-    if (emit.isDone) return;
+    if (emit.isDone || _superseded(attempt)) return;
 
     await _resolveAndEmit(
       reading.result,
       emit,
+      attempt: attempt,
       usesImperialUnits: event.usesImperialUnits,
       source: reading.usedModel
           ? BulkAddReadSource.model
@@ -325,13 +453,14 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
     ReadMealPhotoEvent event,
     Emitter<BulkAddState> emit,
   ) async {
-    emit(const BulkAddLoadingState());
+    final attempt = ++_attempt;
+    emit(BulkAddLoadingState(attempt: attempt));
 
     final reading = await _readMealPhotoUseCase.read(
       event.photo,
       localeCode: event.localeCode,
     );
-    if (emit.isDone) return;
+    if (emit.isDone || _superseded(attempt)) return;
 
     switch (reading) {
       case MealPhotoUnavailable():
@@ -358,10 +487,26 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
         await _resolveAndEmit(
           result,
           emit,
+          attempt: attempt,
           usesImperialUnits: event.usesImperialUnits,
           source: BulkAddReadSource.photo,
         );
     }
+  }
+
+  /// Leaves the loading state and orphans the read in flight.
+  ///
+  /// Bumping [_attempt] is the whole mechanism: the handler still awaiting
+  /// the read compares against it afterwards and returns without emitting.
+  /// Back to [BulkAddInitial] rather than to the previous rows, because the
+  /// text field still holds what was typed and a Search away from trying
+  /// again is the state the user was in before they tapped it. Only while
+  /// loading — a cancel that lands after the rows have does nothing, so a
+  /// tap racing a late result cannot wipe rows the user is already reading.
+  void _onCancel(CancelBulkReadEvent event, Emitter<BulkAddState> emit) {
+    if (state is! BulkAddLoadingState) return;
+    _attempt++;
+    emit(const BulkAddInitial());
   }
 
   /// Shared by both readers: resolve whatever was extracted against the food
@@ -371,6 +516,7 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
   Future<void> _resolveAndEmit(
     MealTextParseResult parsed,
     Emitter<BulkAddState> emit, {
+    required int attempt,
     required bool usesImperialUnits,
     required BulkAddReadSource source,
     MealTextModelFailure? modelFailure,
@@ -392,7 +538,7 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
 
     try {
       final resolved = await _resolveParsedMealsUseCase.resolve(parsed.items);
-      if (emit.isDone) return;
+      if (emit.isDone || _superseded(attempt)) return;
 
       emit(
         BulkAddLoadedState(
@@ -411,6 +557,7 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
                   item.selected,
                   usesImperialUnits,
                 ),
+                fromPhoto: source == BulkAddReadSource.photo,
               ),
           ],
           parseErrors: parsed.errors,
@@ -421,7 +568,7 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
       );
     } catch (e, stackTrace) {
       log.severe('Bulk resolution failed', e, stackTrace);
-      if (emit.isDone) return;
+      if (emit.isDone || _superseded(attempt)) return;
       emit(const BulkAddErrorState());
     }
   }
@@ -435,11 +582,11 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
     bool usesImperialUnits,
   ) {
     final parsedQuantity = parsed.quantity;
-    if (parsedQuantity != null) return _trimZeros(parsedQuantity);
+    if (parsedQuantity != null) return _amountText(parsedQuantity);
 
     if (meal != null && meal.hasServingValues) {
       final serving = meal.servingQuantity;
-      if (serving != null) return _trimZeros(serving);
+      if (serving != null) return _amountText(serving);
     }
     return usesImperialUnits ? '1' : '100';
   }
@@ -469,9 +616,10 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
       // The model's own word first, then the user's. A photograph has no
       // typed text to search, so `portion` is the only thing that can name a
       // slice there; where both exist they usually agree, and the model saw
-      // the food.
+      // the food. The key is English in every locale and goes against the
+      // English label; the user's words go against the localized one.
       final named =
-          matchPortionToQuery(parsed.portion ?? '', meal.portions) ??
+          matchPortionToKey(parsed.portion, meal.portions) ??
           matchPortionToQuery(parsed.query, meal.portions);
       if (named != null) return portionUnit(named);
     }
@@ -497,9 +645,26 @@ class BulkAddBloc extends Bloc<BulkAddEvent, BulkAddState> {
     return fallback;
   }
 
-  static String _trimZeros(double value) => value == value.roundToDouble()
-      ? value.toInt().toString()
-      : value.toString();
+  /// Formats a quantity for the amount field, which accepts at most two
+  /// decimals — [bulkAddQuantityPattern] is both the submit check and the
+  /// field's input formatter. A converted imperial quantity has
+  /// many more: `1 lb` is 453.59237 g. Prefilling that verbatim produced a row
+  /// the submit check refused, with a message naming only the field, and
+  /// because that check aborts the batch, one such row blocked every correct
+  /// row beside it. The pattern is anchored, so the formatter then rejected
+  /// every edit too and the field blanked on the first keystroke. Rounding
+  /// here is what keeps the prefill and the check in step.
+  ///
+  /// The floor is the same concern from the other end: a positive quantity
+  /// below 0.005 would round to zero, which the check rejects for being
+  /// non-positive.
+  static String _amountText(double value) {
+    final rounded = double.parse(value.toStringAsFixed(2));
+    final quantity = rounded <= 0 && value > 0 ? 0.01 : rounded;
+    return quantity == quantity.roundToDouble()
+        ? quantity.toInt().toString()
+        : quantity.toString();
+  }
 
   void _onChangeCandidate(
     ChangeRowCandidateEvent event,
