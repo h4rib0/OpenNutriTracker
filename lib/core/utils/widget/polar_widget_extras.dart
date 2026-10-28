@@ -246,7 +246,7 @@ class PolarWidgetBase {
     );
     List<int> withGoal(String key, double goal) {
       final pair = macros[key] as List? ?? const [0, 0];
-      return [(pair.isEmpty ? 0 : pair[0] as int), goal.round()];
+      return [(pair.isEmpty ? 0 : pair[0] as int), goal.toInt()];
     }
 
     return {

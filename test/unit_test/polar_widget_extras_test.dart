@@ -56,9 +56,9 @@ void main() {
     expect(updated['consumed'], 1191);
     expect(updated['water'], [250, 1900]);
     expect(updated['macros'], {
-      'carbs': [66, carbs.round()],
-      'fat': [53, fat.round()],
-      'protein': [100, protein.round()],
+      'carbs': [66, carbs.toInt()],
+      'fat': [53, fat.toInt()],
+      'protein': [100, protein.toInt()],
     });
   });
 
@@ -132,6 +132,6 @@ void main() {
       'dinner': 0,
       'snack': 0,
     });
-    expect((updated['macros'] as Map)['protein'], [0, 144]);
+    expect((updated['macros'] as Map)['protein'], [0, 143]);
   });
 }
