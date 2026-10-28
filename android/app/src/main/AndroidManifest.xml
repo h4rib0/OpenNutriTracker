@@ -90,6 +90,63 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+        <!-- #832: home-screen widgets, one receiver per size. They only draw
+             the snapshot Home writes (CalorieWidgetSnapshot). -->
+        <receiver
+            android:name=".widget.CalorieWidgetSmallProvider"
+            android:label="@string/calorie_widget_small_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_small_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetMediumProvider"
+            android:label="@string/calorie_widget_medium_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_medium_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetStripProvider"
+            android:label="@string/calorie_widget_strip_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_strip_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CalorieWidgetLargeProvider"
+            android:label="@string/calorie_widget_large_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calorie_widget_large_info" />
+        </receiver>
+        <!-- Redraws the widgets at the day boundary, so a past day's figures
+             do not stay up until the app is next opened. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetScheduledUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!-- #312: Notification scheduling receivers -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

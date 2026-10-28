@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/presentation/widgets/add_item_bottom_sheet.dart';
 import 'package:opennutritracker/core/presentation/widgets/demo_mode_banner.dart';
@@ -7,9 +11,11 @@ import 'package:opennutritracker/core/utils/health_rationale_service.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_type_suggester.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
+import 'package:opennutritracker/core/utils/widget/calorie_widget_link.dart';
 import 'package:opennutritracker/features/diary/diary_page.dart';
 import 'package:opennutritracker/core/presentation/widgets/home_appbar.dart';
 import 'package:opennutritracker/features/home/home_page.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/log_water_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/main_appbar.dart';
 import 'package:opennutritracker/features/profile/profile_page.dart';
 import 'package:opennutritracker/features/trends/presentation/trends_page.dart';
@@ -34,17 +40,55 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late List<Widget> _bodyPages;
   late List<PreferredSizeWidget> _appbarPages;
 
+  StreamSubscription<Uri?>? _widgetLinks;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadConfigDrivenUi();
+    _listenToWidgetLinks();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _widgetLinks?.cancel();
     super.dispose();
+  }
+
+  /// Taps on the Android home-screen widgets (#832): the one that started
+  /// the app, and any while it is running.
+  Future<void> _listenToWidgetLinks() async {
+    _widgetLinks = HomeWidget.widgetClicked.listen(
+      _openWidgetLink,
+      onError: (_) {},
+    );
+    try {
+      _openWidgetLink(await HomeWidget.initiallyLaunchedFromHomeWidget());
+    } on MissingPluginException {
+      // Tests and platforms without the plugin.
+    } on PlatformException {
+      // No launch intent to read.
+    }
+  }
+
+  void _openWidgetLink(Uri? uri) {
+    final link = CalorieWidgetLink.parse(uri);
+    if (link == null || !mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _setPage(0);
+    switch (link) {
+      case CalorieWidgetLink.open:
+        break;
+      case CalorieWidgetLink.addFood:
+        _onFabPressed(context);
+      case CalorieWidgetLink.addWater:
+        showDialog<void>(
+          context: context,
+          builder: (_) => const LogWaterDialog(),
+        );
+    }
   }
 
   @override

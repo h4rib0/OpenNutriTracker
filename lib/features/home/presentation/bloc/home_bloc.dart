@@ -259,6 +259,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       await _publishCalorieWidget(
         consumedKcal: totalKcalIntake,
         goalKcal: totalKcalGoal,
+        macros: CalorieWidgetMacros.fromHome(
+          carbs: totalCarbsIntake,
+          carbsGoal: totalCarbsGoal,
+          fat: totalFatsIntake,
+          fatGoal: totalFatsGoal,
+          protein: totalProteinsIntake,
+          proteinGoal: totalProteinsGoal,
+        ),
+        burnedKcal: totalKcalActivities,
+        waterMl: totalWaterMl,
+        waterGoalMl: configData.effectiveDailyWaterGoalMl(
+          user.gender,
+          caloriesProfile: user.caloriesProfile,
+        ),
+        meals: CalorieWidgetMeals(
+          breakfastKcal: totalBreakfastKcal.round(),
+          lunchKcal: totalLunchKcal.round(),
+          dinnerKcal: totalDinnerKcal.round(),
+          snackKcal: totalSnackKcal.round(),
+        ),
         offsetMinutes: configData.dayStartOffsetTotalMinutes,
         logicalDay: loadDay,
         generation: widgetGeneration,
@@ -269,6 +289,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _publishCalorieWidget({
     required double consumedKcal,
     required double goalKcal,
+    required CalorieWidgetMacros macros,
+    required double burnedKcal,
+    required int waterMl,
+    required int waterGoalMl,
+    required CalorieWidgetMeals meals,
     required int offsetMinutes,
     required DateTime logicalDay,
     required int generation,
@@ -276,6 +301,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final snapshot = CalorieWidgetSnapshot.fromHome(
       consumedKcal: consumedKcal,
       goalKcal: goalKcal,
+      macros: macros,
+      burnedKcal: burnedKcal,
+      waterMl: waterMl,
+      waterGoalMl: waterGoalMl,
+      meals: meals,
       offsetMinutes: offsetMinutes,
       // The day this load read, not the one it finishes in: a load that
       // crosses the day boundary publishes the old day's figures under the

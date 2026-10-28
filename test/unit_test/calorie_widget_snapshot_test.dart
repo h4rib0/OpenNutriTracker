@@ -22,7 +22,78 @@ void main() {
         'offsetMinutes': 0,
         'consumed': 180,
         'goal': 2001,
+        'macros': {
+          'carbs': [0, 0],
+          'fat': [0, 0],
+          'protein': [0, 0],
+        },
+        'burned': 0,
+        'water': [0, 0],
+        'meals': {'breakfast': 0, 'lunch': 0, 'dinner': 0, 'snack': 0},
       });
+    });
+
+    test('carries macros, burned energy, water and meals for Android', () {
+      final snapshot = CalorieWidgetSnapshot.fromHome(
+        consumedKcal: 1191.4,
+        goalKcal: 1129,
+        offsetMinutes: 0,
+        macros: CalorieWidgetMacros.fromHome(
+          carbs: 66.4,
+          carbsGoal: 19.6,
+          fat: 53,
+          fatGoal: 52.3,
+          protein: 100.2,
+          proteinGoal: 143.9,
+        ),
+        burnedKcal: 210.6,
+        waterMl: 750,
+        waterGoalMl: 1900,
+        meals: const CalorieWidgetMeals(
+          breakfastKcal: 354,
+          lunchKcal: 837,
+          dinnerKcal: 0,
+          snackKcal: 0,
+        ),
+        now: DateTime(2026, 10, 28, 16, 40),
+      );
+
+      final json = snapshot.toJson();
+      expect(json['macros'], {
+        'carbs': [66, 20],
+        'fat': [53, 52],
+        'protein': [100, 144],
+      });
+      expect(json['burned'], 211);
+      expect(json['water'], [750, 1900]);
+      expect(json['meals'], {
+        'breakfast': 354,
+        'lunch': 837,
+        'dinner': 0,
+        'snack': 0,
+      });
+    });
+
+    test('a placeholder carries no macros, water or meals', () {
+      final snapshot = CalorieWidgetSnapshot.fromHome(
+        consumedKcal: 40,
+        goalKcal: 0,
+        offsetMinutes: 0,
+        macros: const CalorieWidgetMacros(
+          carbsG: 10,
+          carbsGoalG: 200,
+          fatG: 2,
+          fatGoalG: 60,
+          proteinG: 5,
+          proteinGoalG: 90,
+        ),
+        waterMl: 500,
+        waterGoalMl: 2000,
+        now: DateTime(2026, 10, 28, 8, 0),
+      );
+
+      expect(snapshot.toJson()['macros'], CalorieWidgetMacros.none.toJson());
+      expect(snapshot.toJson()['water'], [0, 0]);
     });
 
     test('a zero goal is a placeholder, not a progress ring', () {

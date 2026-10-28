@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="calorie_widget_background">#22201E</color>
+    <color name="calorie_widget_surface">#2B2926</color>
+    <color name="calorie_widget_track">#34312E</color>
+    <color name="calorie_widget_text">#EDE9E3</color>
+    <color name="calorie_widget_text_secondary">#B5AFA6</color>
+    <color name="calorie_widget_ring">#FFB866</color>
+    <color name="calorie_widget_over">#F4A69B</color>
+    <color name="calorie_widget_carbs">#F2B95A</color>
+    <color name="calorie_widget_fat">#F28C7C</color>
+    <color name="calorie_widget_protein">#4FC9B0</color>
+    <color name="calorie_widget_button">#FFB866</color>
+    <color name="calorie_widget_on_button">#22201E</color>
+</resources>

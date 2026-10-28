@@ -281,6 +281,10 @@
       }
     }
   },
+  "calorieWidgetCarbsShortLabel": "C",
+  "@calorieWidgetCarbsShortLabel": {
+    "description": "Android widget: abbreviation for carbohydrates in front of eaten/goal grams, e.g. 'C 66/120 g'. One or two letters; German uses 'KH'."
+  },
   "calorieWidgetDescription": "Today's calories eaten and your goal.",
   "@calorieWidgetDescription": {
     "description": "Subtitle of the calorie widget in the iOS widget gallery."

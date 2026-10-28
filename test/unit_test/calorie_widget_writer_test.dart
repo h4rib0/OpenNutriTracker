@@ -79,29 +79,68 @@ void main() {
   const snapshotKey = CalorieWidgetSnapshot.storageKey;
   const labelsKey = CalorieWidgetLabels.storageKey;
 
-  test('a snapshot is one stored value, with the labels for its figures', () async {
+  test(
+    'a snapshot is one stored value, with the labels for its figures',
+    () async {
+      final store = HomeWidgetCalorieStore(isIOS: false);
+
+      await store.write(snapshot, german);
+
+      expect(stored, {
+        labelsKey: german.encodeLanguage(),
+        snapshotKey: snapshot.encode(german),
+      });
+      expect(
+        saves.where((save) => save.key == snapshotKey),
+        hasLength(1),
+        reason: 'one platform call, so the extension never reads half of it',
+      );
+      expect(jsonDecode(stored[snapshotKey]! as String), {
+        'hasData': true,
+        'day': '2026-09-23',
+        'offsetMinutes': 0,
+        'consumed': 180,
+        'goal': 2000,
+        'macros': {
+          'carbs': [0, 0],
+          'fat': [0, 0],
+          'protein': [0, 0],
+        },
+        'burned': 0,
+        'water': [0, 0],
+        'meals': {'breakfast': 0, 'lunch': 0, 'dinner': 0, 'snack': 0},
+        'labels': german.figureJson(),
+      });
+    },
+  );
+
+  test('on Android a write redraws all four sizes and schedules the day end '
+      '(#832)', () async {
     final store = HomeWidgetCalorieStore(isIOS: false);
 
     await store.write(snapshot, german);
 
-    expect(stored, {
-      labelsKey: german.encodeLanguage(),
-      snapshotKey: snapshot.encode(german),
-    });
     expect(
-      saves.where((save) => save.key == snapshotKey),
-      hasLength(1),
-      reason: 'one platform call, so the extension never reads half of it',
+      calls.where((c) => c == 'updateWidget'),
+      hasLength(CalorieWidgetSnapshot.androidProviders.length),
     );
-    expect(jsonDecode(stored[snapshotKey]! as String), {
-      'hasData': true,
-      'day': '2026-09-23',
-      'offsetMinutes': 0,
-      'consumed': 180,
-      'goal': 2000,
-      'labels': german.figureJson(),
-    });
+    expect(
+      calls.where((c) => c == 'scheduleWidgetUpdates'),
+      hasLength(CalorieWidgetSnapshot.androidProviders.length),
+    );
   });
+
+  test(
+    'on iOS the extension schedules itself, so nothing is scheduled',
+    () async {
+      final store = HomeWidgetCalorieStore(isIOS: true);
+
+      await store.write(snapshot, german);
+
+      expect(calls.where((c) => c == 'scheduleWidgetUpdates'), isEmpty);
+      expect(calls.where((c) => c == 'updateWidget'), hasLength(1));
+    },
+  );
 
   test('clear removes the figures and keeps the translated labels', () async {
     final store = HomeWidgetCalorieStore(isIOS: false);
