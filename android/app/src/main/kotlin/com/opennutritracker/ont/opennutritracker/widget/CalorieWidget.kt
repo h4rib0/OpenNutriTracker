@@ -13,6 +13,7 @@ import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.math.abs
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -190,7 +191,9 @@ class CalorieWidgetRenderer(
   private fun renderFigures(s: CalorieWidgetSnapshot) {
     val unit = labels.get("unit", "kcal")
     val over = s.leftKcal < 0
-    views.setTextViewText(R.id.calorie_widget_left, signed(s.leftKcal))
+    // The label says which side of the goal it is ("kcal too much"), as
+    // Home does, so the figure itself carries no sign.
+    views.setTextViewText(R.id.calorie_widget_left, "${abs(s.leftKcal)}")
     views.setTextViewText(
         R.id.calorie_widget_left_label,
         if (over) labels.get("kcalOver", "kcal too much") else labels.get("kcalLeft", "kcal left"),
@@ -273,7 +276,4 @@ class CalorieWidgetRenderer(
   }
 
   private fun color(id: Int) = ContextCompat.getColor(context, id)
-
-  /** A typographic minus, as on Home. */
-  private fun signed(value: Int) = if (value < 0) "−${-value}" else "$value"
 }
