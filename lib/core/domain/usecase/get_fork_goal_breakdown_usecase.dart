@@ -2,6 +2,7 @@ import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_sourc
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/domain/entity/kcal_goal_breakdown_entity.dart';
+import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
 import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 
@@ -100,8 +101,14 @@ class GetForkGoalBreakdownUsecase {
         bmrKcal: PolarBmrCalc.getBMRMifflinStJeor1990(
           user.copyWith(weightKG: weightKg),
         ),
+        // Same logical day as GetKcalGoalUsecase, so the totals match.
         polarActiveKcal:
-            await _polarDataSource.fetchActiveKcalForDate(DateTime.now()) ?? 0,
+            await _polarDataSource.fetchActiveKcalForDate(
+              DayBoundaryCalc.currentLogicalDayMinutes(
+                config.dayStartOffsetTotalMinutes,
+              ),
+            ) ??
+            0,
         activityKcal: upstream.activityKcal,
         manualKcalAdjustment: config.userKcalAdjustment ?? 0,
       );
