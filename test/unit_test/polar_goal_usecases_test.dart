@@ -11,7 +11,7 @@ import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
-import 'package:opennutritracker/core/utils/calc/bmr_calc.dart';
+import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
 
 import '../fixture/user_entity_fixtures.dart';
@@ -95,7 +95,7 @@ void main() {
           polar,
         ).getKcalGoal(totalKcalActivitiesParam: 200);
 
-        final bmr = BMRCalc.getBMRMifflinStJeor1990(
+        final bmr = PolarBmrCalc.getBMRMifflinStJeor1990(
           user.copyWith(weightKG: 78),
         );
         expect(goal, closeTo(bmr + 600 + 200 - 500, 0.001));
@@ -112,7 +112,7 @@ void main() {
 
         expect(
           goal,
-          closeTo(BMRCalc.getBMRMifflinStJeor1990(user) + 300, 0.001),
+          closeTo(PolarBmrCalc.getBMRMifflinStJeor1990(user) + 300, 0.001),
         );
       },
     );

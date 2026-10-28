@@ -2,7 +2,7 @@ import 'package:opennutritracker/core/data/data_source/polar_influxdb_data_sourc
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/domain/entity/kcal_goal_breakdown_entity.dart';
-import 'package:opennutritracker/core/utils/calc/bmr_calc.dart';
+import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 
 /// Fork-only parts of the calorie-goal transparency screen. Upstream's
@@ -97,7 +97,7 @@ class GetForkGoalBreakdownUsecase {
       polar = PolarKcalBreakdown(
         weightKg: weightKg,
         weightFromInflux: influxWeightKg != null,
-        bmrKcal: BMRCalc.getBMRMifflinStJeor1990(
+        bmrKcal: PolarBmrCalc.getBMRMifflinStJeor1990(
           user.copyWith(weightKG: weightKg),
         ),
         polarActiveKcal:

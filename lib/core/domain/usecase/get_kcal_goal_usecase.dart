@@ -4,7 +4,7 @@ import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
-import 'package:opennutritracker/core/utils/calc/bmr_calc.dart';
+import 'package:opennutritracker/core/utils/calc/polar_bmr_calc.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
 import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
 
@@ -52,7 +52,7 @@ class GetKcalGoalUsecase {
     final polar = _polarDataSource;
     if (polar != null && await polar.isPolarConfigured()) {
       final weightKg = await polar.fetchLatestWeightKg() ?? user.weightKG;
-      final bmr = BMRCalc.getBMRMifflinStJeor1990(user.copyWith(weightKG: weightKg));
+      final bmr = PolarBmrCalc.getBMRMifflinStJeor1990(user.copyWith(weightKG: weightKg));
       final polarActiveKcal = await polar.fetchActiveKcalForDate(day ?? DateTime.now()) ?? 0;
       return bmr + polarActiveKcal + totalKcalActivities + (config.userKcalAdjustment ?? 0);
     }

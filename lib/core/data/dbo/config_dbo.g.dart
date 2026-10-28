@@ -51,6 +51,8 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
         healthWorkoutKcalMultiplier: (fields[34] as num?)?.toDouble(),
         healthLastImportAt: fields[35] as DateTime?,
         healthDeletedExternalIds: (fields[36] as List?)?.cast<String>(),
+        policyNoticeRevisionSeen: (fields[37] as num?)?.toInt(),
+        healthDeletedWorkouts: (fields[38] as Map?)?.cast<String, DateTime>(),
         syncNutrientsToSupabase: fields[200] as bool?,
         useBodyWeightMacros: fields[201] as bool?,
       )
@@ -62,7 +64,7 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
   @override
   void write(BinaryWriter writer, ConfigDBO obj) {
     writer
-      ..writeByte(39)
+      ..writeByte(41)
       ..writeByte(0)
       ..write(obj.hasAcceptedDisclaimer)
       ..writeByte(1)
@@ -137,6 +139,10 @@ class ConfigDBOAdapter extends TypeAdapter<ConfigDBO> {
       ..write(obj.healthLastImportAt)
       ..writeByte(36)
       ..write(obj.healthDeletedExternalIds)
+      ..writeByte(37)
+      ..write(obj.policyNoticeRevisionSeen)
+      ..writeByte(38)
+      ..write(obj.healthDeletedWorkouts)
       ..writeByte(200)
       ..write(obj.syncNutrientsToSupabase)
       ..writeByte(201)
@@ -208,6 +214,12 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) =>
             (json['healthDeletedExternalIds'] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList(),
+        policyNoticeRevisionSeen: (json['policyNoticeRevisionSeen'] as num?)
+            ?.toInt(),
+        healthDeletedWorkouts:
+            (json['healthDeletedWorkouts'] as Map<String, dynamic>?)?.map(
+              (k, e) => MapEntry(k, DateTime.parse(e as String)),
+            ),
         syncNutrientsToSupabase: json['syncNutrientsToSupabase'] as bool?,
         useBodyWeightMacros: json['useBodyWeightMacros'] as bool?,
       )
@@ -253,6 +265,10 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
   'healthWorkoutKcalMultiplier': instance.healthWorkoutKcalMultiplier,
   'healthLastImportAt': instance.healthLastImportAt?.toIso8601String(),
   'healthDeletedExternalIds': instance.healthDeletedExternalIds,
+  'healthDeletedWorkouts': instance.healthDeletedWorkouts?.map(
+    (k, e) => MapEntry(k, e.toIso8601String()),
+  ),
+  'policyNoticeRevisionSeen': instance.policyNoticeRevisionSeen,
   'syncNutrientsToSupabase': instance.syncNutrientsToSupabase,
   'useBodyWeightMacros': instance.useBodyWeightMacros,
 };
