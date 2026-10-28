@@ -30,6 +30,7 @@ next to its CSV counterpart will not find one.
 | `custom_activity_templates.json` | Saved custom activities — name and typical kcal.         |
 | `goal_settings.json`             | The profile's goal settings. See [below](#goal_settingsjson). |
 | `user_favourites.json`           | The starred foods and meals, each with a meal snapshot. See [below](#user_favouritesjson). |
+| `user_custom_meals.json`         | Fork only: the saved custom meals / foods. See [below](#user_custom_mealsjson). |
 | `tracked_day_boundary.json`      | The day boundary the tracked days are keyed by. See [below](#tracked_day_boundaryjson--tracked_day_boundarycsv). |
 
 **CSV bundle**
@@ -172,10 +173,9 @@ from every other source are never scaled. Tooling that writes `off` rows in
 app units should set the version to `1`, or the importer will scale them a
 second time. The same repair runs once over the on-device data on the first
 launch after the upgrade — the diary, the Open Food Facts cache, the saved
-custom meals and the recipe library. Saved custom meals are not part of the
-bundle, so they are repaired on the device only (the app itself never saves
-an `off` product for reuse, so that box is covered for completeness rather
-than for a known row).
+custom meals and the recipe library. Saved custom meals travel in
+[`user_custom_meals.json`](#user_custom_mealsjson) (fork only) and get the
+same repair on import.
 
 ### `user_activity.json`
 
@@ -348,6 +348,20 @@ importing the same zip twice leaves one entry per food; favourites the zip
 does not carry stay on the list. Where the file lists one food more than once
 (only a hand-edited file can), the last entry wins. Like every other file, it
 is parsed in full before anything on the device changes.
+
+### `user_custom_meals.json`
+
+**Fork only** — upstream exports the custom meals' photos but not the meals.
+Array of the saved custom meals and foods, each the same `MealDBO` shape as an
+intake's `meal` (see `lib/core/data/dbo/meal_dbo.dart`). The library is shared
+by all profiles.
+
+The file is optional on import, so upstream zips and zips from before it
+existed still restore. A meal is identified by its `code`, or its `name` when
+it has no code: an imported meal replaces the saved one with the same key, so
+importing the same zip twice leaves one entry per meal, and meals the zip does
+not carry are kept. Each imported meal is also pushed to Supabase under the
+current sign-in, so the remote copy follows a reinstall.
 
 ## CSV schema
 

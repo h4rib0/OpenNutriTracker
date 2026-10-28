@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:opennutritracker/core/data/data_source/custom_activity_template_dbo.dart';
+import 'package:opennutritracker/core/data/data_source/custom_meal_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_activity_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/favourite_meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/recipe_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/weight_log_dbo.dart';
@@ -26,6 +28,7 @@ import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/features/settings/domain/export_import_failure.dart';
 import 'package:opennutritracker/features/settings/domain/goal_settings_backup.dart';
 import 'package:opennutritracker/features/settings/domain/tracked_day_boundary_record.dart';
+import 'package:opennutritracker/features/settings/domain/usecase/export_data_usecase.dart';
 
 /// Opens the system file picker for a single file of any type and resolves
 /// to the pick, or to null when the user dismissed the picker.
@@ -63,6 +66,10 @@ class ImportDataUsecase {
   /// Null only in tests that do not look at the rows' keys.
   final RestoreTrackedDays? _restoreTrackedDays;
 
+  /// Fork: where the bundle's custom meals go. Null in upstream's tests,
+  /// which then skip that entry.
+  final CustomMealDataSource? _customMealDataSource;
+
   ImportDataUsecase(
     this._userActivityRepository,
     this._intakeRepository,
@@ -74,8 +81,10 @@ class ImportDataUsecase {
     this._favouriteMealRepository, {
     PickImportFile pickFile = _pickAnyFile,
     RestoreTrackedDays? restoreTrackedDays,
+    CustomMealDataSource? customMealDataSource,
   }) : _pickFile = pickFile,
-       _restoreTrackedDays = restoreTrackedDays;
+       _restoreTrackedDays = restoreTrackedDays,
+       _customMealDataSource = customMealDataSource;
 
   /// Imports user activity, intake, tracked day, and (optionally) recipe,
   /// weight log, Custom activity template, goal settings and favourites
@@ -136,6 +145,18 @@ class ImportDataUsecase {
             RecipeDBO.fromJson,
           ).map(OffMicronutrientRepair.repairRecipe).toList();
 
+    // Fork: the custom meal library, absent from upstream's bundles. Same
+    // Open Food Facts repair as the other meal snapshots.
+    final customMealFile = archive.findFile(
+      ExportDataUsecase.customMealJsonFileName,
+    );
+    final customMealDBOs = customMealFile == null
+        ? null
+        : _decodeJsonList(
+            customMealFile,
+            MealDBO.fromJson,
+          ).map(OffMicronutrientRepair.repairMeal).toList();
+
     final weightLogFile = archive.findFile(weightLogJsonFileName);
     final weightLogDBOs = weightLogFile == null
         ? null
@@ -182,6 +203,14 @@ class ImportDataUsecase {
       );
       if (recipeDBOs != null) {
         await _recipeRepository.addAllRecipeDBOs(recipeDBOs);
+      }
+      final customMeals = _customMealDataSource;
+      if (customMealDBOs != null && customMeals != null) {
+        // Upserts by barcode / name, so a re-import does not duplicate, and
+        // pushes each meal to Supabase under the current sign-in.
+        for (final meal in customMealDBOs) {
+          await customMeals.saveCustomMeal(meal);
+        }
       }
       if (weightLogDBOs != null) {
         await _weightLogRepository.addAllEntries(weightLogDBOs);

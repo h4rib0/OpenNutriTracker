@@ -571,6 +571,7 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      customMealDataSource: locator<CustomMealDataSource>(),
       restoreTrackedDays:
           (
             write, {

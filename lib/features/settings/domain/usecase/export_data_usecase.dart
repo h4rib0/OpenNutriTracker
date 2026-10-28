@@ -32,6 +32,11 @@ import 'package:opennutritracker/features/settings/domain/tracked_day_boundary_r
 enum ExportFormat { json, csv }
 
 class ExportDataUsecase {
+  /// Fork: the custom meal / food library in a JSON bundle. A constant
+  /// rather than a parameter so upstream's `exportData` signature, which
+  /// tests override, stays as it is.
+  static const customMealJsonFileName = 'user_custom_meals.json';
+
   final UserActivityRepository _userActivityRepository;
   final IntakeRepository _intakeRepository;
   final TrackedDayRepository _trackedDayRepository;
@@ -249,6 +254,20 @@ class ExportDataUsecase {
           ArchiveFile(recipeJsonFileName, recipeBytes.length, recipeBytes),
         );
 
+        // Fork: the custom meal / food library itself, not only its photos,
+        // so a restore brings back meals that never reached Supabase.
+        final fullCustomMeals = _customMealDataSource.getAllCustomMeals();
+        final customMealBytes = utf8.encode(
+          jsonEncode(fullCustomMeals.map((m) => m.toJson()).toList()),
+        );
+        archive.addFile(
+          ArchiveFile(
+            customMealJsonFileName,
+            customMealBytes.length,
+            customMealBytes,
+          ),
+        );
+
         // Export the current library version while preserving when it was
         // starred. The custom-meal and recipe libraries are not exported.
         final fullFavourites = await _favouriteMealRepository
@@ -271,7 +290,7 @@ class ExportDataUsecase {
         imagePaths.addAll(
           userImagePaths(
             recipes: fullRecipes,
-            customMeals: _customMealDataSource.getAllCustomMeals(),
+            customMeals: fullCustomMeals,
             intakes: fullIntake,
             favourites: fullFavourites,
           ),
