@@ -7,12 +7,13 @@ import 'package:opennutritracker/core/utils/app_locale.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_snapshot.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
-/// The iOS widget's text, translated on the Dart side.
+/// The widgets' text, translated on the Dart side.
 ///
-/// The extension cannot read the generated Dart strings, and copy written
-/// in Swift would sit outside the ARB/Weblate pipeline. So the app writes
-/// the already-localized labels into the App Group next to the numbers,
-/// and the extension falls back to English only until the first write.
+/// Neither the iOS extension nor the Android widgets can read the generated
+/// Dart strings, and copy written in Swift or Android resources would sit
+/// outside the ARB/Weblate pipeline. So the app writes the already-localized
+/// labels next to the numbers, and the widgets fall back to English only
+/// until the first write.
 class CalorieWidgetLabels {
   /// The App Group key of the labels that depend only on the language, as
   /// one JSON string. They hold nothing about the profile, so a wipe keeps
@@ -28,6 +29,24 @@ class CalorieWidgetLabels {
   final String openApp;
   final String description;
 
+  /// The rest is read by the Android widgets only.
+  final String kcalLeft;
+  final String kcalOver;
+  final String goalTitle;
+  final String supplied;
+  final String burned;
+  final String carbsShort;
+  final String fatShort;
+  final String proteinShort;
+  final String gram;
+  final String water;
+  final String ml;
+  final String breakfast;
+  final String lunch;
+  final String dinner;
+  final String snack;
+  final String add;
+
   const CalorieWidgetLabels({
     required this.title,
     required this.unit,
@@ -35,6 +54,22 @@ class CalorieWidgetLabels {
     required this.accessibility,
     required this.openApp,
     required this.description,
+    this.kcalLeft = 'kcal left',
+    this.kcalOver = 'kcal too much',
+    this.goalTitle = 'Goal',
+    this.supplied = 'supplied',
+    this.burned = 'burned',
+    this.carbsShort = 'C',
+    this.fatShort = 'F',
+    this.proteinShort = 'P',
+    this.gram = 'g',
+    this.water = 'Water',
+    this.ml = 'ml',
+    this.breakfast = 'Breakfast',
+    this.lunch = 'Lunch',
+    this.dinner = 'Dinner',
+    this.snack = 'Snack',
+    this.add = 'Add',
   });
 
   /// The labels for [snapshot] in the language of [s]. The goal and the
@@ -63,6 +98,22 @@ class CalorieWidgetLabels {
       accessibility: s.calorieWidgetAccessibilityLabel(consumed, goal),
       openApp: s.calorieWidgetOpenAppHint,
       description: s.calorieWidgetDescription,
+      kcalLeft: s.kcalLeftLabel,
+      kcalOver: s.kcalTooMuchLabel,
+      goalTitle: s.goalLabel,
+      supplied: s.suppliedLabel,
+      burned: s.burnedLabel,
+      carbsShort: s.calorieWidgetCarbsShortLabel,
+      fatShort: s.fatLabelShort.toUpperCase(),
+      proteinShort: s.proteinLabelShort.toUpperCase(),
+      gram: s.gramUnit,
+      water: s.trendsWaterLabel,
+      ml: s.mlLabel,
+      breakfast: s.breakfastLabel,
+      lunch: s.lunchLabel,
+      dinner: s.dinnerLabel,
+      snack: s.snackLabel,
+      add: s.addLabel,
     );
   }
 
@@ -87,6 +138,22 @@ class CalorieWidgetLabels {
     'unit': unit,
     'openApp': openApp,
     'description': description,
+    'kcalLeft': kcalLeft,
+    'kcalOver': kcalOver,
+    'goalTitle': goalTitle,
+    'supplied': supplied,
+    'burned': burned,
+    'carbsShort': carbsShort,
+    'fatShort': fatShort,
+    'proteinShort': proteinShort,
+    'gram': gram,
+    'water': water,
+    'ml': ml,
+    'breakfast': breakfast,
+    'lunch': lunch,
+    'dinner': dinner,
+    'snack': snack,
+    'add': add,
   };
 
   Map<String, String> figureJson() => {

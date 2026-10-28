@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget palette (#832), close to the app's Home dashboard. -->
+<resources>
+    <color name="calorie_widget_background">#FFFBF6</color>
+    <color name="calorie_widget_surface">#F1ECE5</color>
+    <color name="calorie_widget_track">#E6DFD6</color>
+    <color name="calorie_widget_text">#1E1C1A</color>
+    <color name="calorie_widget_text_secondary">#5E5850</color>
+    <color name="calorie_widget_ring">#D9822B</color>
+    <color name="calorie_widget_over">#C2412F</color>
+    <color name="calorie_widget_carbs">#C98A12</color>
+    <color name="calorie_widget_fat">#D9604C</color>
+    <color name="calorie_widget_protein">#1E9C84</color>
+    <color name="calorie_widget_button">#D9822B</color>
+    <color name="calorie_widget_on_button">#FFFFFF</color>
+</resources>

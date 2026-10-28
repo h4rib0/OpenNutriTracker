@@ -3,17 +3,28 @@ import 'dart:convert';
 import 'package:opennutritracker/core/utils/calc/day_boundary_calc.dart';
 import 'package:opennutritracker/core/utils/widget/calorie_widget_labels.dart';
 
-/// Today's calorie figures for the iOS home-screen widget.
+/// Today's figures for the home-screen widgets: the iOS calorie widget and
+/// the Android widgets (#832).
 ///
-/// The widget extension cannot open the encrypted Hive database, so the
-/// app writes this snapshot into the shared App Group whenever Home
-/// finishes loading. Kilocalories are the stored unit. The in-app
-/// kilojoule display preference is not applied here.
+/// The widgets cannot open the encrypted Hive database, so the app writes
+/// this snapshot into the shared App Group (iOS) or the plugin's shared
+/// preferences (Android) whenever Home finishes loading. Kilocalories and
+/// grams are the stored units. The in-app kilojoule display preference is
+/// not applied here.
 class CalorieWidgetSnapshot {
   static const appGroupId = 'group.com.opennutritracker.ont.opennutritracker';
   static const developAppGroupId =
       'group.com.opennutritracker.ont.opennutritracker.develop';
   static const iosWidgetKind = 'CalorieProgressWidget';
+
+  /// The Android widget providers, one per size (#832). Their package is
+  /// the Kotlin namespace, which both flavours share.
+  static const androidProviders = [
+    'com.opennutritracker.ont.opennutritracker.widget.CalorieWidgetSmallProvider',
+    'com.opennutritracker.ont.opennutritracker.widget.CalorieWidgetMediumProvider',
+    'com.opennutritracker.ont.opennutritracker.widget.CalorieWidgetStripProvider',
+    'com.opennutritracker.ont.opennutritracker.widget.CalorieWidgetLargeProvider',
+  ];
 
   /// The App Group key the snapshot lives under: the figures and the
   /// labels that describe them, as one JSON string. One key is one platform
@@ -27,12 +38,30 @@ class CalorieWidgetSnapshot {
   final int consumedKcal;
   final int goalKcal;
 
+  /// Today's macros, eaten and goal, in grams. Read by the Android widgets;
+  /// the iOS widget shows calories only.
+  final CalorieWidgetMacros macros;
+
+  /// Kilocalories burned by logged activities today.
+  final int burnedKcal;
+
+  final int waterMl;
+  final int waterGoalMl;
+
+  /// Kilocalories eaten per meal, in Home's order.
+  final CalorieWidgetMeals meals;
+
   const CalorieWidgetSnapshot({
     required this.hasData,
     required this.dayId,
     required this.offsetMinutes,
     required this.consumedKcal,
     required this.goalKcal,
+    this.macros = CalorieWidgetMacros.none,
+    this.burnedKcal = 0,
+    this.waterMl = 0,
+    this.waterGoalMl = 0,
+    this.meals = CalorieWidgetMeals.none,
   });
 
   /// Builds the snapshot Home should publish.
@@ -49,6 +78,11 @@ class CalorieWidgetSnapshot {
     required double consumedKcal,
     required double goalKcal,
     required int offsetMinutes,
+    CalorieWidgetMacros macros = CalorieWidgetMacros.none,
+    double burnedKcal = 0,
+    int waterMl = 0,
+    int waterGoalMl = 0,
+    CalorieWidgetMeals meals = CalorieWidgetMeals.none,
     DateTime? logicalDay,
     DateTime? now,
   }) {
@@ -64,6 +98,11 @@ class CalorieWidgetSnapshot {
       offsetMinutes: offset,
       consumedKcal: hasData ? consumedKcal.round() : 0,
       goalKcal: hasData ? goal : 0,
+      macros: hasData ? macros : CalorieWidgetMacros.none,
+      burnedKcal: hasData ? burnedKcal.round() : 0,
+      waterMl: hasData ? waterMl : 0,
+      waterGoalMl: hasData ? waterGoalMl : 0,
+      meals: hasData ? meals : CalorieWidgetMeals.none,
     );
   }
 
@@ -94,6 +133,10 @@ class CalorieWidgetSnapshot {
     'offsetMinutes': offsetMinutes,
     'consumed': consumedKcal,
     'goal': goalKcal,
+    'macros': macros.toJson(),
+    'burned': burnedKcal,
+    'water': [waterMl, waterGoalMl],
+    'meals': meals.toJson(),
   };
 
   /// The value stored under [storageKey]: this snapshot with the figure
@@ -119,4 +162,85 @@ class CalorieWidgetSnapshot {
     final dayOfMonth = day.day.toString().padLeft(2, '0');
     return '$year-$month-$dayOfMonth';
   }
+}
+
+/// Today's carbs, fat and protein, eaten and goal, rounded to whole grams.
+class CalorieWidgetMacros {
+  final int carbsG;
+  final int carbsGoalG;
+  final int fatG;
+  final int fatGoalG;
+  final int proteinG;
+  final int proteinGoalG;
+
+  const CalorieWidgetMacros({
+    required this.carbsG,
+    required this.carbsGoalG,
+    required this.fatG,
+    required this.fatGoalG,
+    required this.proteinG,
+    required this.proteinGoalG,
+  });
+
+  static const none = CalorieWidgetMacros(
+    carbsG: 0,
+    carbsGoalG: 0,
+    fatG: 0,
+    fatGoalG: 0,
+    proteinG: 0,
+    proteinGoalG: 0,
+  );
+
+  /// From Home's unrounded totals and goals.
+  factory CalorieWidgetMacros.fromHome({
+    required double carbs,
+    required double carbsGoal,
+    required double fat,
+    required double fatGoal,
+    required double protein,
+    required double proteinGoal,
+  }) => CalorieWidgetMacros(
+    carbsG: carbs.round(),
+    carbsGoalG: carbsGoal.round(),
+    fatG: fat.round(),
+    fatGoalG: fatGoal.round(),
+    proteinG: protein.round(),
+    proteinGoalG: proteinGoal.round(),
+  );
+
+  /// Each macro as `[eaten, goal]`.
+  Map<String, List<int>> toJson() => {
+    'carbs': [carbsG, carbsGoalG],
+    'fat': [fatG, fatGoalG],
+    'protein': [proteinG, proteinGoalG],
+  };
+}
+
+/// Kilocalories eaten per meal today, rounded.
+class CalorieWidgetMeals {
+  final int breakfastKcal;
+  final int lunchKcal;
+  final int dinnerKcal;
+  final int snackKcal;
+
+  const CalorieWidgetMeals({
+    required this.breakfastKcal,
+    required this.lunchKcal,
+    required this.dinnerKcal,
+    required this.snackKcal,
+  });
+
+  static const none = CalorieWidgetMeals(
+    breakfastKcal: 0,
+    lunchKcal: 0,
+    dinnerKcal: 0,
+    snackKcal: 0,
+  );
+
+  Map<String, int> toJson() => {
+    'breakfast': breakfastKcal,
+    'lunch': lunchKcal,
+    'dinner': dinnerKcal,
+    'snack': snackKcal,
+  };
 }
