@@ -179,14 +179,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           .map((entry) => entry.amountMl)
           .fold<int>(0, (sum, ml) => sum + ml);
 
-      final polarActiveKcal = await _polarDataSource?.fetchActiveKcalForDate(
+      // Both Polar queries at once; the usecases below reuse their answers.
+      final polarActiveKcalQuery = _polarDataSource?.fetchActiveKcalForDate(
         currentDay,
       );
+      final influxWeightQuery = _polarDataSource?.fetchLatestWeightKg();
+      final polarActiveKcal = await polarActiveKcalQuery;
       final totalKcalActivitiesWithPolar =
           totalKcalActivities + (polarActiveKcal ?? 0);
 
       final user = await _getUserUsecase.getUserData();
-      final influxWeightKg = await _polarDataSource?.fetchLatestWeightKg();
+      final influxWeightKg = await influxWeightQuery;
       final isPolarActive = await _polarDataSource?.isPolarConfigured() ?? false;
 
       // Goal and macros come from the shared usecases (Polar-aware), so the
