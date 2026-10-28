@@ -41,6 +41,13 @@ class CustomMealDataSource {
       for (final meal in collisions) {
         await meal.delete();
       }
+      // Collisions share the new identity, so the upsert replaces them
+      // remotely too; only a changed identity leaves an old row behind.
+      unawaited(_supabase?.upsert(mealDBO));
+      final previousKey = _identityOf(previous!);
+      if (previousKey != null && previousKey != _identityOf(mealDBO)) {
+        unawaited(_supabase?.delete(previousKey));
+      }
       return;
     }
 
