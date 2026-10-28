@@ -59,10 +59,11 @@ void main() {
       );
 
       final json = snapshot.toJson();
+      // Cut like Home's macro tiles, not rounded: 143.9 g reads 143 there.
       expect(json['macros'], {
-        'carbs': [66, 20],
+        'carbs': [66, 19],
         'fat': [53, 52],
-        'protein': [100, 144],
+        'protein': [100, 143],
       });
       expect(json['burned'], 211);
       expect(json['water'], [750, 1900]);

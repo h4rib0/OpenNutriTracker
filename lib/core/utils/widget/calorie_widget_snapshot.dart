@@ -164,7 +164,7 @@ class CalorieWidgetSnapshot {
   }
 }
 
-/// Today's carbs, fat and protein, eaten and goal, rounded to whole grams.
+/// Today's carbs, fat and protein, eaten and goal, in whole grams.
 class CalorieWidgetMacros {
   final int carbsG;
   final int carbsGoalG;
@@ -191,7 +191,9 @@ class CalorieWidgetMacros {
     proteinGoalG: 0,
   );
 
-  /// From Home's unrounded totals and goals.
+  /// From Home's unrounded totals and goals, cut to whole grams the way
+  /// Home's macro tiles show them (`toInt`), so the widget and the app never
+  /// differ by one.
   factory CalorieWidgetMacros.fromHome({
     required double carbs,
     required double carbsGoal,
@@ -200,12 +202,12 @@ class CalorieWidgetMacros {
     required double protein,
     required double proteinGoal,
   }) => CalorieWidgetMacros(
-    carbsG: carbs.round(),
-    carbsGoalG: carbsGoal.round(),
-    fatG: fat.round(),
-    fatGoalG: fatGoal.round(),
-    proteinG: protein.round(),
-    proteinGoalG: proteinGoal.round(),
+    carbsG: carbs.toInt(),
+    carbsGoalG: carbsGoal.toInt(),
+    fatG: fat.toInt(),
+    fatGoalG: fatGoal.toInt(),
+    proteinG: protein.toInt(),
+    proteinGoalG: proteinGoal.toInt(),
   );
 
   /// Each macro as `[eaten, goal]`.
