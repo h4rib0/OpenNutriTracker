@@ -2,7 +2,7 @@
 
 A small, read-only Home Screen widget shows today's calories eaten, the daily goal, and a progress ring. It reads an App Group snapshot written when Home finishes loading. It does not open the encrypted Hive database.
 
-Android stores the same snapshot and has no widget UI yet. That work is tracked separately.
+Android reads the same snapshot in four widgets of its own; see [`android-calorie-widget.md`](android-calorie-widget.md).
 
 ## App Group
 
