@@ -40,4 +40,41 @@ void main() {
       isNull,
     );
   });
+
+  group('isFresh', () {
+    final now = DateTime(2026, 10, 29, 8, 37);
+    Uri tapAt(DateTime at) => Uri.parse(
+      'opennutritracker://widget/add-food?at=${at.millisecondsSinceEpoch}',
+    );
+
+    test('a tap from just now is followed', () {
+      expect(
+        CalorieWidgetLink.isFresh(
+          tapAt(now.subtract(const Duration(seconds: 20))),
+          now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a tap replayed by a restored activity hours later is not', () {
+      expect(
+        CalorieWidgetLink.isFresh(
+          tapAt(now.subtract(const Duration(hours: 10))),
+          now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a link without a stamp is taken as fresh', () {
+      expect(
+        CalorieWidgetLink.isFresh(
+          Uri.parse('opennutritracker://widget/open'),
+          now,
+        ),
+        isTrue,
+      );
+    });
+  });
 }
