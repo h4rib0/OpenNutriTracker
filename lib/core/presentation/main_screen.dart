@@ -82,6 +82,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     // stream, or again by a later MainScreen — so each is followed once.
     // MainActivity stamps every tap, which keeps two real taps apart.
     if (link == null || !_followedWidgetLinks.add(uri.toString())) return;
+    if (!CalorieWidgetLink.isFresh(uri!, DateTime.now())) return;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _followWidgetLink(link),
     );
